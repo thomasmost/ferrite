@@ -4,7 +4,6 @@
 
 use ferrite::text_layer::TextLayer;
 use ferrite::window::Window;
-use ferrite::App;
 
 ferrite::app! {
     fn main(app: &mut App) {

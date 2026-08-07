@@ -14,6 +14,30 @@ CARGO_TARGET = 'thumbv7m-none-eabi'
 # this alongside [package] name in Cargo.toml.
 RUST_CRATE = 'hello'
 
+# Codegen flags the Pebble loader requires. These are NOT optional:
+#
+#   relocation-model=pic   Pebble apps are loaded at an address chosen at
+#                          runtime. The firmware fixes up pointers using a
+#                          relocation table that inject_metadata.py builds
+#                          from the ELF's .rel.data section and .got only --
+#                          it never touches .text. Without PIC, LLVM
+#                          materializes addresses of statics directly into
+#                          Thumb instructions (movw/movt ABS), which nothing
+#                          fixes up: every &'static pointer is then garbage
+#                          at runtime and the app faults on first use.
+#   force-unwind-tables=no Keeps .ARM.extab/.ARM.exidx from growing, which
+#                          inject_metadata.py does not expect.
+#
+# They live here rather than only in .cargo/config.toml because a RUSTFLAGS
+# environment variable (common in developer shells) silently overrides
+# [target.*] rustflags from config.toml -- which produced exactly the
+# broken-pointer failure above. Inherited flags are kept, but ours are
+# appended last so they win.
+REQUIRED_RUSTFLAGS = [
+    '-C', 'relocation-model=pic',
+    '-C', 'force-unwind-tables=no',
+]
+
 
 def options(ctx):
     ctx.load('pebble_sdk')
@@ -28,13 +52,52 @@ def _cargo_path():
     return cargo if os.path.exists(cargo) else 'cargo'
 
 
+def _cargo_env():
+    """Environment for cargo, with REQUIRED_RUSTFLAGS appended to RUSTFLAGS."""
+    env = os.environ.copy()
+    # CARGO_ENCODED_RUSTFLAGS takes precedence over RUSTFLAGS if both are set,
+    # so it has to be extended rather than left to shadow what we add.
+    if 'CARGO_ENCODED_RUSTFLAGS' in env:
+        inherited = [f for f in env.pop('CARGO_ENCODED_RUSTFLAGS').split('\x1f') if f]
+    else:
+        inherited = env.get('RUSTFLAGS', '').split()
+    env['CARGO_ENCODED_RUSTFLAGS'] = '\x1f'.join(inherited + REQUIRED_RUSTFLAGS)
+    env.pop('RUSTFLAGS', None)
+    return env
+
+
+def _check_relocations(elf, readelf):
+    """Fail loudly if the linked app has absolute relocations in .text.
+
+    inject_metadata.py only emits fixups for .rel.data and .got, so an
+    absolute relocation in code is a pointer that is never corrected at load
+    time. This guards against the required rustflags silently not applying.
+    """
+    out = subprocess.check_output([readelf, '-r', elf]).decode('utf8', 'replace')
+    bad, in_text = [], False
+    for line in out.splitlines():
+        if line.startswith('Relocation section'):
+            in_text = line.startswith("Relocation section '.rel.text'")
+        elif in_text and ('R_ARM_ABS32' in line or '_AB' in line):
+            bad.append(line.strip())
+    if bad:
+        from waflib import Errors
+        raise Errors.WafError(
+            '{} has {} absolute relocation(s) in .text that the Pebble loader '
+            'cannot fix up -- static pointers would be garbage at runtime.\n'
+            'The required rustflags ({}) did not reach rustc.\n'
+            'First offenders:\n  {}'.format(
+                elf, len(bad), ' '.join(REQUIRED_RUSTFLAGS),
+                '\n  '.join(bad[:5])))
+
+
 def build(ctx):
     ctx.load('pebble_sdk')
 
     # Compile the Rust staticlib (target/thumbv7m-none-eabi/release/libhello.a).
     subprocess.check_call(
         [_cargo_path(), 'build', '--release', '--target', CARGO_TARGET],
-        cwd=ctx.path.abspath())
+        cwd=ctx.path.abspath(), env=_cargo_env())
     rust_lib_dir = os.path.join(
         ctx.path.abspath(), 'target', CARGO_TARGET, 'release')
     rust_lib = os.path.join(rust_lib_dir, 'lib{}.a'.format(RUST_CRATE))
@@ -69,3 +132,13 @@ def build(ctx):
                                          'src/pkjs/**/*.json',
                                          'src/common/**/*.js']),
                    js_entry_file='src/pkjs/index.js')
+
+    # inject_metadata.py invokes bare 'arm-none-eabi-readelf', so the SDK
+    # toolchain is already on PATH by the time this runs.
+    def _verify(bld):
+        for binary in binaries:
+            node = bld.bldnode.find_node(binary['app_elf'])
+            if node:
+                _check_relocations(node.abspath(), 'arm-none-eabi-readelf')
+
+    ctx.add_post_fun(_verify)
