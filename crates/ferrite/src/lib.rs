@@ -1,10 +1,14 @@
 //! Safe Rust API and runtime for PebbleOS watchapps.
 
-#![no_std]
+// `no_std` except under `cargo test`, where the host test harness needs std.
+#![cfg_attr(not(test), no_std)]
 
 pub use ferrite_sys as sys;
 
-#[cfg(target_os = "none")]
+// Compiled on the host only under `cfg(test)`, so `FixedBuf`'s truncation
+// arithmetic is unit-testable. The `#[panic_handler]` itself stays gated on
+// `target_os = "none"` so it never clashes with std's.
+#[cfg(any(target_os = "none", test))]
 mod panic;
 pub mod text_layer;
 pub mod window;
@@ -17,7 +21,8 @@ use core::ffi::CStr;
 /// SDK event loop is ready. Wrapper constructors require it to enforce that
 /// SDK calls only run after `main` initialization. The token is created via
 /// `unsafe fn __new()`, so the contract is maintained by user discipline
-/// (constructors should not call `__new` directly).
+/// (user code should not call `__new` directly -- the [`app!`] macro is the
+/// only intended caller).
 pub struct App {
     _private: (),
 }

@@ -25,6 +25,7 @@ impl Write for FixedBuf {
     }
 }
 
+#[cfg(target_os = "none")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let mut out = FixedBuf {
@@ -45,5 +46,95 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     // Undefined instruction: firmware kills the app through its fault handler.
     loop {
         unsafe { core::arch::asm!("udf #255", options(nomem, nostack)) };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FixedBuf;
+    use core::fmt::Write;
+
+    fn new() -> FixedBuf {
+        FixedBuf {
+            buf: [0; 128],
+            len: 0,
+        }
+    }
+
+    fn written(b: &FixedBuf) -> &[u8] {
+        &b.buf[..b.len]
+    }
+
+    /// The buffer must never hold a partial UTF-8 sequence, and must keep the
+    /// longest valid prefix that fits. Regression: an earlier version tested
+    /// the last byte *copied* instead of the first byte *not* copied, which
+    /// chopped the tail off characters that fit entirely.
+    #[test]
+    fn keeps_longest_valid_prefix_at_every_cut() {
+        let samples = [
+            "",
+            "a",
+            "hello",
+            "é",
+            "café",
+            "日本語",
+            "aé",
+            "🦀",
+            "a🦀b",
+            "pan\u{00ed}c at src/lib.rs:1",
+            "\u{10FFFF}\u{10FFFF}",
+        ];
+        for s in samples {
+            for prefill in 0..127usize {
+                let mut b = new();
+                b.len = prefill;
+                b.write_str(s).unwrap();
+                let out = &b.buf[prefill..b.len];
+
+                assert!(
+                    core::str::from_utf8(out).is_ok(),
+                    "invalid UTF-8 for {s:?} at prefill {prefill}: {out:?}"
+                );
+                // Must be the longest char-boundary prefix that fits.
+                let space = 127 - prefill;
+                let mut want = s.len().min(space);
+                while !s.is_char_boundary(want) {
+                    want -= 1;
+                }
+                assert_eq!(
+                    out,
+                    &s.as_bytes()[..want],
+                    "wrong truncation for {s:?} at prefill {prefill}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn never_overruns_or_fills_the_reserved_nul_slot() {
+        let mut b = new();
+        for _ in 0..100 {
+            let _ = b.write_str("0123456789");
+        }
+        // One byte is reserved so the caller can always NUL-terminate.
+        assert!(b.len < b.buf.len(), "len {} overran", b.len);
+        b.buf[b.len] = 0; // must be in bounds, exactly as the handler does it
+        assert_eq!(b.buf[b.len], 0);
+    }
+
+    #[test]
+    fn write_str_appends_across_calls() {
+        let mut b = new();
+        b.write_str("ab").unwrap();
+        b.write_str("cd").unwrap();
+        assert_eq!(written(&b), b"abcd");
+    }
+
+    #[test]
+    fn multibyte_char_is_dropped_whole_when_it_cannot_fit() {
+        let mut b = new();
+        b.len = 126; // 1 byte of usable space, reserving the NUL slot
+        b.write_str("é").unwrap(); // 2 bytes -> must not be split
+        assert_eq!(b.len, 126, "a 2-byte char was split into 1 byte");
     }
 }
