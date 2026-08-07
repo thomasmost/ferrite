@@ -121,6 +121,32 @@ git commit -m "chore(xtask): scaffold cargo xtask runner"
 - Modify: `crates/xtask/src/gen_bindings.rs` (replace skeleton entirely)
 - Generates: `crates/ferrite-sys/src/bindings_emery.rs` (committed output)
 
+> **CORRECTED during Phase 2 — the shipped `gen_bindings.rs` differs from the
+> listing below in four ways. The listing is kept for context; the code is the
+> source of truth.**
+>
+> 1. **The "Codebase verified" claim at the top of this file that "A clang dry
+>    run with stubs + newlib include succeeds" is wrong.** `pebble.h` includes
+>    `<time.h>` and then redefines `struct tm` (line 8753) plus its own
+>    `strftime`/`localtime`/`gmtime`/`mktime` prototypes. That is a hard
+>    redefinition conflict — real `arm-none-eabi-gcc` fails on it too. The
+>    generator adds `-D_TIME_H_` and `-Dtime_t=long`, which is exactly what the
+>    SDK's own compiler config does (`waflib/extras/pebble_sdk_gcc.py`), so
+>    Pebble's `struct tm` and a 32-bit `time_t` are what apps see. Without
+>    `-Dtime_t=long` every `time_t` would be newlib's 64-bit `long long`
+>    against a 32-bit firmware ABI.
+> 2. **`Formatter::Rustfmt`, not `Prettyplease`.** Prettyplease output is not
+>    rustfmt-canonical, so `cargo fmt --all --check` could never pass and
+>    `cargo fmt` would reformat a file the next regeneration rewrites.
+> 3. **`raw_line` also emits `PEBBLE_SDK_VERSION`, `PEBBLE_SDK_PLATFORM` and
+>    `pub type time_t`.** Step 1 of Task 3 below hand-writes the first two in
+>    `ferrite-sys/src/lib.rs`; do not — they are generated, and `lib.rs`
+>    re-exports them through its glob. `time_t` has to be written by hand
+>    because `-Dtime_t=long` erases the name before clang sees it.
+> 4. **No `expect()`.** Bindgen failure, file-write failure and an
+>    undeterminable home directory all return `ExitCode::FAILURE` with a
+>    message, matching the missing-SDK path.
+
 **Step 1: Create the stub headers**
 
 `pebble.h` line 4 is `#include "message_keys.auto.h"` and line 5 is `#include "src/resource_ids.auto.h"` — both generated per-project by the SDK build and absent from the SDK itself. Empty stubs satisfy the includes; real apps declare their message keys in Rust (see design "Message keys").
@@ -296,12 +322,15 @@ The hand-written `extern "C"` declarations are deleted; the generated module tak
 #![no_std]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
-/// SDK version the committed bindings were generated from.
-pub const PEBBLE_SDK_VERSION: &str = "4.17";
-/// Platform the committed bindings were generated for.
-pub const PEBBLE_SDK_PLATFORM: &str = "emery";
+// CORRECTED during Phase 2: PEBBLE_SDK_VERSION and PEBBLE_SDK_PLATFORM are
+// NOT hand-written here. `cargo xtask bindgen` emits them (along with
+// `pub type time_t`) into bindings_emery.rs, and the glob below re-exports
+// them -- a hand-copied version constant would silently go stale against an
+// index-based firmware jump table.
 
-#[allow(nonstandard_style, unused, clippy::all)]
+// `unnecessary_transmutes` is a rustc lint, not a clippy one, so `clippy::all`
+// does not cover the transmutes bindgen writes into packed-struct accessors.
+#[allow(nonstandard_style, unused, unnecessary_transmutes, clippy::all)]
 pub mod bindings_emery;
 
 pub use bindings_emery::*;
