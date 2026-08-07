@@ -67,28 +67,60 @@ def _cargo_env():
 
 
 def _check_relocations(elf, readelf):
-    """Fail loudly if the linked app has absolute relocations in .text.
+    """Fail loudly if the linked app has absolute relocations in code sections.
 
     inject_metadata.py only emits fixups for .rel.data and .got, so an
-    absolute relocation in code is a pointer that is never corrected at load
-    time. This guards against the required rustflags silently not applying.
+    absolute relocation in code or rodata is a pointer that is never
+    corrected at load time. This guards against the required rustflags
+    silently not applying. Check all allocated sections EXCEPT those
+    inject_metadata.py handles (.rel.data*, .got) and harmless exceptions
+    (.rel.ARM.exidx, which uses PREL31 self-relative encoding).
     """
     out = subprocess.check_output([readelf, '-r', elf]).decode('utf8', 'replace')
-    bad, in_text = [], False
+    bad = []
     for line in out.splitlines():
-        if line.startswith('Relocation section'):
-            in_text = line.startswith("Relocation section '.rel.text'")
-        elif in_text and ('R_ARM_ABS32' in line or '_AB' in line):
-            bad.append(line.strip())
+        if not line.startswith('Relocation section'):
+            continue
+        # Extract section name: "Relocation section '.rel.text' at offset ..."
+        section_name_start = line.find("'")
+        section_name_end = line.find("'", section_name_start + 1)
+        if section_name_start == -1 or section_name_end == -1:
+            continue
+        section = line[section_name_start + 1:section_name_end]
+        # Skip sections that inject_metadata.py handles and harmless exceptions
+        if (section.startswith('.rel.data') or section.startswith('.got') or
+            section.startswith('.rel.ARM.exidx')):
+            continue
+        # For this section, check each relocation entry
+        in_section = True
+        for reloc_line in out.splitlines()[out.find(line)+1:]:
+            if reloc_line.startswith('Relocation section'):
+                break  # moved to next section
+            if not reloc_line.strip():
+                continue
+            # Parse the relocation type from readelf output
+            # Format: 000000e0  0000990a R_ARM_THM_CALL    ...
+            # We want column 2 (0-indexed) which is the relocation type
+            parts = reloc_line.split()
+            if len(parts) < 3:
+                continue
+            reloc_type = parts[2]
+            # Check for absolute relocations (including ARM thumb variants)
+            if reloc_type in ('R_ARM_ABS32', 'R_ARM_THM_MOVW_AB', 'R_ARM_THM_MOVT_AB'):
+                bad.append((section, reloc_line.strip()))
     if bad:
         from waflib import Errors
+        error_lines = []
+        for section, line in bad[:5]:
+            error_lines.append('  {}: {}'.format(section, line))
         raise Errors.WafError(
-            '{} has {} absolute relocation(s) in .text that the Pebble loader '
-            'cannot fix up -- static pointers would be garbage at runtime.\n'
+            '{} has {} absolute relocation(s) in code/rodata sections that '
+            'the Pebble loader cannot fix up -- static pointers would be '
+            'garbage at runtime.\n'
             'The required rustflags ({}) did not reach rustc.\n'
-            'First offenders:\n  {}'.format(
+            'First offenders:\n{}'.format(
                 elf, len(bad), ' '.join(REQUIRED_RUSTFLAGS),
-                '\n  '.join(bad[:5])))
+                '\n'.join(error_lines)))
 
 
 def build(ctx):
@@ -133,12 +165,35 @@ def build(ctx):
                                          'src/common/**/*.js']),
                    js_entry_file='src/pkjs/index.js')
 
-    # inject_metadata.py invokes bare 'arm-none-eabi-readelf', so the SDK
-    # toolchain is already on PATH by the time this runs.
+    # Verify relocations in a post-function (after bundling).
+    # If verification fails, delete the .pbw and .bin artifacts so a developer
+    # cannot accidentally install a broken app. The _verify function runs with
+    # the actual build context, so the ELF files exist by then.
     def _verify(bld):
+        from waflib import Errors
         for binary in binaries:
             node = bld.bldnode.find_node(binary['app_elf'])
-            if node:
+            if not node:
+                # Clean up broken artifacts before raising
+                pbw_path = os.path.join(bld.bldnode.abspath(), 'hello.pbw')
+                bin_path = os.path.join(bld.bldnode.abspath(), 'emery', 'pebble-app.bin')
+                if os.path.exists(pbw_path):
+                    os.remove(pbw_path)
+                if os.path.exists(bin_path):
+                    os.remove(bin_path)
+                raise Errors.WafError(
+                    'ELF not found: {} (BUILD_DIR layout may have changed)'.format(
+                        binary['app_elf']))
+            try:
                 _check_relocations(node.abspath(), 'arm-none-eabi-readelf')
+            except Errors.WafError:
+                # Clean up broken artifacts before re-raising
+                pbw_path = os.path.join(bld.bldnode.abspath(), 'hello.pbw')
+                bin_path = os.path.join(bld.bldnode.abspath(), 'emery', 'pebble-app.bin')
+                if os.path.exists(pbw_path):
+                    os.remove(pbw_path)
+                if os.path.exists(bin_path):
+                    os.remove(bin_path)
+                raise
 
     ctx.add_post_fun(_verify)

@@ -27,10 +27,7 @@ impl Window {
     /// state returned from your `app!` setup block.
     pub fn add_child(&mut self, child: &crate::text_layer::TextLayer) {
         unsafe {
-            sys::layer_add_child(
-                sys::window_get_root_layer(self.raw),
-                child.as_layer_ptr(),
-            );
+            sys::layer_add_child(sys::window_get_root_layer(self.raw), child.as_layer_ptr());
         }
     }
 

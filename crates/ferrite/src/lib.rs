@@ -13,9 +13,11 @@ use core::ffi::CStr;
 
 /// Capability token proving the app runtime is initialized.
 ///
-/// A `&mut App` is handed to your setup code by [`app!`]; it cannot be
-/// constructed by user code. Wrapper constructors take it so SDK calls are
-/// structurally impossible before `main` runs.
+/// A `&mut App` is handed to your setup code by [`app!`] and proves that the
+/// SDK event loop is ready. Wrapper constructors require it to enforce that
+/// SDK calls only run after `main` initialization. The token is created via
+/// `unsafe fn __new()`, so the contract is maintained by user discipline
+/// (constructors should not call `__new` directly).
 pub struct App {
     _private: (),
 }
@@ -49,14 +51,20 @@ pub fn log_info(msg: &CStr) {
 /// when the app exits.
 ///
 /// The setup block's final expression is the state kept alive for the app's
-/// lifetime — return every window/layer you create from the block:
+/// lifetime — return every window/layer you create from the block. When
+/// returning multiple objects in a tuple, list children *before* their
+/// parents: Rust drops tuple fields left-to-right, so children drop first.
+/// This prevents use-after-free in child drop impls that unlink from parent:
 ///
 /// ```ignore
 /// ferrite::app! {
 ///     fn main(app: &mut App) {
 ///         let window = Window::new(app);
-///         // ... configure, push ...
-///         window // kept alive until the app exits
+///         let text = TextLayer::new(app, bounds);
+///         // ... configure, add child ...
+///         window.add_child(&text);
+///         // Children must be listed before parents in the return tuple.
+///         (text, window) // text drops first, then window
 ///     }
 /// }
 /// ```

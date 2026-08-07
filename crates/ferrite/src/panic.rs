@@ -11,7 +11,11 @@ struct FixedBuf {
 impl Write for FixedBuf {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         let space = self.buf.len() - 1 - self.len; // reserve NUL byte
-        let n = s.len().min(space);
+        let mut n = s.len().min(space);
+        // Truncate on a UTF-8 character boundary to avoid splitting multi-byte sequences
+        while n > 0 && (s.as_bytes()[n - 1] & 0b11000000) == 0b10000000 {
+            n -= 1; // back up over continuation bytes
+        }
         self.buf[self.len..self.len + n].copy_from_slice(&s.as_bytes()[..n]);
         self.len += n;
         Ok(())
@@ -37,6 +41,6 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     }
     // Undefined instruction: firmware kills the app through its fault handler.
     loop {
-        unsafe { core::arch::asm!("udf #255") };
+        unsafe { core::arch::asm!("udf #255", options(nomem, nostack)) };
     }
 }

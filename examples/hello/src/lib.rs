@@ -16,11 +16,11 @@ ferrite::app! {
             ferrite::sys::GRect(0, bounds.size.h / 2 - 20, bounds.size.w, 40),
         );
         text.set_text(c"Hello from Rust");
-        text.set_text_color(ferrite::sys::GColorBlack);
         window.add_child(&text);
         window.push();
 
         // Returned state stays alive while the event loop runs.
-        (window, text)
+        // Children are dropped first to avoid use-after-free in their Drop impls.
+        (text, window)
     }
 }
