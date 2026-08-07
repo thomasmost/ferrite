@@ -426,18 +426,9 @@ git commit -m "feat(examples): heartbeat log exercising allocator and tick servi
 **Files:**
 - Create: `scripts/check.sh` (mode 755)
 
-**Added in Phase 1 — include these two suites in the script.** Phase 1 checked
-in tests that currently only run when a human types the command:
-
-```bash
-cargo test -p ferrite
-python3 -m unittest discover -s examples/hello/tests
-```
-
-The Python suite covers the wscript's relocation guardrail (the check that
-catches `-C relocation-model=pic` failing to reach rustc); the Rust tests
-cover `FixedBuf`'s UTF-8 truncation. Both guard logic that regressed more
-than once, so they need a runner.
+**Note:** the script body below already includes the two test suites Phase 1
+checked in (`cargo test -p ferrite` and the Python guardrail tests). They have
+no runner until this script exists, so keep them when you copy the block.
 
 **Step 1: Write the script**
 
@@ -458,6 +449,13 @@ TIMEOUT_SECS=120   # first emulator boot can be slow
 
 echo "==> cargo checks"
 (cd "$REPO_ROOT" && cargo check --target thumbv7m-none-eabi -p ferrite-sys -p ferrite)
+
+echo "==> unit tests"
+# Added in Phase 1. These guard logic that regressed more than once: the
+# wscript relocation guardrail (which catches -C relocation-model=pic failing
+# to reach rustc) and FixedBuf's UTF-8 truncation in the panic handler.
+(cd "$REPO_ROOT" && cargo test -p ferrite)
+(cd "$REPO_ROOT" && python3 -m unittest discover -s examples/hello/tests)
 
 echo "==> pebble build"
 (cd "$HELLO_DIR" && pebble build)
