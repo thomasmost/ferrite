@@ -12,9 +12,12 @@ impl Write for FixedBuf {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         let space = self.buf.len() - 1 - self.len; // reserve NUL byte
         let mut n = s.len().min(space);
-        // Truncate on a UTF-8 character boundary to avoid splitting multi-byte sequences
-        while n > 0 && (s.as_bytes()[n - 1] & 0b11000000) == 0b10000000 {
-            n -= 1; // back up over continuation bytes
+        // Truncate on a UTF-8 character boundary so a multi-byte sequence is
+        // never split. The test is on the first byte NOT copied: if it is a
+        // continuation byte (0b10xx_xxxx) the cut lands mid-character, so back
+        // up. When n == s.len() nothing is dropped and there is nothing to fix.
+        while n > 0 && n < s.len() && (s.as_bytes()[n] & 0b1100_0000) == 0b1000_0000 {
+            n -= 1;
         }
         self.buf[self.len..self.len + n].copy_from_slice(&s.as_bytes()[..n]);
         self.len += n;
