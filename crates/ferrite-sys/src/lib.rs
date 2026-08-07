@@ -12,7 +12,11 @@ pub const PEBBLE_SDK_VERSION: &str = "4.17";
 /// Platform the committed bindings were generated for.
 pub const PEBBLE_SDK_PLATFORM: &str = "emery";
 
-#[allow(nonstandard_style, unused, clippy::all)]
+// Generated code is not hand-edited, so its lint findings are noise we cannot
+// act on. `unnecessary_transmutes` is a rustc lint (not clippy), so it needs
+// naming separately from `clippy::all` -- bindgen emits transmutes in the
+// bitfield accessors it writes for packed structs.
+#[allow(nonstandard_style, unused, unnecessary_transmutes, clippy::all)]
 pub mod bindings_emery;
 
 pub use bindings_emery::*;
@@ -151,8 +155,13 @@ const _: () = {
     // ... but 2 bytes for AppMessageResult (APP_MSG_INTERNAL_ERROR = 1 << 15)
     assert!(size_of::<AppMessageResult>() == 2);
 
-    // Additional assertion for struct tm (pebble.h defines its own, not newlib's)
-    // Measured from real arm-none-eabi-gcc with SDK's own CFLAGS:
-    // sizeof(tm) == 48, offset_of(tm, tm_gmtoff) == 36, offset_of(tm, tm_zone) == 40
+    // `struct tm` is Pebble's own (nine ints + int tm_gmtoff + char tm_zone[6]),
+    // NOT newlib's -- pebble.h redefines it, and the SDK compiles app C with
+    // -D_TIME_H_ so Pebble's definition wins. Ground truth measured with real
+    // arm-none-eabi-gcc under the SDK's own CFLAGS. The offsets matter as much
+    // as the size: they are what catches field reordering or a padding change
+    // that happens to preserve the total.
     assert!(size_of::<tm>() == 48);
+    assert!(core::mem::offset_of!(tm, tm_gmtoff) == 36);
+    assert!(core::mem::offset_of!(tm, tm_zone) == 40);
 };

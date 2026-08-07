@@ -40,8 +40,7 @@ where
         debug_assert!(index / 8 < core::mem::size_of::<Storage>());
         let byte_index = index / 8;
         let byte = unsafe {
-            *(core::ptr::addr_of!((*this).storage) as *const u8)
-                .offset(byte_index as isize)
+            *(core::ptr::addr_of!((*this).storage) as *const u8).offset(byte_index as isize)
         };
         Self::extract_bit(byte, index)
     }
@@ -53,7 +52,11 @@ where
             index % 8
         };
         let mask = 1 << bit_index;
-        if val { byte | mask } else { byte & !mask }
+        if val {
+            byte | mask
+        } else {
+            byte & !mask
+        }
     }
     #[inline]
     pub fn set_bit(&mut self, index: usize, val: bool) {
@@ -67,8 +70,7 @@ where
         debug_assert!(index / 8 < core::mem::size_of::<Storage>());
         let byte_index = index / 8;
         let byte = unsafe {
-            (core::ptr::addr_of_mut!((*this).storage) as *mut u8)
-                .offset(byte_index as isize)
+            (core::ptr::addr_of_mut!((*this).storage) as *mut u8).offset(byte_index as isize)
         };
         unsafe { *byte = Self::change_bit(*byte, index, val) };
     }
@@ -76,9 +78,7 @@ where
     pub fn get(&self, bit_offset: usize, bit_width: u8) -> u64 {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < self.storage.as_ref().len());
-        debug_assert!(
-            (bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len(),
-        );
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len());
         let mut val = 0;
         for i in 0..(bit_width as usize) {
             if self.get_bit(i + bit_offset) {
@@ -96,9 +96,7 @@ where
     pub unsafe fn raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64 {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
-        debug_assert!(
-            (bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>(),
-        );
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
         let mut val = 0;
         for i in 0..(bit_width as usize) {
             if unsafe { Self::raw_get_bit(this, i + bit_offset) } {
@@ -116,9 +114,7 @@ where
     pub fn set(&mut self, bit_offset: usize, bit_width: u8, val: u64) {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < self.storage.as_ref().len());
-        debug_assert!(
-            (bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len(),
-        );
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len());
         for i in 0..(bit_width as usize) {
             let mask = 1 << i;
             let val_bit_is_set = val & mask == mask;
@@ -134,9 +130,7 @@ where
     pub unsafe fn raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64) {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
-        debug_assert!(
-            (bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>(),
-        );
+        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
         for i in 0..(bit_width as usize) {
             let mask = 1 << i;
             let val_bit_is_set = val & mask == mask;
@@ -243,14 +237,16 @@ pub const FONT_KEY_ROBOTO_CONDENSED_21: &[u8; 32] = b"RESOURCE_ID_ROBOTO_CONDENS
 pub const FONT_KEY_ROBOTO_BOLD_SUBSET_49: &[u8; 34] = b"RESOURCE_ID_ROBOTO_BOLD_SUBSET_49\0";
 pub const FONT_KEY_DROID_SERIF_28_BOLD: &[u8; 32] = b"RESOURCE_ID_DROID_SERIF_28_BOLD\0";
 pub const FONT_KEY_LECO_20_BOLD_NUMBERS: &[u8; 33] = b"RESOURCE_ID_LECO_20_BOLD_NUMBERS\0";
-pub const FONT_KEY_LECO_26_BOLD_NUMBERS_AM_PM: &[u8; 39] = b"RESOURCE_ID_LECO_26_BOLD_NUMBERS_AM_PM\0";
+pub const FONT_KEY_LECO_26_BOLD_NUMBERS_AM_PM: &[u8; 39] =
+    b"RESOURCE_ID_LECO_26_BOLD_NUMBERS_AM_PM\0";
 pub const FONT_KEY_LECO_32_BOLD_NUMBERS: &[u8; 33] = b"RESOURCE_ID_LECO_32_BOLD_NUMBERS\0";
 pub const FONT_KEY_LECO_36_BOLD_NUMBERS: &[u8; 33] = b"RESOURCE_ID_LECO_36_BOLD_NUMBERS\0";
 pub const FONT_KEY_LECO_38_BOLD_NUMBERS: &[u8; 33] = b"RESOURCE_ID_LECO_38_BOLD_NUMBERS\0";
 pub const FONT_KEY_LECO_42_NUMBERS: &[u8; 28] = b"RESOURCE_ID_LECO_42_NUMBERS\0";
 pub const FONT_KEY_LECO_28_LIGHT_NUMBERS: &[u8; 34] = b"RESOURCE_ID_LECO_28_LIGHT_NUMBERS\0";
 pub const FONT_KEY_LECO_60_NUMBERS_AM_PM: &[u8; 34] = b"RESOURCE_ID_LECO_60_NUMBERS_AM_PM\0";
-pub const FONT_KEY_LECO_60_BOLD_NUMBERS_AM_PM: &[u8; 39] = b"RESOURCE_ID_LECO_60_BOLD_NUMBERS_AM_PM\0";
+pub const FONT_KEY_LECO_60_BOLD_NUMBERS_AM_PM: &[u8; 39] =
+    b"RESOURCE_ID_LECO_60_BOLD_NUMBERS_AM_PM\0";
 pub const FONT_KEY_FONT_FALLBACK: &[u8; 26] = b"RESOURCE_ID_FONT_FALLBACK\0";
 pub const TRIG_MAX_RATIO: u32 = 65535;
 pub const TRIG_MAX_ANGLE: u32 = 65536;
@@ -280,264 +276,215 @@ pub const HOURS_PER_DAY: u32 = 24;
 pub const MINUTES_PER_DAY: u32 = 1440;
 pub const SECONDS_PER_DAY: u32 = 86400;
 impl ButtonId {
-    ///! Back button
+    #[doc = "! Back button"]
     pub const BUTTON_ID_BACK: ButtonId = ButtonId(0);
-    ///! Up button
+    #[doc = "! Up button"]
     pub const BUTTON_ID_UP: ButtonId = ButtonId(1);
-    ///! Select (middle) button
+    #[doc = "! Select (middle) button"]
     pub const BUTTON_ID_SELECT: ButtonId = ButtonId(2);
-    ///! Down button
+    #[doc = "! Down button"]
     pub const BUTTON_ID_DOWN: ButtonId = ButtonId(3);
-    ///! Total number of buttons
+    #[doc = "! Total number of buttons"]
     pub const NUM_BUTTONS: ButtonId = ButtonId(4);
 }
 #[repr(transparent)]
-/**! Button ID values
-! @see \ref click_recognizer_get_button_id()*/
+#[doc = "! Button ID values\n! @see \\ref click_recognizer_get_button_id()"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ButtonId(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Get the ISO locale name for the language currently set on the watch
-! @return A string containing the ISO locale name (e.g. "fr", "en_US", ...)
-! @note It is possible for the locale to change while your app is running.
-! And thus, two calls to i18n_get_system_locale may return different values.*/
+    #[doc = "! Get the ISO locale name for the language currently set on the watch\n! @return A string containing the ISO locale name (e.g. \"fr\", \"en_US\", ...)\n! @note It is possible for the locale to change while your app is running.\n! And thus, two calls to i18n_get_system_locale may return different values."]
     pub fn i18n_get_system_locale() -> *const ::core::ffi::c_char;
 }
 impl WatchInfoModel {
-    ///!< Unknown model
+    #[doc = "!< Unknown model"]
     pub const WATCH_INFO_MODEL_UNKNOWN: WatchInfoModel = WatchInfoModel(0);
-    ///!< Original Pebble
+    #[doc = "!< Original Pebble"]
     pub const WATCH_INFO_MODEL_PEBBLE_ORIGINAL: WatchInfoModel = WatchInfoModel(1);
-    ///!< Pebble Steel
+    #[doc = "!< Pebble Steel"]
     pub const WATCH_INFO_MODEL_PEBBLE_STEEL: WatchInfoModel = WatchInfoModel(2);
-    ///!< Pebble Time
+    #[doc = "!< Pebble Time"]
     pub const WATCH_INFO_MODEL_PEBBLE_TIME: WatchInfoModel = WatchInfoModel(3);
-    ///!< Pebble Time Steel
+    #[doc = "!< Pebble Time Steel"]
     pub const WATCH_INFO_MODEL_PEBBLE_TIME_STEEL: WatchInfoModel = WatchInfoModel(4);
-    ///!< Pebble Time Round, 14mm lug size
+    #[doc = "!< Pebble Time Round, 14mm lug size"]
     pub const WATCH_INFO_MODEL_PEBBLE_TIME_ROUND_14: WatchInfoModel = WatchInfoModel(5);
-    ///!< Pebble Time Round, 20mm lug size
+    #[doc = "!< Pebble Time Round, 20mm lug size"]
     pub const WATCH_INFO_MODEL_PEBBLE_TIME_ROUND_20: WatchInfoModel = WatchInfoModel(6);
-    ///!< Pebble 2 HR
+    #[doc = "!< Pebble 2 HR"]
     pub const WATCH_INFO_MODEL_PEBBLE_2_HR: WatchInfoModel = WatchInfoModel(7);
-    ///!< Pebble 2 SE
+    #[doc = "!< Pebble 2 SE"]
     pub const WATCH_INFO_MODEL_PEBBLE_2_SE: WatchInfoModel = WatchInfoModel(8);
-    ///!< Pebble Time 2
+    #[doc = "!< Pebble Time 2"]
     pub const WATCH_INFO_MODEL_PEBBLE_TIME_2: WatchInfoModel = WatchInfoModel(9);
-    ///!< CoreDevices P2D (Pebble 2 Duo)
+    #[doc = "!< CoreDevices P2D (Pebble 2 Duo)"]
     pub const WATCH_INFO_MODEL_COREDEVICES_P2D: WatchInfoModel = WatchInfoModel(10);
-    ///!< CoreDevices PT2 (Pebble Time 2)
+    #[doc = "!< CoreDevices PT2 (Pebble Time 2)"]
     pub const WATCH_INFO_MODEL_COREDEVICES_PT2: WatchInfoModel = WatchInfoModel(11);
-    ///!< CoreDevices PR2 (Pebble Round 2)
+    #[doc = "!< CoreDevices PR2 (Pebble Round 2)"]
     pub const WATCH_INFO_MODEL_COREDEVICES_PR2: WatchInfoModel = WatchInfoModel(12);
     pub const WATCH_INFO_MODEL__MAX: WatchInfoModel = WatchInfoModel(13);
 }
 #[repr(transparent)]
-///! The different watch models.
+#[doc = "! The different watch models."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct WatchInfoModel(pub ::core::ffi::c_uchar);
 impl WatchInfoColor {
-    ///!< Unknown color
+    #[doc = "!< Unknown color"]
     pub const WATCH_INFO_COLOR_UNKNOWN: WatchInfoColor = WatchInfoColor(0);
-    ///!< Black
+    #[doc = "!< Black"]
     pub const WATCH_INFO_COLOR_BLACK: WatchInfoColor = WatchInfoColor(1);
-    ///!< White
+    #[doc = "!< White"]
     pub const WATCH_INFO_COLOR_WHITE: WatchInfoColor = WatchInfoColor(2);
-    ///!< Red
+    #[doc = "!< Red"]
     pub const WATCH_INFO_COLOR_RED: WatchInfoColor = WatchInfoColor(3);
-    ///!< Orange
+    #[doc = "!< Orange"]
     pub const WATCH_INFO_COLOR_ORANGE: WatchInfoColor = WatchInfoColor(4);
-    ///!< Gray
+    #[doc = "!< Gray"]
     pub const WATCH_INFO_COLOR_GRAY: WatchInfoColor = WatchInfoColor(5);
-    ///!< Stainless Steel
+    #[doc = "!< Stainless Steel"]
     pub const WATCH_INFO_COLOR_STAINLESS_STEEL: WatchInfoColor = WatchInfoColor(6);
-    ///!< Matte Black
+    #[doc = "!< Matte Black"]
     pub const WATCH_INFO_COLOR_MATTE_BLACK: WatchInfoColor = WatchInfoColor(7);
-    ///!< Blue
+    #[doc = "!< Blue"]
     pub const WATCH_INFO_COLOR_BLUE: WatchInfoColor = WatchInfoColor(8);
-    ///!< Green
+    #[doc = "!< Green"]
     pub const WATCH_INFO_COLOR_GREEN: WatchInfoColor = WatchInfoColor(9);
-    ///!< Pink
+    #[doc = "!< Pink"]
     pub const WATCH_INFO_COLOR_PINK: WatchInfoColor = WatchInfoColor(10);
-    ///!< Time White
+    #[doc = "!< Time White"]
     pub const WATCH_INFO_COLOR_TIME_WHITE: WatchInfoColor = WatchInfoColor(11);
-    ///!< Time Black
+    #[doc = "!< Time Black"]
     pub const WATCH_INFO_COLOR_TIME_BLACK: WatchInfoColor = WatchInfoColor(12);
-    ///!< Time Red
+    #[doc = "!< Time Red"]
     pub const WATCH_INFO_COLOR_TIME_RED: WatchInfoColor = WatchInfoColor(13);
-    ///!< Time Steel Silver
+    #[doc = "!< Time Steel Silver"]
     pub const WATCH_INFO_COLOR_TIME_STEEL_SILVER: WatchInfoColor = WatchInfoColor(14);
-    ///!< Time Steel Black
+    #[doc = "!< Time Steel Black"]
     pub const WATCH_INFO_COLOR_TIME_STEEL_BLACK: WatchInfoColor = WatchInfoColor(15);
-    ///!< Time Steel Gold
+    #[doc = "!< Time Steel Gold"]
     pub const WATCH_INFO_COLOR_TIME_STEEL_GOLD: WatchInfoColor = WatchInfoColor(16);
-    ///!< Time Round 14mm lug size, Silver
+    #[doc = "!< Time Round 14mm lug size, Silver"]
     pub const WATCH_INFO_COLOR_TIME_ROUND_SILVER_14: WatchInfoColor = WatchInfoColor(17);
-    ///!< Time Round 14mm lug size, Black
+    #[doc = "!< Time Round 14mm lug size, Black"]
     pub const WATCH_INFO_COLOR_TIME_ROUND_BLACK_14: WatchInfoColor = WatchInfoColor(18);
-    ///!< Time Round 20mm lug size, Silver
+    #[doc = "!< Time Round 20mm lug size, Silver"]
     pub const WATCH_INFO_COLOR_TIME_ROUND_SILVER_20: WatchInfoColor = WatchInfoColor(19);
-    ///!< Time Round 20mm lug size, Black
+    #[doc = "!< Time Round 20mm lug size, Black"]
     pub const WATCH_INFO_COLOR_TIME_ROUND_BLACK_20: WatchInfoColor = WatchInfoColor(20);
-    ///!< Time Round 14mm lug size, Rose Gold
-    pub const WATCH_INFO_COLOR_TIME_ROUND_ROSE_GOLD_14: WatchInfoColor = WatchInfoColor(
-        21,
-    );
-    ///!< Pebble 2 HR, Black / Charcoal
+    #[doc = "!< Time Round 14mm lug size, Rose Gold"]
+    pub const WATCH_INFO_COLOR_TIME_ROUND_ROSE_GOLD_14: WatchInfoColor = WatchInfoColor(21);
+    #[doc = "!< Pebble 2 HR, Black / Charcoal"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_HR_BLACK: WatchInfoColor = WatchInfoColor(25);
-    ///!< Pebble 2 HR, Charcoal / Sorbet Green
+    #[doc = "!< Pebble 2 HR, Charcoal / Sorbet Green"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_HR_LIME: WatchInfoColor = WatchInfoColor(27);
-    ///!< Pebble 2 HR, Charcoal / Red
+    #[doc = "!< Pebble 2 HR, Charcoal / Red"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_HR_FLAME: WatchInfoColor = WatchInfoColor(28);
-    ///!< Pebble 2 HR, White / Gray
+    #[doc = "!< Pebble 2 HR, White / Gray"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_HR_WHITE: WatchInfoColor = WatchInfoColor(29);
-    ///!< Pebble 2 HR, White / Turquoise
+    #[doc = "!< Pebble 2 HR, White / Turquoise"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_HR_AQUA: WatchInfoColor = WatchInfoColor(30);
-    ///!< Pebble 2 SE, Black / Charcoal
+    #[doc = "!< Pebble 2 SE, Black / Charcoal"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_SE_BLACK: WatchInfoColor = WatchInfoColor(24);
-    ///!< Pebble 2 SE, White / Gray
+    #[doc = "!< Pebble 2 SE, White / Gray"]
     pub const WATCH_INFO_COLOR_PEBBLE_2_SE_WHITE: WatchInfoColor = WatchInfoColor(26);
-    ///!< Pebble Time 2, Black
+    #[doc = "!< Pebble Time 2, Black"]
     pub const WATCH_INFO_COLOR_PEBBLE_TIME_2_BLACK: WatchInfoColor = WatchInfoColor(31);
-    ///!< Pebble Time 2, Silver
+    #[doc = "!< Pebble Time 2, Silver"]
     pub const WATCH_INFO_COLOR_PEBBLE_TIME_2_SILVER: WatchInfoColor = WatchInfoColor(32);
-    ///!< Pebble Time 2, Gold
+    #[doc = "!< Pebble Time 2, Gold"]
     pub const WATCH_INFO_COLOR_PEBBLE_TIME_2_GOLD: WatchInfoColor = WatchInfoColor(33);
-    ///!< CoreDevices P2D, Black
-    pub const WATCH_INFO_COLOR_COREDEVICES_P2D_BLACK: WatchInfoColor = WatchInfoColor(
-        34,
-    );
-    ///!< CoreDevices P2D, White
-    pub const WATCH_INFO_COLOR_COREDEVICES_P2D_WHITE: WatchInfoColor = WatchInfoColor(
-        35,
-    );
-    ///!< CoreDevices PT2, Black/Grey
-    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_BLACK_GREY: WatchInfoColor = WatchInfoColor(
-        36,
-    );
-    ///!< CoreDevices PT2, Black/Red
-    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_BLACK_RED: WatchInfoColor = WatchInfoColor(
-        37,
-    );
-    ///!< CoreDevices PT2, Silver/Blue
-    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_SILVER_BLUE: WatchInfoColor = WatchInfoColor(
-        38,
-    );
-    ///!< CoreDevices PT2, Silver/Grey
-    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_SILVER_GREY: WatchInfoColor = WatchInfoColor(
-        39,
-    );
-    ///!< CoreDevices PR2, Black (20mm)
-    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_BLACK_20: WatchInfoColor = WatchInfoColor(
-        40,
-    );
-    ///!< CoreDevices PR2, Silver (20mm)
-    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_SILVER_20: WatchInfoColor = WatchInfoColor(
-        41,
-    );
-    ///!< CoreDevices PR2, Gold (14mm)
-    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_GOLD_14: WatchInfoColor = WatchInfoColor(
-        42,
-    );
-    ///!< CoreDevices PR2, Silver (14mm)
-    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_SILVER_14: WatchInfoColor = WatchInfoColor(
-        43,
-    );
+    #[doc = "!< CoreDevices P2D, Black"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_P2D_BLACK: WatchInfoColor = WatchInfoColor(34);
+    #[doc = "!< CoreDevices P2D, White"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_P2D_WHITE: WatchInfoColor = WatchInfoColor(35);
+    #[doc = "!< CoreDevices PT2, Black/Grey"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_BLACK_GREY: WatchInfoColor = WatchInfoColor(36);
+    #[doc = "!< CoreDevices PT2, Black/Red"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_BLACK_RED: WatchInfoColor = WatchInfoColor(37);
+    #[doc = "!< CoreDevices PT2, Silver/Blue"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_SILVER_BLUE: WatchInfoColor = WatchInfoColor(38);
+    #[doc = "!< CoreDevices PT2, Silver/Grey"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PT2_SILVER_GREY: WatchInfoColor = WatchInfoColor(39);
+    #[doc = "!< CoreDevices PR2, Black (20mm)"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_BLACK_20: WatchInfoColor = WatchInfoColor(40);
+    #[doc = "!< CoreDevices PR2, Silver (20mm)"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_SILVER_20: WatchInfoColor = WatchInfoColor(41);
+    #[doc = "!< CoreDevices PR2, Gold (14mm)"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_GOLD_14: WatchInfoColor = WatchInfoColor(42);
+    #[doc = "!< CoreDevices PR2, Silver (14mm)"]
+    pub const WATCH_INFO_COLOR_COREDEVICES_PR2_SILVER_14: WatchInfoColor = WatchInfoColor(43);
     pub const WATCH_INFO_COLOR__MAX: WatchInfoColor = WatchInfoColor(44);
 }
 #[repr(transparent)]
-///! The different watch colors.
+#[doc = "! The different watch colors."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct WatchInfoColor(pub ::core::ffi::c_uchar);
-/**! Data structure containing the version of the firmware running on the watch.
-! The version of the firmware has the form X.[X.[X]]. If a version number is not present it will be 0.
-! For example: the version numbers of 2.4.1 are 2, 4, and 1. The version numbers of 2.4 are 2, 4, and 0.*/
+#[doc = "! Data structure containing the version of the firmware running on the watch.\n! The version of the firmware has the form X.[X.[X]]. If a version number is not present it will be 0.\n! For example: the version numbers of 2.4.1 are 2, 4, and 1. The version numbers of 2.4 are 2, 4, and 0."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct WatchInfoVersion {
-    ///!< Major version number
+    #[doc = "!< Major version number"]
     pub major: u8,
-    ///!< Minor version number
+    #[doc = "!< Minor version number"]
     pub minor: u8,
-    ///!< Patch version number
+    #[doc = "!< Patch version number"]
     pub patch: u8,
 }
 unsafe extern "C" {
-    /**! Provides the model of the watch.
-! @return {@link WatchInfoModel} representing the model of the watch.*/
+    #[doc = "! Provides the model of the watch.\n! @return {@link WatchInfoModel} representing the model of the watch."]
     pub fn watch_info_get_model() -> WatchInfoModel;
 }
 unsafe extern "C" {
-    /**! Provides the version of the firmware running on the watch.
-! @return {@link WatchInfoVersion} representing the version of the firmware running on the watch.*/
+    #[doc = "! Provides the version of the firmware running on the watch.\n! @return {@link WatchInfoVersion} representing the version of the firmware running on the watch."]
     pub fn watch_info_get_firmware_version() -> WatchInfoVersion;
 }
 unsafe extern "C" {
     pub fn watch_info_get_color() -> WatchInfoColor;
 }
 unsafe extern "C" {
-    /**! Look-up the sine of the given angle from a pre-computed table.
-! @param angle The angle for which to compute the cosine.
-! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians.*/
+    #[doc = "! Look-up the sine of the given angle from a pre-computed table.\n! @param angle The angle for which to compute the cosine.\n! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians."]
     pub fn sin_lookup(angle: i32) -> i32;
 }
 unsafe extern "C" {
-    /**! Look-up the cosine of the given angle from a pre-computed table.
-! This is equivalent to calling `sin_lookup(angle + TRIG_MAX_ANGLE / 4)`.
-! @param angle The angle for which to compute the cosine.
-! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians.*/
+    #[doc = "! Look-up the cosine of the given angle from a pre-computed table.\n! This is equivalent to calling `sin_lookup(angle + TRIG_MAX_ANGLE / 4)`.\n! @param angle The angle for which to compute the cosine.\n! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians."]
     pub fn cos_lookup(angle: i32) -> i32;
 }
 unsafe extern "C" {
-    /**! Look-up the arctangent of a given x, y pair
-! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians.*/
+    #[doc = "! Look-up the arctangent of a given x, y pair\n! The angle value is scaled linearly, such that a value of 0x10000 corresponds to 360 degrees or 2 PI radians."]
     pub fn atan2_lookup(y: i16, x: i16) -> i32;
 }
 impl WeekDay {
-    ///!< Today
+    #[doc = "!< Today"]
     pub const TODAY: WeekDay = WeekDay(0);
-    ///!< Sunday
+    #[doc = "!< Sunday"]
     pub const SUNDAY: WeekDay = WeekDay(1);
-    ///!< Monday
+    #[doc = "!< Monday"]
     pub const MONDAY: WeekDay = WeekDay(2);
-    ///!< Tuesday
+    #[doc = "!< Tuesday"]
     pub const TUESDAY: WeekDay = WeekDay(3);
-    ///!< Wednesday
+    #[doc = "!< Wednesday"]
     pub const WEDNESDAY: WeekDay = WeekDay(4);
-    ///!< Thursday
+    #[doc = "!< Thursday"]
     pub const THURSDAY: WeekDay = WeekDay(5);
-    ///!< Friday
+    #[doc = "!< Friday"]
     pub const FRIDAY: WeekDay = WeekDay(6);
-    ///!< Saturday
+    #[doc = "!< Saturday"]
     pub const SATURDAY: WeekDay = WeekDay(7);
 }
 #[repr(transparent)]
-///! Weekday values
+#[doc = "! Weekday values"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct WeekDay(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Copies a time string into the buffer, formatted according to the user's time display preferences (such as 12h/24h
-! time).
-! Example results: "7:30" or "15:00".
-! @note AM/PM are also outputted with the time if the user's preference is 12h time.
-! @param[out] buffer A pointer to the buffer to copy the time string into
-! @param size The maximum size of buffer*/
+    #[doc = "! Copies a time string into the buffer, formatted according to the user's time display preferences (such as 12h/24h\n! time).\n! Example results: \"7:30\" or \"15:00\".\n! @note AM/PM are also outputted with the time if the user's preference is 12h time.\n! @param[out] buffer A pointer to the buffer to copy the time string into\n! @param size The maximum size of buffer"]
     pub fn clock_copy_time_string(buffer: *mut ::core::ffi::c_char, size: u8);
 }
 unsafe extern "C" {
-    /**! Gets the user's 12/24h clock style preference.
-! @return `true` if the user prefers 24h-style time display or `false` if the
-! user prefers 12h-style time display.*/
+    #[doc = "! Gets the user's 12/24h clock style preference.\n! @return `true` if the user prefers 24h-style time display or `false` if the\n! user prefers 12h-style time display."]
     pub fn clock_is_24h_style() -> bool;
 }
 unsafe extern "C" {
-    /**! Converts a (day, hour, minute) specification to a UTC timestamp occurring in the future
-! Always returns a timestamp for the next occurring instance,
-! example: specifying TODAY@14:30 when it is 14:40 will return a timestamp for 7 days from
-! now at 14:30
-! @param day WeekDay day of week including support for specifying TODAY
-! @param hour hour specified in 24-hour format [0-23]
-! @param minute minute [0-59]*/
+    #[doc = "! Converts a (day, hour, minute) specification to a UTC timestamp occurring in the future\n! Always returns a timestamp for the next occurring instance,\n! example: specifying TODAY@14:30 when it is 14:40 will return a timestamp for 7 days from\n! now at 14:30\n! @param day WeekDay day of week including support for specifying TODAY\n! @param hour hour specified in 24-hour format [0-23]\n! @param minute minute [0-59]"]
     pub fn clock_to_timestamp(
         day: WeekDay,
         hour: ::core::ffi::c_int,
@@ -545,16 +492,11 @@ unsafe extern "C" {
     ) -> ::core::ffi::c_long;
 }
 unsafe extern "C" {
-    /**! Checks if timezone is currently set, otherwise gmtime == localtime.
-! @return `true` if timezone has been set, false otherwise*/
+    #[doc = "! Checks if timezone is currently set, otherwise gmtime == localtime.\n! @return `true` if timezone has been set, false otherwise"]
     pub fn clock_is_timezone_set() -> bool;
 }
 unsafe extern "C" {
-    /**! If timezone is set, copies the current timezone long name (e.g. America/Chicago)
-! to user-provided buffer.
-! @param timezone A pointer to the buffer to copy the timezone long name into
-! @param buffer_size Size of the allocated buffer to copy the timezone long name into
-! @note timezone buffer should be at least TIMEZONE_NAME_LENGTH bytes*/
+    #[doc = "! If timezone is set, copies the current timezone long name (e.g. America/Chicago)\n! to user-provided buffer.\n! @param timezone A pointer to the buffer to copy the timezone long name into\n! @param buffer_size Size of the allocated buffer to copy the timezone long name into\n! @note timezone buffer should be at least TIMEZONE_NAME_LENGTH bytes"]
     pub fn clock_get_timezone(timezone: *mut ::core::ffi::c_char, buffer_size: usize);
 }
 impl PlatformType {
@@ -567,373 +509,229 @@ impl PlatformType {
     pub const PlatformTypeGabbro: PlatformType = PlatformType(6);
 }
 #[repr(transparent)]
-/**! @addtogroup Platform
-! @{*/
+#[doc = "! @addtogroup Platform\n! @{"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PlatformType(pub ::core::ffi::c_uchar);
-/**! @addtogroup ConnectionService
-! \brief Determine what the Pebble watch is connected to
-!
-! The ConnectionService allows your app to learn about the apps the Pebble
-! watch is connected to. You can ask the system for this information at a
-! given time or you can register to receive events every time connection or
-! disconnection events occur.
-!
-! It allows you to determine whether the watch is connected to the Pebble
-! mobile app by subscribing to the pebble_app_connection_handler or by calling
-! the connection_service_peek_pebble_app_connection function.  Note that when
-! the Pebble app is connected, you can assume PebbleKit JS apps will also be
-! running correctly.
-!
-! The service also allows you to determine if the Pebble watch can establish
-! a connection to a PebbleKit companion app by subscribing to the
-! pebblekit_connection_handler or by calling the
-! connection_service_peek_pebblekit_connection function.  Today, due to
-! architectural differences between iOS and Android, this will return true
-! for Android anytime a connection with the Pebble mobile app is established
-! (since PebbleKit messages are routed through the Android app). For iOS,
-! this will return true when any PebbleKit companion app has established a
-! connection with the Pebble watch (since companion app messages are routed
-! directly to the watch)
-!
-! @{*/
-pub type ConnectionHandler = ::core::option::Option<
-    unsafe extern "C" fn(connected: bool),
->;
+#[doc = "! @addtogroup ConnectionService\n! \\brief Determine what the Pebble watch is connected to\n!\n! The ConnectionService allows your app to learn about the apps the Pebble\n! watch is connected to. You can ask the system for this information at a\n! given time or you can register to receive events every time connection or\n! disconnection events occur.\n!\n! It allows you to determine whether the watch is connected to the Pebble\n! mobile app by subscribing to the pebble_app_connection_handler or by calling\n! the connection_service_peek_pebble_app_connection function.  Note that when\n! the Pebble app is connected, you can assume PebbleKit JS apps will also be\n! running correctly.\n!\n! The service also allows you to determine if the Pebble watch can establish\n! a connection to a PebbleKit companion app by subscribing to the\n! pebblekit_connection_handler or by calling the\n! connection_service_peek_pebblekit_connection function.  Today, due to\n! architectural differences between iOS and Android, this will return true\n! for Android anytime a connection with the Pebble mobile app is established\n! (since PebbleKit messages are routed through the Android app). For iOS,\n! this will return true when any PebbleKit companion app has established a\n! connection with the Pebble watch (since companion app messages are routed\n! directly to the watch)\n!\n! @{"]
+pub type ConnectionHandler = ::core::option::Option<unsafe extern "C" fn(connected: bool)>;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ConnectionHandlers {
-    /**! callback to be executed when the connection state between the watch and
-! the phone app has changed. Note, if the phone App is connected, PebbleKit JS apps
-! will also be working correctly*/
+    #[doc = "! callback to be executed when the connection state between the watch and\n! the phone app has changed. Note, if the phone App is connected, PebbleKit JS apps\n! will also be working correctly"]
     pub pebble_app_connection_handler: ConnectionHandler,
-    ///! ID for callback to be executed on PebbleKit connection event
+    #[doc = "! ID for callback to be executed on PebbleKit connection event"]
     pub pebblekit_connection_handler: ConnectionHandler,
 }
 unsafe extern "C" {
-    /**! Query the bluetooth connection service for the current Pebble app connection status
-! @return true if the Pebble app is connected, false otherwise*/
+    #[doc = "! Query the bluetooth connection service for the current Pebble app connection status\n! @return true if the Pebble app is connected, false otherwise"]
     pub fn connection_service_peek_pebble_app_connection() -> bool;
 }
 unsafe extern "C" {
-    /**! Query the bluetooth connection service for the current PebbleKit connection status
-! @return true if a PebbleKit companion app is connected, false otherwise*/
+    #[doc = "! Query the bluetooth connection service for the current PebbleKit connection status\n! @return true if a PebbleKit companion app is connected, false otherwise"]
     pub fn connection_service_peek_pebblekit_connection() -> bool;
 }
 unsafe extern "C" {
-    /**! Subscribe to the connection event service. Once subscribed, the appropriate
-! handler gets called based on the type of connection event and user provided
-! handlers
-! @param ConnectionHandlers A struct populated with the handlers to
-! be called when the specified connection event occurs. If a given handler is
-! NULL, no function will be called.*/
+    #[doc = "! Subscribe to the connection event service. Once subscribed, the appropriate\n! handler gets called based on the type of connection event and user provided\n! handlers\n! @param ConnectionHandlers A struct populated with the handlers to\n! be called when the specified connection event occurs. If a given handler is\n! NULL, no function will be called."]
     pub fn connection_service_subscribe(conn_handlers: ConnectionHandlers);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the bluetooth event service. Once unsubscribed, the previously registered
-! handler will no longer be called.*/
+    #[doc = "! Unsubscribe from the bluetooth event service. Once unsubscribed, the previously registered\n! handler will no longer be called."]
     pub fn connection_service_unsubscribe();
 }
-/**! @deprecated Backwards compatibility typedef for ConnectionHandler. New code
-! should use ConnectionHandler directly.  This will be removed in a future
-! version of the Pebble SDK.*/
+#[doc = "! @deprecated Backwards compatibility typedef for ConnectionHandler. New code\n! should use ConnectionHandler directly.  This will be removed in a future\n! version of the Pebble SDK."]
 pub type BluetoothConnectionHandler = ConnectionHandler;
 unsafe extern "C" {
-    /**! @deprecated Backward compatibility function for
-! connection_service_peek_pebble_app_connection.  New code should use
-! connection_service_peek_pebble_app_connection directly. This will be
-! removed in a future version of the Pebble SDK*/
+    #[doc = "! @deprecated Backward compatibility function for\n! connection_service_peek_pebble_app_connection.  New code should use\n! connection_service_peek_pebble_app_connection directly. This will be\n! removed in a future version of the Pebble SDK"]
     pub fn bluetooth_connection_service_peek() -> bool;
 }
 unsafe extern "C" {
-    /**! @deprecated Backward compatibility function for
-! connection_service_subscribe.  New code should use
-! connection_service_subscribe directly. This will be removed in a future
-! version of the Pebble SDK*/
+    #[doc = "! @deprecated Backward compatibility function for\n! connection_service_subscribe.  New code should use\n! connection_service_subscribe directly. This will be removed in a future\n! version of the Pebble SDK"]
     pub fn bluetooth_connection_service_subscribe(handler: ConnectionHandler);
 }
 unsafe extern "C" {
-    /**! @deprecated Backward compatibility function for
-! connection_service_unsubscribe.  New code should use
-! connection_service_unsubscribe directly. This will be removed in a future
-! version of the Pebble SDK*/
+    #[doc = "! @deprecated Backward compatibility function for\n! connection_service_unsubscribe.  New code should use\n! connection_service_unsubscribe directly. This will be removed in a future\n! version of the Pebble SDK"]
     pub fn bluetooth_connection_service_unsubscribe();
 }
-/**! Callback type for focus events
-! @param in_focus True if the app is gaining focus, false otherwise.*/
+#[doc = "! Callback type for focus events\n! @param in_focus True if the app is gaining focus, false otherwise."]
 pub type AppFocusHandler = ::core::option::Option<unsafe extern "C" fn(in_focus: bool)>;
-/**! There are two different focus events which take place when transitioning to and from an app
-! being in focus. Below is an example of when these events will occur:
-! 1) The app is launched. Once the system animation to the app has completed and the app is
-! completely in focus, the did_focus handler is called with in_focus set to true.
-! 2) A notification comes in and the animation to show the notification starts. The will_focus
-! handler is called with in_focus set to false.
-! 3) The animation completes and the notification is in focus, with the app being completely
-! covered. The did_focus hander is called with in_focus set to false.
-! 4) The notification is dismissed and the animation to return to the app starts. The will_focus
-! handler is called with in_focus set to true.
-! 5) The animation completes and the app is in focus. The did_focus handler is called with
-! in_focus set to true.*/
+#[doc = "! There are two different focus events which take place when transitioning to and from an app\n! being in focus. Below is an example of when these events will occur:\n! 1) The app is launched. Once the system animation to the app has completed and the app is\n! completely in focus, the did_focus handler is called with in_focus set to true.\n! 2) A notification comes in and the animation to show the notification starts. The will_focus\n! handler is called with in_focus set to false.\n! 3) The animation completes and the notification is in focus, with the app being completely\n! covered. The did_focus hander is called with in_focus set to false.\n! 4) The notification is dismissed and the animation to return to the app starts. The will_focus\n! handler is called with in_focus set to true.\n! 5) The animation completes and the app is in focus. The did_focus handler is called with\n! in_focus set to true."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AppFocusHandlers {
-    /**! Handler which will be called right before an app will lose or gain focus.
-! @note This will be called with in_focus set to true when a window which is covering the app is
-! about to close and return focus to the app.
-! @note This will be called with in_focus set to false when a window which will cover the app is
-! about to open, causing the app to lose focus.*/
+    #[doc = "! Handler which will be called right before an app will lose or gain focus.\n! @note This will be called with in_focus set to true when a window which is covering the app is\n! about to close and return focus to the app.\n! @note This will be called with in_focus set to false when a window which will cover the app is\n! about to open, causing the app to lose focus."]
     pub will_focus: AppFocusHandler,
-    /**! Handler which will be called when an animation finished which has put the app into focus or
-! taken the app out of focus.
-! @note This will be called with in_focus set to true when a window which was covering the app
-! has closed and the app has gained focus.
-! @note This will be called with in_focus set to false when a window has opened which is now
-! covering the app, causing the app to lose focus.*/
+    #[doc = "! Handler which will be called when an animation finished which has put the app into focus or\n! taken the app out of focus.\n! @note This will be called with in_focus set to true when a window which was covering the app\n! has closed and the app has gained focus.\n! @note This will be called with in_focus set to false when a window has opened which is now\n! covering the app, causing the app to lose focus."]
     pub did_focus: AppFocusHandler,
 }
 unsafe extern "C" {
-    /**! Subscribe to the focus event service. Once subscribed, the handlers get called every time the
-! app gains or loses focus.
-! @param handler Handlers which will be called on will-focus and did-focus events.
-! @see AppFocusHandlers*/
+    #[doc = "! Subscribe to the focus event service. Once subscribed, the handlers get called every time the\n! app gains or loses focus.\n! @param handler Handlers which will be called on will-focus and did-focus events.\n! @see AppFocusHandlers"]
     pub fn app_focus_service_subscribe_handlers(handlers: AppFocusHandlers);
 }
 unsafe extern "C" {
-    /**! Subscribe to the focus event service. Once subscribed, the handler
-! gets called every time the app focus changes.
-! @note Calling this function is equivalent to
-! \code{.c}
-! app_focus_service_subscribe_handlers((AppFocusHandlers){
-!   .will_focus = handler,
-! });
-! \endcode
-! @note Out focus events are triggered when a modal window is about to open and cover the app.
-! @note In focus events are triggered when a modal window which is covering the app is about to
-! close.
-! @param handler A callback to be called on will-focus events.*/
+    #[doc = "! Subscribe to the focus event service. Once subscribed, the handler\n! gets called every time the app focus changes.\n! @note Calling this function is equivalent to\n! \\code{.c}\n! app_focus_service_subscribe_handlers((AppFocusHandlers){\n!   .will_focus = handler,\n! });\n! \\endcode\n! @note Out focus events are triggered when a modal window is about to open and cover the app.\n! @note In focus events are triggered when a modal window which is covering the app is about to\n! close.\n! @param handler A callback to be called on will-focus events."]
     pub fn app_focus_service_subscribe(handler: AppFocusHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the focus event service. Once unsubscribed, the previously
-! registered handlers will no longer be called.*/
+    #[doc = "! Unsubscribe from the focus event service. Once unsubscribed, the previously\n! registered handlers will no longer be called."]
     pub fn app_focus_service_unsubscribe();
 }
-///! Structure for retrieval of the battery charge state
+#[doc = "! Structure for retrieval of the battery charge state"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct BatteryChargeState {
-    ///! A percentage (0-100) of how full the battery is
+    #[doc = "! A percentage (0-100) of how full the battery is"]
     pub charge_percent: u8,
-    ///! True if the battery is currently being charged. False if not.
+    #[doc = "! True if the battery is currently being charged. False if not."]
     pub is_charging: bool,
-    ///! True if the charger cable is connected. False if not.
+    #[doc = "! True if the charger cable is connected. False if not."]
     pub is_plugged: bool,
 }
-/**! Callback type for battery state change events
-! @param charge the state of the battery \ref BatteryChargeState*/
-pub type BatteryStateHandler = ::core::option::Option<
-    unsafe extern "C" fn(charge: BatteryChargeState),
->;
+#[doc = "! Callback type for battery state change events\n! @param charge the state of the battery \\ref BatteryChargeState"]
+pub type BatteryStateHandler =
+    ::core::option::Option<unsafe extern "C" fn(charge: BatteryChargeState)>;
 unsafe extern "C" {
-    /**! Subscribe to the battery state event service. Once subscribed, the handler gets called
-! on every battery state change
-! @param handler A callback to be executed on battery state change event*/
+    #[doc = "! Subscribe to the battery state event service. Once subscribed, the handler gets called\n! on every battery state change\n! @param handler A callback to be executed on battery state change event"]
     pub fn battery_state_service_subscribe(handler: BatteryStateHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the battery state event service. Once unsubscribed, the previously registered
-! handler will no longer be called.*/
+    #[doc = "! Unsubscribe from the battery state event service. Once unsubscribed, the previously registered\n! handler will no longer be called."]
     pub fn battery_state_service_unsubscribe();
 }
 unsafe extern "C" {
-    /**! Peek at the last known battery state.
-! @return a \ref BatteryChargeState containing the last known data*/
+    #[doc = "! Peek at the last known battery state.\n! @return a \\ref BatteryChargeState containing the last known data"]
     pub fn battery_state_service_peek() -> BatteryChargeState;
 }
-/**! Callback type for backlight on/off events.
-! @param on true when the backlight has just turned on, false when it has
-!   just turned fully off.*/
+#[doc = "! Callback type for backlight on/off events.\n! @param on true when the backlight has just turned on, false when it has\n!   just turned fully off."]
 pub type BacklightHandler = ::core::option::Option<unsafe extern "C" fn(on: bool)>;
 unsafe extern "C" {
-    /**! Subscribe to the backlight event service. Once subscribed, the handler is
-! called every time the backlight transitions between off and on.
-! @param handler A callback to be executed on backlight on/off events.*/
+    #[doc = "! Subscribe to the backlight event service. Once subscribed, the handler is\n! called every time the backlight transitions between off and on.\n! @param handler A callback to be executed on backlight on/off events."]
     pub fn backlight_service_subscribe(handler: BacklightHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the backlight event service. Once unsubscribed, the
-! previously registered handler will no longer be called.
-!
-! To read the current backlight state at any time, use \ref light_is_on().*/
+    #[doc = "! Unsubscribe from the backlight event service. Once unsubscribed, the\n! previously registered handler will no longer be called.\n!\n! To read the current backlight state at any time, use \\ref light_is_on()."]
     pub fn backlight_service_unsubscribe();
 }
-/**! A single accelerometer sample for all three axes including timestamp and
-! vibration rumble status.*/
+#[doc = "! A single accelerometer sample for all three axes including timestamp and\n! vibration rumble status."]
 #[repr(C, packed)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AccelData {
-    ///! acceleration along the x axis
+    #[doc = "! acceleration along the x axis"]
     pub x: i16,
-    ///! acceleration along the y axis
+    #[doc = "! acceleration along the y axis"]
     pub y: i16,
-    ///! acceleration along the z axis
+    #[doc = "! acceleration along the z axis"]
     pub z: i16,
-    ///! true if the watch vibrated when this sample was collected
+    #[doc = "! true if the watch vibrated when this sample was collected"]
     pub did_vibrate: bool,
-    ///! timestamp, in milliseconds
+    #[doc = "! timestamp, in milliseconds"]
     pub timestamp: u64,
 }
-///! A single accelerometer sample for all three axes
+#[doc = "! A single accelerometer sample for all three axes"]
 #[repr(C, packed)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AccelRawData {
-    ///! acceleration along the x axis
+    #[doc = "! acceleration along the x axis"]
     pub x: i16,
-    ///! acceleration along the y axis
+    #[doc = "! acceleration along the y axis"]
     pub y: i16,
-    ///! acceleration along the z axis
+    #[doc = "! acceleration along the z axis"]
     pub z: i16,
 }
 impl AccelAxisType {
-    /**! Accelerometer's X axis. The positive direction along the X axis goes
-! toward the right of the watch.*/
+    #[doc = "! Accelerometer's X axis. The positive direction along the X axis goes\n! toward the right of the watch."]
     pub const ACCEL_AXIS_X: AccelAxisType = AccelAxisType(0);
-    /**! Accelerometer's Y axis. The positive direction along the Y axis goes
-! toward the top of the watch.*/
+    #[doc = "! Accelerometer's Y axis. The positive direction along the Y axis goes\n! toward the top of the watch."]
     pub const ACCEL_AXIS_Y: AccelAxisType = AccelAxisType(1);
-    /**! Accelerometer's Z axis. The positive direction along the Z axis goes
-! vertically out of the watchface.*/
+    #[doc = "! Accelerometer's Z axis. The positive direction along the Z axis goes\n! vertically out of the watchface."]
     pub const ACCEL_AXIS_Z: AccelAxisType = AccelAxisType(2);
 }
 #[repr(transparent)]
-///! Enumerated values defining the three accelerometer axes.
+#[doc = "! Enumerated values defining the three accelerometer axes."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AccelAxisType(pub ::core::ffi::c_uchar);
-/**! Callback type for accelerometer data events
-! @param data Pointer to the collected accelerometer samples.
-! @param num_samples the number of samples stored in data.*/
-pub type AccelDataHandler = ::core::option::Option<
-    unsafe extern "C" fn(data: *mut AccelData, num_samples: u32),
->;
-/**! Callback type for accelerometer raw data events
-! @param data Pointer to the collected accelerometer samples.
-! @param num_samples the number of samples stored in data.
-! @param timestamp the timestamp, in ms, of the first sample.*/
+#[doc = "! Callback type for accelerometer data events\n! @param data Pointer to the collected accelerometer samples.\n! @param num_samples the number of samples stored in data."]
+pub type AccelDataHandler =
+    ::core::option::Option<unsafe extern "C" fn(data: *mut AccelData, num_samples: u32)>;
+#[doc = "! Callback type for accelerometer raw data events\n! @param data Pointer to the collected accelerometer samples.\n! @param num_samples the number of samples stored in data.\n! @param timestamp the timestamp, in ms, of the first sample."]
 pub type AccelRawDataHandler = ::core::option::Option<
     unsafe extern "C" fn(data: *mut AccelRawData, num_samples: u32, timestamp: u64),
 >;
-/**! Callback type for accelerometer tap events
-! @param axis the axis on which a tap was registered (x, y, or z)
-! @param direction the direction (-1 or +1) of the tap*/
-pub type AccelTapHandler = ::core::option::Option<
-    unsafe extern "C" fn(axis: AccelAxisType, direction: i32),
->;
+#[doc = "! Callback type for accelerometer tap events\n! @param axis the axis on which a tap was registered (x, y, or z)\n! @param direction the direction (-1 or +1) of the tap"]
+pub type AccelTapHandler =
+    ::core::option::Option<unsafe extern "C" fn(axis: AccelAxisType, direction: i32)>;
 impl AccelSamplingRate {
-    ///! 10 HZ sampling rate
+    #[doc = "! 10 HZ sampling rate"]
     pub const ACCEL_SAMPLING_10HZ: AccelSamplingRate = AccelSamplingRate(10);
-    ///! 25 HZ sampling rate [Default]
+    #[doc = "! 25 HZ sampling rate [Default]"]
     pub const ACCEL_SAMPLING_25HZ: AccelSamplingRate = AccelSamplingRate(25);
-    ///! 50 HZ sampling rate
+    #[doc = "! 50 HZ sampling rate"]
     pub const ACCEL_SAMPLING_50HZ: AccelSamplingRate = AccelSamplingRate(50);
-    ///! 100 HZ sampling rate
+    #[doc = "! 100 HZ sampling rate"]
     pub const ACCEL_SAMPLING_100HZ: AccelSamplingRate = AccelSamplingRate(100);
 }
 #[repr(transparent)]
-///! Valid accelerometer sampling rates, in Hz
+#[doc = "! Valid accelerometer sampling rates, in Hz"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AccelSamplingRate(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Peek at the last recorded reading.
-! @param[out] data a pointer to a pre-allocated AccelData item
-! @note Cannot be used when subscribed to accelerometer data events.
-! @return -1 if the accel is not running
-! @return -2 if subscribed to accelerometer events.*/
+    #[doc = "! Peek at the last recorded reading.\n! @param[out] data a pointer to a pre-allocated AccelData item\n! @note Cannot be used when subscribed to accelerometer data events.\n! @return -1 if the accel is not running\n! @return -2 if subscribed to accelerometer events."]
     pub fn accel_service_peek(data: *mut AccelData) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Change the accelerometer sampling rate.
-! @param rate The sampling rate in Hz (10Hz, 25Hz, 50Hz, and 100Hz possible)*/
-    pub fn accel_service_set_sampling_rate(
-        rate: AccelSamplingRate,
-    ) -> ::core::ffi::c_int;
+    #[doc = "! Change the accelerometer sampling rate.\n! @param rate The sampling rate in Hz (10Hz, 25Hz, 50Hz, and 100Hz possible)"]
+    pub fn accel_service_set_sampling_rate(rate: AccelSamplingRate) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Change the number of samples buffered between each accelerometer data event
-! @param num_samples the number of samples to buffer, between 0 and 25.*/
+    #[doc = "! Change the number of samples buffered between each accelerometer data event\n! @param num_samples the number of samples to buffer, between 0 and 25."]
     pub fn accel_service_set_samples_per_update(num_samples: u32) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Subscribe to the accelerometer data event service. Once subscribed, the handler
-! gets called every time there are new accelerometer samples available.
-! @note Cannot use \ref accel_service_peek() when subscribed to accelerometer data events.
-! @param handler A callback to be executed on accelerometer data events
-! @param samples_per_update the number of samples to buffer, between 0 and 25.*/
-    pub fn accel_data_service_subscribe(
-        samples_per_update: u32,
-        handler: AccelDataHandler,
-    );
+    #[doc = "! Subscribe to the accelerometer data event service. Once subscribed, the handler\n! gets called every time there are new accelerometer samples available.\n! @note Cannot use \\ref accel_service_peek() when subscribed to accelerometer data events.\n! @param handler A callback to be executed on accelerometer data events\n! @param samples_per_update the number of samples to buffer, between 0 and 25."]
+    pub fn accel_data_service_subscribe(samples_per_update: u32, handler: AccelDataHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the accelerometer data event service. Once unsubscribed,
-! the previously registered handler will no longer be called.*/
+    #[doc = "! Unsubscribe from the accelerometer data event service. Once unsubscribed,\n! the previously registered handler will no longer be called."]
     pub fn accel_data_service_unsubscribe();
 }
 unsafe extern "C" {
-    /**! Subscribe to the accelerometer tap event service. Once subscribed, the handler
-! gets called on every tap event emitted by the accelerometer.
-! @param handler A callback to be executed on tap event*/
+    #[doc = "! Subscribe to the accelerometer tap event service. Once subscribed, the handler\n! gets called on every tap event emitted by the accelerometer.\n! @param handler A callback to be executed on tap event"]
     pub fn accel_tap_service_subscribe(handler: AccelTapHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the accelerometer tap event service. Once unsubscribed,
-! the previously registered handler will no longer be called.*/
+    #[doc = "! Unsubscribe from the accelerometer tap event service. Once unsubscribed,\n! the previously registered handler will no longer be called."]
     pub fn accel_tap_service_unsubscribe();
 }
 unsafe extern "C" {
-    /**! Subscribe to the accelerometer raw data event service. Once subscribed, the handler
-! gets called every time there are new accelerometer samples available.
-! @note Cannot use \ref accel_service_peek() when subscribed to accelerometer data events.
-! @param handler A callback to be executed on accelerometer data events
-! @param samples_per_update the number of samples to buffer, between 0 and 25.*/
-    pub fn accel_raw_data_service_subscribe(
-        samples_per_update: u32,
-        handler: AccelRawDataHandler,
-    );
+    #[doc = "! Subscribe to the accelerometer raw data event service. Once subscribed, the handler\n! gets called every time there are new accelerometer samples available.\n! @note Cannot use \\ref accel_service_peek() when subscribed to accelerometer data events.\n! @param handler A callback to be executed on accelerometer data events\n! @param samples_per_update the number of samples to buffer, between 0 and 25."]
+    pub fn accel_raw_data_service_subscribe(samples_per_update: u32, handler: AccelRawDataHandler);
 }
 impl CompassStatus {
-    ///! The Compass Service is unavailable.
+    #[doc = "! The Compass Service is unavailable."]
     pub const CompassStatusUnavailable: CompassStatus = CompassStatus(-1);
-    /**! Compass is calibrating: data is invalid and should not be used
-! Data will become valid once calibration is complete*/
+    #[doc = "! Compass is calibrating: data is invalid and should not be used\n! Data will become valid once calibration is complete"]
     pub const CompassStatusDataInvalid: CompassStatus = CompassStatus(0);
-    ///! Compass is calibrating: the data is valid but the calibration is still being refined
+    #[doc = "! Compass is calibrating: the data is valid but the calibration is still being refined"]
     pub const CompassStatusCalibrating: CompassStatus = CompassStatus(1);
-    ///! Compass data is valid and the calibration has completed
+    #[doc = "! Compass data is valid and the calibration has completed"]
     pub const CompassStatusCalibrated: CompassStatus = CompassStatus(2);
 }
 #[repr(transparent)]
-///! Enum describing the current state of the Compass Service
+#[doc = "! Enum describing the current state of the Compass Service"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct CompassStatus(pub ::core::ffi::c_schar);
-/**! Represents an angle relative to get to a reference direction, e.g. (magnetic) north.
-! The angle value is scaled linearly, such that a value of TRIG_MAX_ANGLE
-! corresponds to 360 degrees or 2 PI radians.
-! Thus, if heading towards north, north is 0, west is TRIG_MAX_ANGLE/4,
-! south is TRIG_MAX_ANGLE/2, and so on.*/
+#[doc = "! Represents an angle relative to get to a reference direction, e.g. (magnetic) north.\n! The angle value is scaled linearly, such that a value of TRIG_MAX_ANGLE\n! corresponds to 360 degrees or 2 PI radians.\n! Thus, if heading towards north, north is 0, west is TRIG_MAX_ANGLE/4,\n! south is TRIG_MAX_ANGLE/2, and so on."]
 pub type CompassHeading = i32;
-///! Structure containing a single heading towards magnetic and true north.
+#[doc = "! Structure containing a single heading towards magnetic and true north."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct CompassHeadingData {
-    /**! Measured angle that increases counter-clockwise from magnetic north
-! (use `int clockwise_heading = TRIG_MAX_ANGLE - heading_data.magnetic_heading;`
-! for example to find your heading clockwise from magnetic north).*/
+    #[doc = "! Measured angle that increases counter-clockwise from magnetic north\n! (use `int clockwise_heading = TRIG_MAX_ANGLE - heading_data.magnetic_heading;`\n! for example to find your heading clockwise from magnetic north)."]
     pub magnetic_heading: CompassHeading,
-    ///! Currently same value as magnetic_heading (reserved for future implementation).
+    #[doc = "! Currently same value as magnetic_heading (reserved for future implementation)."]
     pub true_heading: CompassHeading,
-    ///! Indicates the current state of the Compass Service calibration.
+    #[doc = "! Indicates the current state of the Compass Service calibration."]
     pub compass_status: CompassStatus,
-    ///! Currently always false (reserved for future implementation).
+    #[doc = "! Currently always false (reserved for future implementation)."]
     pub is_declination_valid: bool,
 }
 impl Default for CompassHeadingData {
@@ -945,82 +743,52 @@ impl Default for CompassHeadingData {
         }
     }
 }
-/**! Callback type for compass heading events
-! @param heading copy of last recorded heading*/
-pub type CompassHeadingHandler = ::core::option::Option<
-    unsafe extern "C" fn(heading: CompassHeadingData),
->;
+#[doc = "! Callback type for compass heading events\n! @param heading copy of last recorded heading"]
+pub type CompassHeadingHandler =
+    ::core::option::Option<unsafe extern "C" fn(heading: CompassHeadingData)>;
 unsafe extern "C" {
-    /**! Set the minimum angular change required to generate new compass heading events.
-! The angular distance is measured relative to the last delivered heading event.
-! Use 0 to be notified of all movements.
-! Negative values and values > TRIG_MAX_ANGLE / 2 are not valid.
-! The default value of this property is TRIG_MAX_ANGLE / 360.
-! @return 0, success.
-! @return Non-Zero, if filter is invalid.
-! @see compass_service_subscribe*/
-    pub fn compass_service_set_heading_filter(
-        filter: CompassHeading,
-    ) -> ::core::ffi::c_int;
+    #[doc = "! Set the minimum angular change required to generate new compass heading events.\n! The angular distance is measured relative to the last delivered heading event.\n! Use 0 to be notified of all movements.\n! Negative values and values > TRIG_MAX_ANGLE / 2 are not valid.\n! The default value of this property is TRIG_MAX_ANGLE / 360.\n! @return 0, success.\n! @return Non-Zero, if filter is invalid.\n! @see compass_service_subscribe"]
+    pub fn compass_service_set_heading_filter(filter: CompassHeading) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Subscribe to the compass heading event service. Once subscribed, the handler
-! gets called every time the angular distance relative to the previous value
-! exceeds the configured filter.
-! @param handler A callback to be executed on heading events
-! @see compass_service_set_heading_filter
-! @see compass_service_unsubscribe*/
+    #[doc = "! Subscribe to the compass heading event service. Once subscribed, the handler\n! gets called every time the angular distance relative to the previous value\n! exceeds the configured filter.\n! @param handler A callback to be executed on heading events\n! @see compass_service_set_heading_filter\n! @see compass_service_unsubscribe"]
     pub fn compass_service_subscribe(handler: CompassHeadingHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the compass heading event service. Once unsubscribed,
-! the previously registered handler will no longer be called.
-! @see compass_service_subscribe*/
+    #[doc = "! Unsubscribe from the compass heading event service. Once unsubscribed,\n! the previously registered handler will no longer be called.\n! @see compass_service_subscribe"]
     pub fn compass_service_unsubscribe();
 }
 unsafe extern "C" {
-    /**! Peek at the last recorded reading.
-! @param[out] data a pointer to a pre-allocated CompassHeadingData
-! @return Always returns 0 to indicate success.*/
+    #[doc = "! Peek at the last recorded reading.\n! @param[out] data a pointer to a pre-allocated CompassHeadingData\n! @return Always returns 0 to indicate success."]
     pub fn compass_service_peek(data: *mut CompassHeadingData) -> ::core::ffi::c_int;
 }
 impl TimeUnits {
-    ///! Flag to represent the "seconds" time unit
+    #[doc = "! Flag to represent the \"seconds\" time unit"]
     pub const SECOND_UNIT: TimeUnits = TimeUnits(1);
-    ///! Flag to represent the "minutes" time unit
+    #[doc = "! Flag to represent the \"minutes\" time unit"]
     pub const MINUTE_UNIT: TimeUnits = TimeUnits(2);
-    ///! Flag to represent the "hours" time unit
+    #[doc = "! Flag to represent the \"hours\" time unit"]
     pub const HOUR_UNIT: TimeUnits = TimeUnits(4);
-    ///! Flag to represent the "days" time unit
+    #[doc = "! Flag to represent the \"days\" time unit"]
     pub const DAY_UNIT: TimeUnits = TimeUnits(8);
-    ///! Flag to represent the "months" time unit
+    #[doc = "! Flag to represent the \"months\" time unit"]
     pub const MONTH_UNIT: TimeUnits = TimeUnits(16);
-    ///! Flag to represent the "years" time unit
+    #[doc = "! Flag to represent the \"years\" time unit"]
     pub const YEAR_UNIT: TimeUnits = TimeUnits(32);
 }
 #[repr(transparent)]
-/**! Time unit flags that can be used to create a bitmask for use in \ref tick_timer_service_subscribe().
-! This will also be passed to \ref TickHandler.*/
+#[doc = "! Time unit flags that can be used to create a bitmask for use in \\ref tick_timer_service_subscribe().\n! This will also be passed to \\ref TickHandler."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct TimeUnits(pub ::core::ffi::c_uchar);
-/**! Callback type for tick timer events
-! @param tick_time the time at which the tick event was triggered
-! @param units_changed which unit change triggered this tick event*/
-pub type TickHandler = ::core::option::Option<
-    unsafe extern "C" fn(tick_time: *mut tm, units_changed: TimeUnits),
->;
+#[doc = "! Callback type for tick timer events\n! @param tick_time the time at which the tick event was triggered\n! @param units_changed which unit change triggered this tick event"]
+pub type TickHandler =
+    ::core::option::Option<unsafe extern "C" fn(tick_time: *mut tm, units_changed: TimeUnits)>;
 unsafe extern "C" {
-    /**! Subscribe to the tick timer event service. Once subscribed, the handler gets called
-! on every requested unit change.
-! Calling this function multiple times will override the units and handler (i.e., only
-! the last tick_units and handler passed will be used).
-! @param handler The callback to be executed on tick events
-! @param tick_units a bitmask of all the units that have changed*/
+    #[doc = "! Subscribe to the tick timer event service. Once subscribed, the handler gets called\n! on every requested unit change.\n! Calling this function multiple times will override the units and handler (i.e., only\n! the\u{a0}last\u{a0}tick_units and\u{a0}handler passed\u{a0}will\u{a0}be\u{a0}used).\n! @param handler The callback to be executed on tick events\n! @param tick_units a bitmask of all the units that have changed"]
     pub fn tick_timer_service_subscribe(tick_units: TimeUnits, handler: TickHandler);
 }
 unsafe extern "C" {
-    /**! Unsubscribe from the tick timer event service. Once unsubscribed, the previously registered
-! handler will no longer be called.*/
+    #[doc = "! Unsubscribe from the tick timer event service. Once unsubscribed, the previously registered\n! handler will no longer be called."]
     pub fn tick_timer_service_unsubscribe();
 }
 impl TouchEventType {
@@ -1029,10 +797,10 @@ impl TouchEventType {
     pub const TouchEvent_PositionUpdate: TouchEventType = TouchEventType(2);
 }
 #[repr(transparent)]
-///! Touch event type
+#[doc = "! Touch event type"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct TouchEventType(pub ::core::ffi::c_uchar);
-///! Touch event data, carried directly in PebbleTouchEvent
+#[doc = "! Touch event data, carried directly in PebbleTouchEvent"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct TouchEvent {
@@ -1065,21 +833,18 @@ impl TouchEvent {
     #[inline]
     pub unsafe fn type__raw(this: *const Self) -> TouchEventType {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 0usize, 8u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                8u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_type_raw(this: *mut Self, val: TouchEventType) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 0usize,
                 8u8,
@@ -1090,70 +855,54 @@ impl TouchEvent {
     #[inline]
     pub fn new_bitfield_1(type_: TouchEventType) -> __BindgenBitfieldUnit<[u8; 1usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
-        __bindgen_bitfield_unit
-            .set(
-                0usize,
-                8u8,
-                {
-                    let type_: u8 = unsafe { ::core::mem::transmute(type_) };
-                    type_ as u64
-                },
-            );
+        __bindgen_bitfield_unit.set(0usize, 8u8, {
+            let type_: u8 = unsafe { ::core::mem::transmute(type_) };
+            type_ as u64
+        });
         __bindgen_bitfield_unit
     }
 }
-/**! Callback for touch events.
-! @param event The touch event data
-! @param context User-provided context*/
+#[doc = "! Callback for touch events.\n! @param event The touch event data\n! @param context User-provided context"]
 pub type TouchServiceHandler = ::core::option::Option<
     unsafe extern "C" fn(event: *const TouchEvent, context: *mut ::core::ffi::c_void),
 >;
 unsafe extern "C" {
-    /**! Subscribe to touch events. The touch sensor is enabled while subscribed.
-! @param handler Callback invoked for each touch event
-! @param context User context passed to the callback*/
-    pub fn touch_service_subscribe(
-        handler: TouchServiceHandler,
-        context: *mut ::core::ffi::c_void,
-    );
+    #[doc = "! Subscribe to touch events. The touch sensor is enabled while subscribed.\n! @param handler Callback invoked for each touch event\n! @param context User context passed to the callback"]
+    pub fn touch_service_subscribe(handler: TouchServiceHandler, context: *mut ::core::ffi::c_void);
 }
 unsafe extern "C" {
-    ///! Unsubscribe from touch events. The touch sensor is disabled if no other subscribers remain.
+    #[doc = "! Unsubscribe from touch events. The touch sensor is disabled if no other subscribers remain."]
     pub fn touch_service_unsubscribe();
 }
 unsafe extern "C" {
-    /**! @return true if touch input is currently being delivered to apps.
-! Returns false on platforms without a touchscreen, or when touch has been
-! disabled system-wide (future feature). Apps can poll this (for example on
-! window appear) to avoid looking broken when touch is unavailable.*/
+    #[doc = "! @return true if touch input is currently being delivered to apps.\n! Returns false on platforms without a touchscreen, or when touch has been\n! disabled system-wide (future feature). Apps can poll this (for example on\n! window appear) to avoid looking broken when touch is unavailable."]
     pub fn touch_service_is_enabled() -> bool;
 }
 impl HealthMetric {
-    ///! The number of steps counted.
+    #[doc = "! The number of steps counted."]
     pub const HealthMetricStepCount: HealthMetric = HealthMetric(0);
-    ///! The number of seconds spent active (i.e. not resting).
+    #[doc = "! The number of seconds spent active (i.e. not resting)."]
     pub const HealthMetricActiveSeconds: HealthMetric = HealthMetric(1);
-    ///! The distance walked, in meters.
+    #[doc = "! The distance walked, in meters."]
     pub const HealthMetricWalkedDistanceMeters: HealthMetric = HealthMetric(2);
-    ///! The number of seconds spent sleeping.
+    #[doc = "! The number of seconds spent sleeping."]
     pub const HealthMetricSleepSeconds: HealthMetric = HealthMetric(3);
-    ///! The number of sleep seconds in the 'restful' or deep sleep state.
+    #[doc = "! The number of sleep seconds in the 'restful' or deep sleep state."]
     pub const HealthMetricSleepRestfulSeconds: HealthMetric = HealthMetric(4);
-    ///! The number of kcal (Calories) burned while resting due to resting metabolism.
+    #[doc = "! The number of kcal (Calories) burned while resting due to resting metabolism."]
     pub const HealthMetricRestingKCalories: HealthMetric = HealthMetric(5);
-    ///! The number of kcal (Calories) burned while active.
+    #[doc = "! The number of kcal (Calories) burned while active."]
     pub const HealthMetricActiveKCalories: HealthMetric = HealthMetric(6);
-    ///! The heart rate, in beats per minute. This is a filtered value that is at most 15 minutes old.
+    #[doc = "! The heart rate, in beats per minute. This is a filtered value that is at most 15 minutes old."]
     pub const HealthMetricHeartRateBPM: HealthMetric = HealthMetric(7);
-    ///! The raw heart rate value of the most recent sample, in beats per minute.
+    #[doc = "! The raw heart rate value of the most recent sample, in beats per minute."]
     pub const HealthMetricHeartRateRawBPM: HealthMetric = HealthMetric(8);
 }
 #[repr(transparent)]
-/**! Health metric values used to retrieve health data.
-! For example, using \ref health_service_sum().*/
+#[doc = "! Health metric values used to retrieve health data.\n! For example, using \\ref health_service_sum()."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthMetric(pub ::core::ffi::c_uchar);
-///! Type used to represent HealthMetric values
+#[doc = "! Type used to represent HealthMetric values"]
 pub type HealthValue = i32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1161,14 +910,7 @@ pub struct HealthMetricAlert {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Return the sum of a \ref HealthMetric's values over a time range.
-! The `time_start` and `time_end` parameters define the range of time you want the sum for.
-! @note The value returned will be based on daily totals, weighted for the length of the
-! specified time range. This may change in the future.
-! @param metric The metric to query for data.
-! @param time_start UTC time of the earliest data item to incorporate into the sum.
-! @param time_end UTC time of the most recent data item to incorporate into the sum.
-! @return The sum of that metric over the given time range, if available.*/
+    #[doc = "! Return the sum of a \\ref HealthMetric's values over a time range.\n! The `time_start` and `time_end` parameters define the range of time you want the sum for.\n! @note The value returned will be based on daily totals, weighted for the length of the\n! specified time range. This may change in the future.\n! @param metric The metric to query for data.\n! @param time_start UTC time of the earliest data item to incorporate into the sum.\n! @param time_end UTC time of the most recent data item to incorporate into the sum.\n! @return The sum of that metric over the given time range, if available."]
     pub fn health_service_sum(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1176,75 +918,30 @@ unsafe extern "C" {
     ) -> HealthValue;
 }
 unsafe extern "C" {
-    /**! Convenience wrapper for \ref health_service_sum() that returns the sum for today.
-! @param metric The metric to query.
-! @return The sum of that metric's data for today, if available.*/
+    #[doc = "! Convenience wrapper for \\ref health_service_sum() that returns the sum for today.\n! @param metric The metric to query.\n! @return The sum of that metric's data for today, if available."]
     pub fn health_service_sum_today(metric: HealthMetric) -> HealthValue;
 }
 unsafe extern "C" {
-    /**! Convenience function for peeking at the current value of a metric. This is useful for metrics
-! like \ref HealthMetricHeartRateBPM that represent instantaneous values. It is NOT applicable for
-! metrics like \ref HealthMetricStepCount that must be accumulated over time (it will return 0 if
-! passed that type of metric). This call is equivalent to calling
-! `health_service_aggregate_averaged(metric, time(NULL), time(NULL), HealthAggregationAvg,
-! HealthServiceTimeScopeOnce)`
-! @param metric The metric to query.
-! @return The current value of that metric, if available.*/
+    #[doc = "! Convenience function for peeking at the current value of a metric. This is useful for metrics\n! like \\ref HealthMetricHeartRateBPM that represent instantaneous values. It is NOT applicable for\n! metrics like \\ref HealthMetricStepCount that must be accumulated over time (it will return 0 if\n! passed that type of metric). This call is equivalent to calling\n! `health_service_aggregate_averaged(metric, time(NULL), time(NULL), HealthAggregationAvg,\n! HealthServiceTimeScopeOnce)`\n! @param metric The metric to query.\n! @return The current value of that metric, if available."]
     pub fn health_service_peek_current_value(metric: HealthMetric) -> HealthValue;
 }
 impl HealthServiceTimeScope {
-    ///! No average computed. The result is the same as calling \ref health_service_sum().
-    pub const HealthServiceTimeScopeOnce: HealthServiceTimeScope = HealthServiceTimeScope(
-        0,
-    );
-    /**! Compute average using the same day from each week. For example, every Monday if the passed
-! in time range falls on a Monday.*/
-    pub const HealthServiceTimeScopeWeekly: HealthServiceTimeScope = HealthServiceTimeScope(
-        1,
-    );
-    /**! Compute average using either weekdays (Monday to Friday) or weekends (Saturday and Sunday),
-! depending on which day the passed in time range falls.*/
-    pub const HealthServiceTimeScopeDailyWeekdayOrWeekend: HealthServiceTimeScope = HealthServiceTimeScope(
-        2,
-    );
-    ///! Compute average across all days of the week.
-    pub const HealthServiceTimeScopeDaily: HealthServiceTimeScope = HealthServiceTimeScope(
-        3,
-    );
+    #[doc = "! No average computed. The result is the same as calling \\ref health_service_sum()."]
+    pub const HealthServiceTimeScopeOnce: HealthServiceTimeScope = HealthServiceTimeScope(0);
+    #[doc = "! Compute average using the same day from each week. For example, every Monday if the passed\n! in time range falls on a Monday."]
+    pub const HealthServiceTimeScopeWeekly: HealthServiceTimeScope = HealthServiceTimeScope(1);
+    #[doc = "! Compute average using either weekdays (Monday to Friday) or weekends (Saturday and Sunday),\n! depending on which day the passed in time range falls."]
+    pub const HealthServiceTimeScopeDailyWeekdayOrWeekend: HealthServiceTimeScope =
+        HealthServiceTimeScope(2);
+    #[doc = "! Compute average across all days of the week."]
+    pub const HealthServiceTimeScopeDaily: HealthServiceTimeScope = HealthServiceTimeScope(3);
 }
 #[repr(transparent)]
-///! Used by \ref health_service_sum_averaged() to specify how the average is computed.
+#[doc = "! Used by \\ref health_service_sum_averaged() to specify how the average is computed."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthServiceTimeScope(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Return the value of a metric's sum over a given time range between `time_start`
-! and `time_end`. Using this call you can specify the time range that you are interested in
-! getting the average for, as well as a `scope` specifier on how to compute an average of the sum.
-! For example, if you want to get the average number of steps taken from 12 AM (midnight) to 9 AM
-! across all days you would specify:
-! \code{.c}
-! time_t time_start = time_start_of_today();
-! time_t time_end = time_start + (9 * SECONDS_PER_HOUR);
-! HealthValue value = health_service_sum_averaged(HealthMetricStepCount, time_start,
-!    time_end, HealthServiceTimeScopeDaily);
-! \endcode
-! If you want the average number of steps taken on a weekday (Monday to Friday) and today is a
-! Monday (in the local timezone) you would specify:
-! \code{.c}
-! time_start = time_start_of_today();
-! time_end = time_start + SECONDS_PER_DAY;
-! HealthValue value = health_service_sum_averaged(HealthMetricStepCount, time_start,
-!    time_end, HealthServiceTimeScopeDailyWeekdayOrWeekend);
-! \endcode
-!
-! Note that this call is the same as calling `health_service_aggregate_averaged(metric,
-! time_start, time_end, HealthAggregationSum, scope)`
-!
-! @param metric Which \ref HealthMetric to query.
-! @param time_start UTC time of the start of the query interval.
-! @param time_end UTC time of the end of the query interval.
-! @param scope \ref HealthServiceTimeScope value describing how the average should be computed.
-! @return The average of the sum of the given metric over the given time range, if available.*/
+    #[doc = "! Return the value of a metric's sum over a given time range between `time_start`\n! and `time_end`. Using this call you can specify the time range that you are interested in\n! getting the average for, as well as a `scope` specifier on how to compute an average of the sum.\n! For example, if you want to get the average number of steps taken from 12 AM (midnight) to 9 AM\n! across all days you would specify:\n! \\code{.c}\n! time_t time_start = time_start_of_today();\n! time_t time_end = time_start + (9 * SECONDS_PER_HOUR);\n! HealthValue value = health_service_sum_averaged(HealthMetricStepCount, time_start,\n!    time_end, HealthServiceTimeScopeDaily);\n! \\endcode\n! If you want the average number of steps taken on a weekday (Monday to Friday) and today is a\n! Monday (in the local timezone) you would specify:\n! \\code{.c}\n! time_start = time_start_of_today();\n! time_end = time_start + SECONDS_PER_DAY;\n! HealthValue value = health_service_sum_averaged(HealthMetricStepCount, time_start,\n!    time_end, HealthServiceTimeScopeDailyWeekdayOrWeekend);\n! \\endcode\n!\n! Note that this call is the same as calling `health_service_aggregate_averaged(metric,\n! time_start, time_end, HealthAggregationSum, scope)`\n!\n! @param metric Which \\ref HealthMetric to query.\n! @param time_start UTC time of the start of the query interval.\n! @param time_end UTC time of the end of the query interval.\n! @param scope \\ref HealthServiceTimeScope value describing how the average should be computed.\n! @return The average of the sum of the given metric over the given time range, if available."]
     pub fn health_service_sum_averaged(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1253,69 +950,21 @@ unsafe extern "C" {
     ) -> HealthValue;
 }
 impl HealthAggregation {
-    /**! Sum the metric. The result is the same as calling \ref health_service_sum_averaged(). This
-! operation is only applicable for metrics that accumulate, like HealthMetricStepCount,
-! HealthMetricActiveSeconds, etc.*/
+    #[doc = "! Sum the metric. The result is the same as calling \\ref health_service_sum_averaged(). This\n! operation is only applicable for metrics that accumulate, like HealthMetricStepCount,\n! HealthMetricActiveSeconds, etc."]
     pub const HealthAggregationSum: HealthAggregation = HealthAggregation(0);
-    /**! Use the average of the metric. This is only applicable for metrics that measure instantaneous
-! values, like HealthMetricHeartRateBPM*/
+    #[doc = "! Use the average of the metric. This is only applicable for metrics that measure instantaneous\n! values, like HealthMetricHeartRateBPM"]
     pub const HealthAggregationAvg: HealthAggregation = HealthAggregation(1);
-    /**! Use the minimum value of the metric. This is only applicable for metrics that measure
-! instantaneous values, like HealthMetricHeartRateBPM*/
+    #[doc = "! Use the minimum value of the metric. This is only applicable for metrics that measure\n! instantaneous values, like HealthMetricHeartRateBPM"]
     pub const HealthAggregationMin: HealthAggregation = HealthAggregation(2);
-    /**! Use the maximum value of the metric. This is only applicable for metrics that measure
-! instantaneous values, like HealthMetricHeartRateBPM*/
+    #[doc = "! Use the maximum value of the metric. This is only applicable for metrics that measure\n! instantaneous values, like HealthMetricHeartRateBPM"]
     pub const HealthAggregationMax: HealthAggregation = HealthAggregation(3);
 }
 #[repr(transparent)]
-/**! Used by \ref health_service_aggregate_averaged() to specify what type of aggregation to perform.
-! This aggregation is applied to the metric before the average is computed.*/
+#[doc = "! Used by \\ref health_service_aggregate_averaged() to specify what type of aggregation to perform.\n! This aggregation is applied to the metric before the average is computed."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthAggregation(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Return the value of an aggregated metric over a given time range. This call is more
-! flexible than health_service_sum_averaged because it lets you specify which aggregation function
-! to perform.
-!
-! The aggregation function `aggregation` is applied to the metric `metric` over the given time
-! range `time_start` to `time_end` first, and then an average is computed based on the passed in
-! `scope`.
-!
-! For example, if you want to get the average number of steps taken from 12 AM (midnight) to 9 AM
-! across all days you would specify:
-! \code{.c}
-! time_t time_start = time_start_of_today();
-! time_t time_end = time_start + (9 * SECONDS_PER_HOUR);
-! HealthValue value = health_service_aggregate_averaged(HealthMetricStepCount, time_start,
-!    time_end, HealthAggregationSum, HealthServiceTimeScopeDaily);
-! \endcode
-!
-! If you want to compute the average heart rate on Mondays and today is a Monday, you would
-! specify:
-! \code{.c}
-! time_t time_start = time_start_of_today(),
-! time_t time_end = time_start + SECONDS_PER_DAY,
-! HealthValue value = health_service_aggregate_averaged(HealthMetricHeartRateBPM, time_start,
-!    time_end, HealthAggregationAvg, HealthServiceTimeScopeWeekly);
-! \endcode
-!
-! To get the average of the minimum heart rate seen on Mondays for example, you would instead
-! pass in `HealthAggregationMin`
-!
-! Certain HealthAggregation operations are only applicable to certain types of metrics. See the
-! notes above on \ref HealthAggregation for details. Use
-! \ref health_service_metric_aggregate_averaged_accessible to check for applicability at run
-! time.
-!
-! @param metric Which \ref HealthMetric to query.
-! @param time_start UTC time of the start of the query interval.
-! @param time_end UTC time of the end of the query interval.
-! @param aggregation the aggregation function to perform on the metric. This operation is
-!   performed across the passed in time range `time_start` to `time_end`.
-! @param scope \ref HealthServiceTimeScope value describing how the average should be computed.
-!  Use `HealthServiceTimeScopeOnce` to not compute an average.
-! @return The average of the aggregation performed on the given metric over the given time range,
-!  if available.*/
+    #[doc = "! Return the value of an aggregated metric over a given time range. This call is more\n! flexible than health_service_sum_averaged because it lets you specify which aggregation function\n! to perform.\n!\n! The aggregation function `aggregation` is applied to the metric `metric` over the given time\n! range `time_start` to `time_end` first, and then an average is computed based on the passed in\n! `scope`.\n!\n! For example, if you want to get the average number of steps taken from 12 AM (midnight) to 9 AM\n! across all days you would specify:\n! \\code{.c}\n! time_t time_start = time_start_of_today();\n! time_t time_end = time_start + (9 * SECONDS_PER_HOUR);\n! HealthValue value = health_service_aggregate_averaged(HealthMetricStepCount, time_start,\n!    time_end, HealthAggregationSum, HealthServiceTimeScopeDaily);\n! \\endcode\n!\n! If you want to compute the average heart rate on Mondays and today is a Monday, you would\n! specify:\n! \\code{.c}\n! time_t time_start = time_start_of_today(),\n! time_t time_end = time_start + SECONDS_PER_DAY,\n! HealthValue value = health_service_aggregate_averaged(HealthMetricHeartRateBPM, time_start,\n!    time_end, HealthAggregationAvg, HealthServiceTimeScopeWeekly);\n! \\endcode\n!\n! To get the average of the minimum heart rate seen on Mondays for example, you would instead\n! pass in `HealthAggregationMin`\n!\n! Certain HealthAggregation operations are only applicable to certain types of metrics. See the\n! notes above on \\ref HealthAggregation for details. Use\n! \\ref health_service_metric_aggregate_averaged_accessible to check for applicability at run\n! time.\n!\n! @param metric Which \\ref HealthMetric to query.\n! @param time_start UTC time of the start of the query interval.\n! @param time_end UTC time of the end of the query interval.\n! @param aggregation the aggregation function to perform on the metric. This operation is\n!   performed across the passed in time range `time_start` to `time_end`.\n! @param scope \\ref HealthServiceTimeScope value describing how the average should be computed.\n!  Use `HealthServiceTimeScopeOnce` to not compute an average.\n! @return The average of the aggregation performed on the given metric over the given time range,\n!  if available."]
     pub fn health_service_aggregate_averaged(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1324,39 +973,31 @@ unsafe extern "C" {
         scope: HealthServiceTimeScope,
     ) -> HealthValue;
 }
-///! Expresses a set of \ref HealthActivity values as a bitmask.
+#[doc = "! Expresses a set of \\ref HealthActivity values as a bitmask."]
 pub type HealthActivityMask = u32;
 impl HealthActivity {
-    ///! No special activity.
+    #[doc = "! No special activity."]
     pub const HealthActivityNone: HealthActivity = HealthActivity(0);
-    ///! The 'sleeping' activity.
+    #[doc = "! The 'sleeping' activity."]
     pub const HealthActivitySleep: HealthActivity = HealthActivity(1);
-    ///! The 'restful sleeping' activity.
+    #[doc = "! The 'restful sleeping' activity."]
     pub const HealthActivityRestfulSleep: HealthActivity = HealthActivity(2);
-    ///! The 'walk' activity.
+    #[doc = "! The 'walk' activity."]
     pub const HealthActivityWalk: HealthActivity = HealthActivity(4);
-    ///! The 'run' activity.
+    #[doc = "! The 'run' activity."]
     pub const HealthActivityRun: HealthActivity = HealthActivity(8);
-    ///! The 'generic' activity.
+    #[doc = "! The 'generic' activity."]
     pub const HealthActivityOpenWorkout: HealthActivity = HealthActivity(16);
 }
 #[repr(transparent)]
-///! Health-related activities that can be accessed using
+#[doc = "! Health-related activities that can be accessed using"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthActivity(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Return a \ref HealthActivityMask containing a set of bits, one set for each
-! activity that is currently active.
-! @return A bitmask with zero or more \ref HealthActivityMask bits set as appropriate.*/
+    #[doc = "! Return a \\ref HealthActivityMask containing a set of bits, one set for each\n! activity that is currently active.\n! @return A bitmask with zero or more \\ref HealthActivityMask bits set as appropriate."]
     pub fn health_service_peek_current_activities() -> HealthActivityMask;
 }
-/**! Callback used by \ref health_service_activities_iterate().
-! @param activity Which activity the caller is being informed about.
-! @param time_start Start UTC time of the activity.
-! @param time_end End UTC time of the activity.
-! @param context The `context` parameter initially passed
-!     to \ref health_service_activities_iterate().
-! @return `true` if you are interested in more activities, or `false` to stop iterating.*/
+#[doc = "! Callback used by \\ref health_service_activities_iterate().\n! @param activity Which activity the caller is being informed about.\n! @param time_start Start UTC time of the activity.\n! @param time_end End UTC time of the activity.\n! @param context The `context` parameter initially passed\n!     to \\ref health_service_activities_iterate().\n! @return `true` if you are interested in more activities, or `false` to stop iterating."]
 pub type HealthActivityIteratorCB = ::core::option::Option<
     unsafe extern "C" fn(
         activity: HealthActivity,
@@ -1366,34 +1007,18 @@ pub type HealthActivityIteratorCB = ::core::option::Option<
     ) -> bool,
 >;
 impl HealthIterationDirection {
-    ///! Iterate into the past.
-    pub const HealthIterationDirectionPast: HealthIterationDirection = HealthIterationDirection(
-        0,
-    );
-    ///! Iterate into the future.
-    pub const HealthIterationDirectionFuture: HealthIterationDirection = HealthIterationDirection(
-        1,
-    );
+    #[doc = "! Iterate into the past."]
+    pub const HealthIterationDirectionPast: HealthIterationDirection = HealthIterationDirection(0);
+    #[doc = "! Iterate into the future."]
+    pub const HealthIterationDirectionFuture: HealthIterationDirection =
+        HealthIterationDirection(1);
 }
 #[repr(transparent)]
-/**! Iteration direction, passed to \ref health_service_activities_iterate().
-! When iterating backwards (`HealthIterationDirectionPast`), activities that have a greater value
-! for `time_end` come first.
-! When iterating forward (`HealthIterationDirectionFuture`), activities that have a smaller value
-! for `time_start` come first.*/
+#[doc = "! Iteration direction, passed to \\ref health_service_activities_iterate().\n! When iterating backwards (`HealthIterationDirectionPast`), activities that have a greater value\n! for `time_end` come first.\n! When iterating forward (`HealthIterationDirectionFuture`), activities that have a smaller value\n! for `time_start` come first."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthIterationDirection(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Iterates backwards or forward within a given time span to list all recorded activities.
-! For example, this can be used to find the last recorded sleep phase or all deep sleep phases in
-! a given time range. Any activity that overlaps with `time_start` and `time_end` will be
-! included, even if the start time starts before `time_start` or end time ends after `time_end`.
-! @param activity_mask A bitmask containing set of activities you are interested in.
-! @param time_start UTC time of the earliest time you are interested in.
-! @param time_end UTC time of the latest time you are interested in.
-! @param direction The direction in which to iterate.
-! @param callback Developer-supplied callback that is called for each activity iterated over.
-! @param context Developer-supplied context pointer that is passed to the callback.*/
+    #[doc = "! Iterates backwards or forward within a given time span to list all recorded activities.\n! For example, this can be used to find the last recorded sleep phase or all deep sleep phases in\n! a given time range. Any activity that overlaps with `time_start` and `time_end` will be\n! included, even if the start time starts before `time_start` or end time ends after `time_end`.\n! @param activity_mask A bitmask containing set of activities you are interested in.\n! @param time_start UTC time of the earliest time you are interested in.\n! @param time_end UTC time of the latest time you are interested in.\n! @param direction The direction in which to iterate.\n! @param callback Developer-supplied callback that is called for each activity iterated over.\n! @param context Developer-supplied context pointer that is passed to the callback."]
     pub fn health_service_activities_iterate(
         activity_mask: HealthActivityMask,
         time_start: ::core::ffi::c_long,
@@ -1404,45 +1029,25 @@ unsafe extern "C" {
     );
 }
 impl HealthServiceAccessibilityMask {
-    ///! Return values are available and represent the collected health information.
-    pub const HealthServiceAccessibilityMaskAvailable: HealthServiceAccessibilityMask = HealthServiceAccessibilityMask(
-        1,
-    );
-    ///! The user hasn't granted permission.
-    pub const HealthServiceAccessibilityMaskNoPermission: HealthServiceAccessibilityMask = HealthServiceAccessibilityMask(
-        2,
-    );
-    /**! The queried combination of time span and \ref HealthMetric or \ref HealthActivityMask
-! is currently unsupported.*/
-    pub const HealthServiceAccessibilityMaskNotSupported: HealthServiceAccessibilityMask = HealthServiceAccessibilityMask(
-        4,
-    );
-    ///! No samples were recorded for the given time span.
-    pub const HealthServiceAccessibilityMaskNotAvailable: HealthServiceAccessibilityMask = HealthServiceAccessibilityMask(
-        8,
-    );
+    #[doc = "! Return values are available and represent the collected health information."]
+    pub const HealthServiceAccessibilityMaskAvailable: HealthServiceAccessibilityMask =
+        HealthServiceAccessibilityMask(1);
+    #[doc = "! The user hasn't granted permission."]
+    pub const HealthServiceAccessibilityMaskNoPermission: HealthServiceAccessibilityMask =
+        HealthServiceAccessibilityMask(2);
+    #[doc = "! The queried combination of time span and \\ref HealthMetric or \\ref HealthActivityMask\n! is currently unsupported."]
+    pub const HealthServiceAccessibilityMaskNotSupported: HealthServiceAccessibilityMask =
+        HealthServiceAccessibilityMask(4);
+    #[doc = "! No samples were recorded for the given time span."]
+    pub const HealthServiceAccessibilityMaskNotAvailable: HealthServiceAccessibilityMask =
+        HealthServiceAccessibilityMask(8);
 }
 #[repr(transparent)]
-/**! Possible values returned by \ref health_service_metric_accessible().
-! The values are used in combination as a bitmask.
-! For example, to check if any data is available for a given request use:
-! bool any_data_available = value & HealthServiceAccessibilityMaskAvailable;*/
+#[doc = "! Possible values returned by \\ref health_service_metric_accessible().\n! The values are used in combination as a bitmask.\n! For example, to check if any data is available for a given request use:\n! bool any_data_available = value & HealthServiceAccessibilityMaskAvailable;"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthServiceAccessibilityMask(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Check if a certain combination of metric and time span is accessible using
-! \ref health_service_sum by returning a value of \ref HealthServiceAccessibilityMask. Developers
-! should check if the return value is \ref HealthServiceAccessibilityMaskAvailable before calling
-! \ref health_service_sum.
-!
-! Note that this call is the same as calling `health_service_metric_averaged_accessible(metric,
-! time_start, time_end, HealthServiceTimeScopeOnce)`
-!
-! @param metric The metric to query for data.
-! @param time_start Earliest UTC time you are interested in.
-! @param time_end Latest UTC time you are interested in.
-! @return A \ref HealthServiceAccessibilityMask representing the accessible metrics
-! in this time range.*/
+    #[doc = "! Check if a certain combination of metric and time span is accessible using\n! \\ref health_service_sum by returning a value of \\ref HealthServiceAccessibilityMask. Developers\n! should check if the return value is \\ref HealthServiceAccessibilityMaskAvailable before calling\n! \\ref health_service_sum.\n!\n! Note that this call is the same as calling `health_service_metric_averaged_accessible(metric,\n! time_start, time_end, HealthServiceTimeScopeOnce)`\n!\n! @param metric The metric to query for data.\n! @param time_start Earliest UTC time you are interested in.\n! @param time_end Latest UTC time you are interested in.\n! @return A \\ref HealthServiceAccessibilityMask representing the accessible metrics\n! in this time range."]
     pub fn health_service_metric_accessible(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1450,20 +1055,7 @@ unsafe extern "C" {
     ) -> HealthServiceAccessibilityMask;
 }
 unsafe extern "C" {
-    /**! Check if a certain combination of metric, time span, and scope is accessible for calculating
-! summed, averaged data by returning a value of \ref HealthServiceAccessibilityMask. Developers
-! should check if the return value is \ref HealthServiceAccessibilityMaskAvailable before calling
-! \ref health_service_sum_averaged.
-!
-! Note that this call is the same as calling
-! `health_service_metric_aggregate_averaged_accessible(metric, time_start, time_end,
-!  HealthAggregationSum, HealthServiceTimeScopeOnce)`
-!
-! @param metric The metric to query for averaged data.
-! @param time_start Earliest UTC time you are interested in.
-! @param time_end Latest UTC time you are interested in.
-! @param scope \ref HealthServiceTimeScope value describing how the average should be computed.
-! @return A \HealthServiceAccessibilityMask value decribing whether averaged data is available.*/
+    #[doc = "! Check if a certain combination of metric, time span, and scope is accessible for calculating\n! summed, averaged data by returning a value of \\ref HealthServiceAccessibilityMask. Developers\n! should check if the return value is \\ref HealthServiceAccessibilityMaskAvailable before calling\n! \\ref health_service_sum_averaged.\n!\n! Note that this call is the same as calling\n! `health_service_metric_aggregate_averaged_accessible(metric, time_start, time_end,\n!  HealthAggregationSum, HealthServiceTimeScopeOnce)`\n!\n! @param metric The metric to query for averaged data.\n! @param time_start Earliest UTC time you are interested in.\n! @param time_end Latest UTC time you are interested in.\n! @param scope \\ref HealthServiceTimeScope value describing how the average should be computed.\n! @return A \\HealthServiceAccessibilityMask value decribing whether averaged data is available."]
     pub fn health_service_metric_averaged_accessible(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1472,17 +1064,7 @@ unsafe extern "C" {
     ) -> HealthServiceAccessibilityMask;
 }
 unsafe extern "C" {
-    /**! Check if a certain combination of metric, time span, aggregation operation, and scope is
-! accessible for calculating aggregated, averaged data by returning a value of
-! \ref HealthServiceAccessibilityMask. Developers should check if the return value is
-! \ref HealthServiceAccessibilityMaskAvailable before calling
-! \ref health_service_aggregate_averaged.
-! @param metric The metric to query for averaged data.
-! @param time_start Earliest UTC time you are interested in.
-! @param time_end Latest UTC time you are interested in.
-! @param aggregation The aggregation to perform
-! @param scope \ref HealthServiceTimeScope value describing how the average should be computed.
-! @return A \HealthServiceAccessibilityMask value decribing whether averaged data is available.*/
+    #[doc = "! Check if a certain combination of metric, time span, aggregation operation, and scope is\n! accessible for calculating aggregated, averaged data by returning a value of\n! \\ref HealthServiceAccessibilityMask. Developers should check if the return value is\n! \\ref HealthServiceAccessibilityMaskAvailable before calling\n! \\ref health_service_aggregate_averaged.\n! @param metric The metric to query for averaged data.\n! @param time_start Earliest UTC time you are interested in.\n! @param time_end Latest UTC time you are interested in.\n! @param aggregation The aggregation to perform\n! @param scope \\ref HealthServiceTimeScope value describing how the average should be computed.\n! @return A \\HealthServiceAccessibilityMask value decribing whether averaged data is available."]
     pub fn health_service_metric_aggregate_averaged_accessible(
         metric: HealthMetric,
         time_start: ::core::ffi::c_long,
@@ -1492,15 +1074,7 @@ unsafe extern "C" {
     ) -> HealthServiceAccessibilityMask;
 }
 unsafe extern "C" {
-    /**! Check if a certain combination of metric, \ref HealthActivityMask and time span is
-! accessible. Developers should check if the return value is
-! \ref HealthServiceAccessibilityMaskAvailable before calling any other HealthService APIs that
-! involve the given activities.
-! @param activity_mask A bitmask of activities you are interested in.
-! @param time_start Earliest UTC time you are interested in.
-! @param time_end Latest UTC time you are interested in.
-! @return A \ref HealthServiceAccessibilityMask representing which of the
-! passed \ref HealthActivityMask values are available under the given constraints.*/
+    #[doc = "! Check if a certain combination of metric, \\ref HealthActivityMask and time span is\n! accessible. Developers should check if the return value is\n! \\ref HealthServiceAccessibilityMaskAvailable before calling any other HealthService APIs that\n! involve the given activities.\n! @param activity_mask A bitmask of activities you are interested in.\n! @param time_start Earliest UTC time you are interested in.\n! @param time_end Latest UTC time you are interested in.\n! @return A \\ref HealthServiceAccessibilityMask representing which of the\n! passed \\ref HealthActivityMask values are available under the given constraints."]
     pub fn health_service_any_activity_accessible(
         activity_mask: HealthActivityMask,
         time_start: ::core::ffi::c_long,
@@ -1508,116 +1082,53 @@ unsafe extern "C" {
     ) -> HealthServiceAccessibilityMask;
 }
 impl HealthEventType {
-    /**! All data is considered as outdated and apps should re-read all health data.
-! This happens after an app is subscribed via \ref health_service_events_subscribe(),
-! on a change of the day, or in other cases that significantly change the underlying data.*/
+    #[doc = "! All data is considered as outdated and apps should re-read all health data.\n! This happens after an app is subscribed via \\ref health_service_events_subscribe(),\n! on a change of the day, or in other cases that significantly change the underlying data."]
     pub const HealthEventSignificantUpdate: HealthEventType = HealthEventType(0);
-    /**! Recent values around \ref HealthMetricStepCount, \ref HealthMetricActiveSeconds,
-! or \ref HealthMetricWalkedDistanceMeters have changed.*/
+    #[doc = "! Recent values around \\ref HealthMetricStepCount, \\ref HealthMetricActiveSeconds,\n! or \\ref HealthMetricWalkedDistanceMeters have changed."]
     pub const HealthEventMovementUpdate: HealthEventType = HealthEventType(1);
-    /**! Recent values around \ref HealthMetricSleepSeconds, \ref HealthMetricSleepRestfulSeconds,
-! \ref HealthActivitySleep, and \ref HealthActivityRestfulSleep changed.*/
+    #[doc = "! Recent values around \\ref HealthMetricSleepSeconds, \\ref HealthMetricSleepRestfulSeconds,\n! \\ref HealthActivitySleep, and \\ref HealthActivityRestfulSleep changed."]
     pub const HealthEventSleepUpdate: HealthEventType = HealthEventType(2);
-    ///! A metric has crossed the threshold set by \ref health_service_register_metric_alert.
+    #[doc = "! A metric has crossed the threshold set by \\ref health_service_register_metric_alert."]
     pub const HealthEventMetricAlert: HealthEventType = HealthEventType(3);
-    ///! Value of \ref HealthMetricHeartRateBPM or \ref HealthMetricHeartRateRawBPM has changed.
+    #[doc = "! Value of \\ref HealthMetricHeartRateBPM or \\ref HealthMetricHeartRateRawBPM has changed."]
     pub const HealthEventHeartRateUpdate: HealthEventType = HealthEventType(4);
 }
 #[repr(transparent)]
-///! Health event enum. Passed into the \ref HealthEventHandler.
+#[doc = "! Health event enum. Passed into the \\ref HealthEventHandler."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct HealthEventType(pub ::core::ffi::c_uchar);
-/**! Developer-supplied event handler, called when a health-related event occurs after subscribing
-! via \ref health_service_events_subscribe();
-! @param event The type of health-related event that occured.
-! @param context The developer-supplied context pointer.*/
+#[doc = "! Developer-supplied event handler, called when a health-related event occurs after subscribing\n! via \\ref health_service_events_subscribe();\n! @param event The type of health-related event that occured.\n! @param context The developer-supplied context pointer."]
 pub type HealthEventHandler = ::core::option::Option<
     unsafe extern "C" fn(event: HealthEventType, context: *mut ::core::ffi::c_void),
 >;
 unsafe extern "C" {
-    /**! Subscribe to HealthService events. This allocates a cache on the application's heap of up
-! to 2048 bytes that will be de-allocated if you call \ref health_service_events_unsubscribe().
-! If there's not enough heap available, this function will return `false` and will not
-! subscribe to any events.
-! @param handler Developer-supplied event handler function.
-! @param context Developer-supplied context pointer.
-! @return `true` on success, `false` on failure.*/
+    #[doc = "! Subscribe to HealthService events. This allocates a cache on the application's heap of up\n! to 2048 bytes that will be de-allocated if you call \\ref health_service_events_unsubscribe().\n! If there's not enough heap available, this function will return `false` and will not\n! subscribe to any events.\n! @param handler Developer-supplied event handler function.\n! @param context Developer-supplied context pointer.\n! @return `true` on success, `false` on failure."]
     pub fn health_service_events_subscribe(
         handler: HealthEventHandler,
         context: *mut ::core::ffi::c_void,
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Unsubscribe from HealthService events.
-! @return `true` on success, `false` on failure.*/
+    #[doc = "! Unsubscribe from HealthService events.\n! @return `true` on success, `false` on failure."]
     pub fn health_service_events_unsubscribe() -> bool;
 }
 unsafe extern "C" {
-    /**! Set the desired sampling period for heart rate readings. Normally, the system will sample the
-! heart rate using a sampling period that is automatically chosen to provide useful information
-! without undue battery drain (it automatically samples more often during periods of intense
-! activity, and less often when the user is idle). If desired though, an application can request a
-! specific sampling period using this call. The system will use this as a suggestion, but does not
-! guarantee that the requested period will be used. The actual sampling period may be greater or
-! less due to system needs or heart rate sensor reading quality issues.
-!
-! Each time a new heart rate reading becomes available, a `HealthEventHeartRateUpdate` event will
-! be sent to the application's `HealthEventHandler`. The sample period request will remain in
-! effect the entire time the app is running unless it is explicitly cancelled (by calling this
-! method again with 0 as the desired interval). If the app exits without first cancelling the
-! request, it will remain in effect even for a limited time afterwards. To determine how long it
-! will remain active after the app exits, use
-! `health_service_get_heart_rate_sample_period_expiration_sec`.
-!
-! Unless the app explicitly needs to access to historical high-resolution heart rate data, it is
-! best practice to always cancel the sample period request before exiting in order to maximize
-! battery life. Historical heart rate data can be accessed using the
-! `health_service_get_minute_history` call.
-! @param interval_sec desired interval between heart rate reading updates. Pass 0 to
-!   go back to automatically chosen intervals.
-! @return `true` on success, `false` on failure*/
+    #[doc = "! Set the desired sampling period for heart rate readings. Normally, the system will sample the\n! heart rate using a sampling period that is automatically chosen to provide useful information\n! without undue battery drain (it automatically samples more often during periods of intense\n! activity, and less often when the user is idle). If desired though, an application can request a\n! specific sampling period using this call. The system will use this as a suggestion, but does not\n! guarantee that the requested period will be used. The actual sampling period may be greater or\n! less due to system needs or heart rate sensor reading quality issues.\n!\n! Each time a new heart rate reading becomes available, a `HealthEventHeartRateUpdate` event will\n! be sent to the application's `HealthEventHandler`. The sample period request will remain in\n! effect the entire time the app is running unless it is explicitly cancelled (by calling this\n! method again with 0 as the desired interval). If the app exits without first cancelling the\n! request, it will remain in effect even for a limited time afterwards. To determine how long it\n! will remain active after the app exits, use\n! `health_service_get_heart_rate_sample_period_expiration_sec`.\n!\n! Unless the app explicitly needs to access to historical high-resolution heart rate data, it is\n! best practice to always cancel the sample period request before exiting in order to maximize\n! battery life. Historical heart rate data can be accessed using the\n! `health_service_get_minute_history` call.\n! @param interval_sec desired interval between heart rate reading updates. Pass 0 to\n!   go back to automatically chosen intervals.\n! @return `true` on success, `false` on failure"]
     pub fn health_service_set_heart_rate_sample_period(interval_sec: u16) -> bool;
 }
 unsafe extern "C" {
-    /**! Return how long a heart rate sample period request (sent via
-! `health_service_set_heart_rate_sample_period`) will remain active after the app exits. If
-! there is no current request by this app, this call will return 0.
-! @return The number of seconds the heart rate sample period request will remain active after
-! the app exits, or 0 if there is no active request by this app.*/
+    #[doc = "! Return how long a heart rate sample period request (sent via\n! `health_service_set_heart_rate_sample_period`) will remain active after the app exits. If\n! there is no current request by this app, this call will return 0.\n! @return The number of seconds the heart rate sample period request will remain active after\n! the app exits, or 0 if there is no active request by this app."]
     pub fn health_service_get_heart_rate_sample_period_expiration_sec() -> u16;
 }
 unsafe extern "C" {
-    /**! Register for an alert when a metric crosses the given threshold. When the metric crosses this
-! threshold (either goes above or below it), a \ref HealthEventMetricAlert event will be
-! generated. To cancel this registration, pass the returned \ref HealthMetricAlert value to
-! \ref health_service_cancel_metric_alert. The only metric currently supported by this call is
-! \ref HealthMetricHeartRateBPM, but future versions may support additional metrics. To see if a
-! specific metric is supported by this call, use:
-! \code{.c}
-! time_t now = time(NULL);
-! HealthServiceAccessibilityMask accessible =
-!     health_service_metric_aggregate_averaged_accessible(metric, now, now, HealthAggregationAvg,
-!     HealthServiceTimeScopeOnce);
-! bool alert_supported = (accessible & HealthServiceAccessibilityMaskAvailable);
-! \endcode
-!
-! In the current implementation, only one alert per metric can be registered at a time. Future
-! implementations may support two or more simulataneous alert registrations per metric. To change
-! the alert threshold in the current implementation, cancel the original registration
-! using `health_service_cancel_metric_alert` before registering the new threshold.
-! @param metric Which \ref HealthMetric to query.
-! @param threshold The threshold value.
-! @return handle to the alert registration on success, NULL on failure*/
+    #[doc = "! Register for an alert when a metric crosses the given threshold. When the metric crosses this\n! threshold (either goes above or below it), a \\ref HealthEventMetricAlert event will be\n! generated. To cancel this registration, pass the returned \\ref HealthMetricAlert value to\n! \\ref health_service_cancel_metric_alert. The only metric currently supported by this call is\n! \\ref HealthMetricHeartRateBPM, but future versions may support additional metrics. To see if a\n! specific metric is supported by this call, use:\n! \\code{.c}\n! time_t now = time(NULL);\n! HealthServiceAccessibilityMask accessible =\n!     health_service_metric_aggregate_averaged_accessible(metric, now, now, HealthAggregationAvg,\n!     HealthServiceTimeScopeOnce);\n! bool alert_supported = (accessible & HealthServiceAccessibilityMaskAvailable);\n! \\endcode\n!\n! In the current implementation, only one alert per metric can be registered at a time. Future\n! implementations may support two or more simulataneous alert registrations per metric. To change\n! the alert threshold in the current implementation, cancel the original registration\n! using `health_service_cancel_metric_alert` before registering the new threshold.\n! @param metric Which \\ref HealthMetric to query.\n! @param threshold The threshold value.\n! @return handle to the alert registration on success, NULL on failure"]
     pub fn health_service_register_metric_alert(
         metric: HealthMetric,
         threshold: HealthValue,
     ) -> *mut HealthMetricAlert;
 }
 unsafe extern "C" {
-    /**! Cancel an metric alert previously created with \ref health_service_register_metric_alert.
-! @param alert the \ref HealthMetricAlert previously returned by
-!  \ref health_service_register_metric_alert
-! @return `true` on success, `false` on failure*/
+    #[doc = "! Cancel an metric alert previously created with \\ref health_service_register_metric_alert.\n! @param alert the \\ref HealthMetricAlert previously returned by\n!  \\ref health_service_register_metric_alert\n! @return `true` on success, `false` on failure"]
     pub fn health_service_cancel_metric_alert(alert: *mut HealthMetricAlert) -> bool;
 }
 impl AmbientLightLevel {
@@ -1628,30 +1139,24 @@ impl AmbientLightLevel {
     pub const AmbientLightLevelVeryLight: AmbientLightLevel = AmbientLightLevel(4);
 }
 #[repr(transparent)]
-///! Light level enum
+#[doc = "! Light level enum"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AmbientLightLevel(pub ::core::ffi::c_uchar);
-/**! Structure representing a single minute data record returned
-! by \ref health_service_get_minute_history().
-! The `orientation` field encodes the angle of the watch in the x-y plane (the "yaw") in the
-! lower 4 bits (360 degrees linearly mapped to 1 of 16 different values) and the angle to the
-! z axis (the "pitch") in the upper 4 bits.
-! The `vmc` value is a measure of the total amount of movement seen by the watch. More vigorous
-! movement yields higher VMC values.*/
+#[doc = "! Structure representing a single minute data record returned\n! by \\ref health_service_get_minute_history().\n! The `orientation` field encodes the angle of the watch in the x-y plane (the \"yaw\") in the\n! lower 4 bits (360 degrees linearly mapped to 1 of 16 different values) and the angle to the\n! z axis (the \"pitch\") in the upper 4 bits.\n! The `vmc` value is a measure of the total amount of movement seen by the watch. More vigorous\n! movement yields higher VMC values."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct HealthMinuteData {
-    ///!< Number of steps taken in this minute.
+    #[doc = "!< Number of steps taken in this minute."]
     pub steps: u8,
-    ///!< Quantized average orientation.
+    #[doc = "!< Quantized average orientation."]
     pub orientation: u8,
-    ///!< Vector Magnitude Counts (vmc).
+    #[doc = "!< Vector Magnitude Counts (vmc)."]
     pub vmc: u16,
     pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
-    ///!< heart rate in beats per minute
+    #[doc = "!< heart rate in beats per minute"]
     pub heart_rate_bpm: u8,
-    ///!< Reserved for future use.
+    #[doc = "!< Reserved for future use."]
     pub reserved: [u8; 6usize],
 }
 impl Default for HealthMinuteData {
@@ -1678,21 +1183,18 @@ impl HealthMinuteData {
     #[inline]
     pub unsafe fn is_invalid_raw(this: *const Self) -> bool {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 0usize, 1u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                1u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_is_invalid_raw(this: *mut Self, val: bool) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 0usize,
                 1u8,
@@ -1714,21 +1216,18 @@ impl HealthMinuteData {
     #[inline]
     pub unsafe fn light_raw(this: *const Self) -> AmbientLightLevel {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 1usize, 3u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                1usize,
+                3u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_light_raw(this: *mut Self, val: AmbientLightLevel) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 1usize,
                 3u8,
@@ -1750,21 +1249,18 @@ impl HealthMinuteData {
     #[inline]
     pub unsafe fn padding_raw(this: *const Self) -> u8 {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 4usize, 4u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                4usize,
+                4u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_padding_raw(this: *mut Self, val: u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 4usize,
                 4u8,
@@ -1779,56 +1275,23 @@ impl HealthMinuteData {
         padding: u8,
     ) -> __BindgenBitfieldUnit<[u8; 1usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
-        __bindgen_bitfield_unit
-            .set(
-                0usize,
-                1u8,
-                {
-                    let is_invalid: u8 = unsafe { ::core::mem::transmute(is_invalid) };
-                    is_invalid as u64
-                },
-            );
-        __bindgen_bitfield_unit
-            .set(
-                1usize,
-                3u8,
-                {
-                    let light: u8 = unsafe { ::core::mem::transmute(light) };
-                    light as u64
-                },
-            );
-        __bindgen_bitfield_unit
-            .set(
-                4usize,
-                4u8,
-                {
-                    let padding: u8 = unsafe { ::core::mem::transmute(padding) };
-                    padding as u64
-                },
-            );
+        __bindgen_bitfield_unit.set(0usize, 1u8, {
+            let is_invalid: u8 = unsafe { ::core::mem::transmute(is_invalid) };
+            is_invalid as u64
+        });
+        __bindgen_bitfield_unit.set(1usize, 3u8, {
+            let light: u8 = unsafe { ::core::mem::transmute(light) };
+            light as u64
+        });
+        __bindgen_bitfield_unit.set(4usize, 4u8, {
+            let padding: u8 = unsafe { ::core::mem::transmute(padding) };
+            padding as u64
+        });
         __bindgen_bitfield_unit
     }
 }
 unsafe extern "C" {
-    /**! Return historical minute data records. This fills in the `minute_data` array parameter with
-! minute by minute statistics of the user's steps, average watch orientation, etc. The data is
-! returned in time order, with the oldest minute data returned at `minute_data[0]`.
-! @param minute_data Pointer to an array of \ref HealthMinuteData records that will be filled
-!      in with the historical minute data.
-! @param max_records The maximum number of records the `minute_data` array can hold.
-! @param[in,out] time_start On entry, the UTC time of the first requested record. On exit,
-!      the UTC time of the first second of the first record actually returned.
-!      If `time_start` on entry is somewhere in the middle of a minute interval, this function
-!      behaves as if the caller passed in the start of that minute.
-! @param[in,out] time_end On entry, the UTC time of the end of the requested range of records. On
-!      exit, the UTC time of the end of the last record actually returned (i.e. start time of last
-!      record + 60). If `time_end` on entry is somewhere in the middle of a minute interval, this
-!      function behaves as if the caller passed in the end of that minute.
-! @return Actual number of records returned. May be less then the maximum requested.
-! @note If the return value is zero, `time_start` and `time_end` are meaningless.
-!      It's not guaranteed that all records contain valid data, even if the return value is
-!      greater than zero. Check `HealthMinuteData.is_invalid` to see if a given record contains
-!      valid data.*/
+    #[doc = "! Return historical minute data records. This fills in the `minute_data` array parameter with\n! minute by minute statistics of the user's steps, average watch orientation, etc. The data is\n! returned in time order, with the oldest minute data returned at `minute_data[0]`.\n! @param minute_data Pointer to an array of \\ref HealthMinuteData records that will be filled\n!      in with the historical minute data.\n! @param max_records The maximum number of records the `minute_data` array can hold.\n! @param[in,out] time_start On entry, the UTC time of the first requested record. On exit,\n!      the UTC time of the first second of the first record actually returned.\n!      If `time_start` on entry is somewhere in the middle of a minute interval, this function\n!      behaves as if the caller passed in the start of that minute.\n! @param[in,out] time_end On entry, the UTC time of the end of the requested range of records. On\n!      exit, the UTC time of the end of the last record actually returned (i.e. start time of last\n!      record + 60). If `time_end` on entry is somewhere in the middle of a minute interval, this\n!      function behaves as if the caller passed in the end of that minute.\n! @return Actual number of records returned. May be less then the maximum requested.\n! @note If the return value is zero, `time_start` and `time_end` are meaningless.\n!      It's not guaranteed that all records contain valid data, even if the return value is\n!      greater than zero. Check `HealthMinuteData.is_invalid` to see if a given record contains\n!      valid data."]
     pub fn health_service_get_minute_history(
         minute_data: *mut HealthMinuteData,
         max_records: u32,
@@ -1837,114 +1300,59 @@ unsafe extern "C" {
     ) -> u32;
 }
 impl MeasurementSystem {
-    ///! The measurement system is unknown, or does not apply to the chosen metric.
+    #[doc = "! The measurement system is unknown, or does not apply to the chosen metric."]
     pub const MeasurementSystemUnknown: MeasurementSystem = MeasurementSystem(0);
-    ///! The metric measurement system.
+    #[doc = "! The metric measurement system."]
     pub const MeasurementSystemMetric: MeasurementSystem = MeasurementSystem(1);
-    ///! The imperial measurement system.
+    #[doc = "! The imperial measurement system."]
     pub const MeasurementSystemImperial: MeasurementSystem = MeasurementSystem(2);
 }
 #[repr(transparent)]
-///! Types of measurement system a \ref HealthMetric may be measured in.
+#[doc = "! Types of measurement system a \\ref HealthMetric may be measured in."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct MeasurementSystem(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Get the preferred measurement system for a given \ref HealthMetric, if the user has chosen
-! a preferred system and it is applicable to that metric.
-! @param metric A metric value chosen from \ref HealthMetric.
-! @return A value from \ref MeasurementSystem if applicable, else \ref MeasurementSystemUnknown.*/
+    #[doc = "! Get the preferred measurement system for a given \\ref HealthMetric, if the user has chosen\n! a preferred system and it is applicable to that metric.\n! @param metric A metric value chosen from \\ref HealthMetric.\n! @return A value from \\ref MeasurementSystem if applicable, else \\ref MeasurementSystemUnknown."]
     pub fn health_service_get_measurement_system_for_display(
         metric: HealthMetric,
     ) -> MeasurementSystem;
 }
-/**! @addtogroup DataLogging
-! \brief Enables logging data asynchronously to a mobile app
-!
-! In Pebble OS, data logging is a data storage and transfer subsystem that allows watchapps to
-! save data on non-volatile storage devices when the phone is not available to process it. The
-! API provides your watchapp with a mechanism for short-term data buffering for asynchronous data
-! transmission to a mobile app.
-!
-! Using this API, your Pebble watchapp can create an arbitrary number of logs, but you’re
-! limited in the amount of storage space you can use. Note that approximately 640K is available
-! for data logging, which is shared among all watchapps that use it. This value is subject to
-! change in the future. When the data spool is full, an app will start overwriting its own data.
-! An app cannot overwrite another apps's data. However, the other app might have 0 bytes for data
-! logging.
-!
-! Your app can log data to a session. Every new block of data is appended to the session.
-! The data is then sent to the associated phone application at the earliest convenience.
-! If a phone is available, the data is sent directly to the phone. Otherwise, it is saved to the
-! watch storage until the watch is connected to a phone.
-!
-!
-! For example:
-!
-! To create a data logging session for 4-byte unsigned integers with a tag of 0x1234, you would
-! do this: \code{.c}
-!
-! DataLoggingSessionRef logging_session = data_logging_create(0x1234, DATA_LOGGING_UINT, 4,
-!                                                             false);
-!
-! // Fake creating some data and logging it to the session.
-! uint32_t data[] = { 1, 2, 3};
-! data_logging_log(logging_session, &data, 3);
-!
-! // Fake creating more data and logging that as well.
-! uint32_t data2[] = { 1, 2 };
-! data_logging_log(logging_session, &data, 2);
-!
-! // When we don't need to log anything else, we can close off the session.
-! data_logging_finish(logging_session);
-! \endcode
-!
-! @{*/
+#[doc = "! @addtogroup DataLogging\n! \\brief Enables logging data asynchronously to a mobile app\n!\n! In Pebble OS, data logging is a data storage and transfer subsystem that allows watchapps to\n! save data on non-volatile storage devices when the phone is not available to process it. The\n! API provides your watchapp with a mechanism for short-term data buffering for asynchronous data\n! transmission to a mobile app.\n!\n! Using this API, your Pebble watchapp can create an arbitrary number of logs, but you’re\n! limited in the amount of storage space you can use. Note that approximately 640K is available\n! for data logging, which is shared among all watchapps that use it. This value is subject to\n! change in the future. When the data spool is full, an app will start overwriting its own data.\n! An app cannot overwrite another apps's data. However, the other app might have 0 bytes for data\n! logging.\n!\n! Your app can log data to a session. Every new block of data is appended to the session.\n! The data is then sent to the associated phone application at the earliest convenience.\n! If a phone is available, the data is sent directly to the phone. Otherwise, it is saved to the\n! watch storage until the watch is connected to a phone.\n!\n!\n! For example:\n!\n! To create a data logging session for 4-byte unsigned integers with a tag of 0x1234, you would\n! do this: \\code{.c}\n!\n! DataLoggingSessionRef logging_session = data_logging_create(0x1234, DATA_LOGGING_UINT, 4,\n!                                                             false);\n!\n! // Fake creating some data and logging it to the session.\n! uint32_t data[] = { 1, 2, 3};\n! data_logging_log(logging_session, &data, 3);\n!\n! // Fake creating more data and logging that as well.\n! uint32_t data2[] = { 1, 2 };\n! data_logging_log(logging_session, &data, 2);\n!\n! // When we don't need to log anything else, we can close off the session.\n! data_logging_finish(logging_session);\n! \\endcode\n!\n! @{"]
 pub type DataLoggingSessionRef = *mut ::core::ffi::c_void;
 impl DataLoggingItemType {
-    /**! Array of bytes. Remember that this is the type of a single item in the logging session, so
-! using this type means you'll be logging multiple byte arrays (each a fixed length described
-! by item_length) for the duration of the session.*/
+    #[doc = "! Array of bytes. Remember that this is the type of a single item in the logging session, so\n! using this type means you'll be logging multiple byte arrays (each a fixed length described\n! by item_length) for the duration of the session."]
     pub const DATA_LOGGING_BYTE_ARRAY: DataLoggingItemType = DataLoggingItemType(0);
-    ///! Unsigned integer. This may be a 1, 2, or 4 byte integer depending on the item_length parameter
+    #[doc = "! Unsigned integer. This may be a 1, 2, or 4 byte integer depending on the item_length parameter"]
     pub const DATA_LOGGING_UINT: DataLoggingItemType = DataLoggingItemType(2);
-    ///! Signed integer. This may be a 1, 2, or 4 byte integer depending on the item_length parameter
+    #[doc = "! Signed integer. This may be a 1, 2, or 4 byte integer depending on the item_length parameter"]
     pub const DATA_LOGGING_INT: DataLoggingItemType = DataLoggingItemType(3);
 }
 #[repr(transparent)]
-/**! The different types of session data that Pebble supports. This type describes the type of a
-! singular item in the data session. Every item in a given session is the same type and size.*/
+#[doc = "! The different types of session data that Pebble supports. This type describes the type of a\n! singular item in the data session. Every item in a given session is the same type and size."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct DataLoggingItemType(pub ::core::ffi::c_uchar);
 impl DataLoggingResult {
-    ///!< Successful operation
+    #[doc = "!< Successful operation"]
     pub const DATA_LOGGING_SUCCESS: DataLoggingResult = DataLoggingResult(0);
-    ///!< Someone else is writing to this logging session
+    #[doc = "!< Someone else is writing to this logging session"]
     pub const DATA_LOGGING_BUSY: DataLoggingResult = DataLoggingResult(1);
-    ///!< No more space to save data
+    #[doc = "!< No more space to save data"]
     pub const DATA_LOGGING_FULL: DataLoggingResult = DataLoggingResult(2);
-    ///!< The logging session does not exist
+    #[doc = "!< The logging session does not exist"]
     pub const DATA_LOGGING_NOT_FOUND: DataLoggingResult = DataLoggingResult(3);
-    ///!< The logging session was made inactive
+    #[doc = "!< The logging session was made inactive"]
     pub const DATA_LOGGING_CLOSED: DataLoggingResult = DataLoggingResult(4);
-    ///!< An invalid parameter was passed to one of the functions
+    #[doc = "!< An invalid parameter was passed to one of the functions"]
     pub const DATA_LOGGING_INVALID_PARAMS: DataLoggingResult = DataLoggingResult(5);
-    ///!< An internal error occurred
+    #[doc = "!< An internal error occurred"]
     pub const DATA_LOGGING_INTERNAL_ERR: DataLoggingResult = DataLoggingResult(6);
 }
 #[repr(transparent)]
-///! Enumerated values describing the possible outcomes of data logging operations
+#[doc = "! Enumerated values describing the possible outcomes of data logging operations"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct DataLoggingResult(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Create a new data logging session.
-!
-! @param tag A tag associated with the logging session.
-! @param item_type The type of data stored in this logging session
-! @param item_length The size of a single data item in bytes
-! @param resume True if we want to look for a logging session of the same tag and
-!   resume logging to it. If this is false and a session with the specified tag exists, that
-!   session will be closed and a new session will be opened.
-! @return An opaque reference to the data logging session*/
+    #[doc = "! Create a new data logging session.\n!\n! @param tag A tag associated with the logging session.\n! @param item_type The type of data stored in this logging session\n! @param item_length The size of a single data item in bytes\n! @param resume True if we want to look for a logging session of the same tag and\n!   resume logging to it. If this is false and a session with the specified tag exists, that\n!   session will be closed and a new session will be opened.\n! @return An opaque reference to the data logging session"]
     pub fn data_logging_create(
         tag: u32,
         item_type: DataLoggingItemType,
@@ -1953,45 +1361,18 @@ unsafe extern "C" {
     ) -> DataLoggingSessionRef;
 }
 unsafe extern "C" {
-    /**! Finish up a data logging_session. Logging data is kept until it has successfully been
-! transferred over to the phone, but no data may be added to the session after this function is
-! called.
-!
-! @param logging_session a reference to the data logging session previously allocated using
-!   data_logging_create*/
+    #[doc = "! Finish up a data logging_session. Logging data is kept until it has successfully been\n! transferred over to the phone, but no data may be added to the session after this function is\n! called.\n!\n! @param logging_session a reference to the data logging session previously allocated using\n!   data_logging_create"]
     pub fn data_logging_finish(logging_session: DataLoggingSessionRef);
 }
 unsafe extern "C" {
-    /**! Add data to the data logging session. If a phone is available, the data is sent directly
-! to the phone. Otherwise, it is saved to the watch storage until the watch is connected to a
-! phone.
-!
-! @param logging_session a reference to the data logging session you want to add the data to
-! @param data a pointer to the data buffer that contains multiple items
-! @param num_items the number of items to log. This means data must be at least
-!    (num_items * item_length) long in bytes
-! @return
-! DATA_LOGGING_SUCCESS on success
-!
-! @return
-! DATA_LOGGING_NOT_FOUND if the logging session is invalid
-!
-! @return
-! DATA_LOGGING_CLOSED if the sesion is not active
-!
-! @return
-! DATA_LOGGING_BUSY if the sesion is not available for writing
-!
-! @return
-! DATA_LOGGING_INVALID_PARAMS if num_items is 0 or data is NULL*/
+    #[doc = "! Add data to the data logging session. If a phone is available, the data is sent directly\n! to the phone. Otherwise, it is saved to the watch storage until the watch is connected to a\n! phone.\n!\n! @param logging_session a reference to the data logging session you want to add the data to\n! @param data a pointer to the data buffer that contains multiple items\n! @param num_items the number of items to log. This means data must be at least\n!    (num_items * item_length) long in bytes\n! @return\n! DATA_LOGGING_SUCCESS on success\n!\n! @return\n! DATA_LOGGING_NOT_FOUND if the logging session is invalid\n!\n! @return\n! DATA_LOGGING_CLOSED if the sesion is not active\n!\n! @return\n! DATA_LOGGING_BUSY if the sesion is not available for writing\n!\n! @return\n! DATA_LOGGING_INVALID_PARAMS if num_items is 0 or data is NULL"]
     pub fn data_logging_log(
         logging_session: DataLoggingSessionRef,
         data: *const ::core::ffi::c_void,
         num_items: u32,
     ) -> DataLoggingResult;
 }
-/**! @addtogroup UUID
-! @{*/
+#[doc = "! @addtogroup UUID\n! @{"]
 #[repr(C, packed)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Uuid {
@@ -2013,29 +1394,15 @@ pub struct Uuid {
     pub byte15: u8,
 }
 unsafe extern "C" {
-    /**! Compares two UUIDs.
-! @return True if the two UUIDs are equal, false if they are not.*/
+    #[doc = "! Compares two UUIDs.\n! @return True if the two UUIDs are equal, false if they are not."]
     pub fn uuid_equal(uu1: *const Uuid, uu2: *const Uuid) -> bool;
 }
 unsafe extern "C" {
-    /**! Writes UUID in a string form into buffer that looks like the following...
-! {12345678-1234-5678-1234-567812345678} or {NULL UUID} if NULL was passed.
-! @param uuid The Uuid to write into the buffer as human-readable string
-! @param buffer Memory to write the string to. Must be at least \ref UUID_STRING_BUFFER_LENGTH bytes long.*/
+    #[doc = "! Writes UUID in a string form into buffer that looks like the following...\n! {12345678-1234-5678-1234-567812345678} or {NULL UUID} if NULL was passed.\n! @param uuid The Uuid to write into the buffer as human-readable string\n! @param buffer Memory to write the string to. Must be at least \\ref UUID_STRING_BUFFER_LENGTH bytes long."]
     pub fn uuid_to_string(uuid: *const Uuid, buffer: *mut ::core::ffi::c_char);
 }
 unsafe extern "C" {
-    /**! @addtogroup Logging Logging
-!   \brief Functions related to logging from apps.
-!
-! This module contains the functions necessary to log messages through
-! Bluetooth.
-! @note It is no longer necessary to enable app logging output from the "settings->about" menu on the Pebble for
-! them to be transmitted!  Instead use the "pebble logs" command included with the SDK to activate logs.  The logs
-! will appear right in your console. Logging
-! over Bluetooth is a fairly power hungry operation that non-developers will
-! not need when your apps are distributed.
-! @{*/
+    #[doc = "! @addtogroup Logging Logging\n!   \\brief Functions related to logging from apps.\n!\n! This module contains the functions necessary to log messages through\n! Bluetooth.\n! @note It is no longer necessary to enable app logging output from the \"settings->about\" menu on the Pebble for\n! them to be transmitted!  Instead use the \"pebble logs\" command included with the SDK to activate logs.  The logs\n! will appear right in your console. Logging\n! over Bluetooth is a fairly power hungry operation that non-developers will\n! not need when your apps are distributed.\n! @{"]
     pub fn app_log(
         log_level: u8,
         src_filename: *const ::core::ffi::c_char,
@@ -2045,96 +1412,80 @@ unsafe extern "C" {
     );
 }
 impl AppLogLevel {
-    ///! Error level log message
+    #[doc = "! Error level log message"]
     pub const APP_LOG_LEVEL_ERROR: AppLogLevel = AppLogLevel(1);
-    ///! Warning level log message
+    #[doc = "! Warning level log message"]
     pub const APP_LOG_LEVEL_WARNING: AppLogLevel = AppLogLevel(50);
-    ///! Info level log message
+    #[doc = "! Info level log message"]
     pub const APP_LOG_LEVEL_INFO: AppLogLevel = AppLogLevel(100);
-    ///! Debug level log message
+    #[doc = "! Debug level log message"]
     pub const APP_LOG_LEVEL_DEBUG: AppLogLevel = AppLogLevel(200);
-    ///! Verbose Debug level log message
+    #[doc = "! Verbose Debug level log message"]
     pub const APP_LOG_LEVEL_DEBUG_VERBOSE: AppLogLevel = AppLogLevel(255);
 }
 #[repr(transparent)]
-///! Suggested log level values
+#[doc = "! Suggested log level values"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppLogLevel(pub ::core::ffi::c_uchar);
 impl DictionaryResult {
-    ///! The operation returned successfully
+    #[doc = "! The operation returned successfully"]
     pub const DICT_OK: DictionaryResult = DictionaryResult(0);
-    ///! There was not enough backing storage to complete the operation
+    #[doc = "! There was not enough backing storage to complete the operation"]
     pub const DICT_NOT_ENOUGH_STORAGE: DictionaryResult = DictionaryResult(2);
-    ///! One or more arguments were invalid or uninitialized
+    #[doc = "! One or more arguments were invalid or uninitialized"]
     pub const DICT_INVALID_ARGS: DictionaryResult = DictionaryResult(4);
-    ///! The lengths and/or count of the dictionary its tuples are inconsistent
+    #[doc = "! The lengths and/or count of the dictionary its tuples are inconsistent"]
     pub const DICT_INTERNAL_INCONSISTENCY: DictionaryResult = DictionaryResult(8);
-    /**! A requested operation required additional memory to be allocated, but
-! the allocation failed, likely due to insufficient remaining heap memory.*/
+    #[doc = "! A requested operation required additional memory to be allocated, but\n! the allocation failed, likely due to insufficient remaining heap memory."]
     pub const DICT_MALLOC_FAILED: DictionaryResult = DictionaryResult(16);
 }
 #[repr(transparent)]
-///! Return values for dictionary write/conversion functions.
+#[doc = "! Return values for dictionary write/conversion functions."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct DictionaryResult(pub ::core::ffi::c_uchar);
 impl TupleType {
-    ///! The value is an array of bytes
+    #[doc = "! The value is an array of bytes"]
     pub const TUPLE_BYTE_ARRAY: TupleType = TupleType(0);
-    ///! The value is a zero-terminated, UTF-8 C-string
+    #[doc = "! The value is a zero-terminated, UTF-8 C-string"]
     pub const TUPLE_CSTRING: TupleType = TupleType(1);
-    /**! The value is an unsigned integer. The tuple's `.length` field is used to
-! determine the size of the integer (1, 2, or 4 bytes).*/
+    #[doc = "! The value is an unsigned integer. The tuple's `.length` field is used to\n! determine the size of the integer (1, 2, or 4 bytes)."]
     pub const TUPLE_UINT: TupleType = TupleType(2);
-    /**! The value is a signed integer. The tuple's `.length` field is used to
-! determine the size of the integer (1, 2, or 4 bytes).*/
+    #[doc = "! The value is a signed integer. The tuple's `.length` field is used to\n! determine the size of the integer (1, 2, or 4 bytes)."]
     pub const TUPLE_INT: TupleType = TupleType(3);
 }
 #[repr(transparent)]
-///! Values representing the type of data that the `value` field of a Tuple contains
+#[doc = "! Values representing the type of data that the `value` field of a Tuple contains"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct TupleType(pub ::core::ffi::c_uchar);
-/**! Data structure for one serialized key/value tuple
-! @note The structure is variable length! The length depends on the value data that the tuple
-! contains.*/
+#[doc = "! Data structure for one serialized key/value tuple\n! @note The structure is variable length! The length depends on the value data that the tuple\n! contains."]
 #[repr(C, packed)]
 pub struct Tuple {
-    ///! The key
+    #[doc = "! The key"]
     pub key: u32,
     pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
-    ///! The length of `.value` in bytes
+    #[doc = "! The length of `.value` in bytes"]
     pub length: u16,
     pub value: __IncompleteArrayField<Tuple__bindgen_ty_1>,
 }
-/**! @brief The value itself.
-!
-! The different union fields are provided for convenience, avoiding the need for manual casts.
-! @note The array length is of incomplete length on purpose, to facilitate
-! variable length data and because a data length of zero is valid.
-! @note __Important: The integers are little endian!__*/
+#[doc = "! @brief The value itself.\n!\n! The different union fields are provided for convenience, avoiding the need for manual casts.\n! @note The array length is of incomplete length on purpose, to facilitate\n! variable length data and because a data length of zero is valid.\n! @note __Important: The integers are little endian!__"]
 #[repr(C)]
 pub struct Tuple__bindgen_ty_1 {
-    ///! The byte array value. Valid when `.type` is \ref TUPLE_BYTE_ARRAY.
+    #[doc = "! The byte array value. Valid when `.type` is \\ref TUPLE_BYTE_ARRAY."]
     pub data: __BindgenUnionField<[u8; 0usize]>,
-    ///! The C-string value. Valid when `.type` is \ref TUPLE_CSTRING.
+    #[doc = "! The C-string value. Valid when `.type` is \\ref TUPLE_CSTRING."]
     pub cstring: __BindgenUnionField<[::core::ffi::c_char; 0usize]>,
-    /**! The 8-bit unsigned integer value. Valid when `.type` is \ref TUPLE_UINT
-! and `.length` is 1 byte.*/
+    #[doc = "! The 8-bit unsigned integer value. Valid when `.type` is \\ref TUPLE_UINT\n! and `.length` is 1 byte."]
     pub uint8: __BindgenUnionField<u8>,
-    /**! The 16-bit unsigned integer value. Valid when `.type` is \ref TUPLE_UINT
-! and `.length` is 2 byte.*/
+    #[doc = "! The 16-bit unsigned integer value. Valid when `.type` is \\ref TUPLE_UINT\n! and `.length` is 2 byte."]
     pub uint16: __BindgenUnionField<u16>,
-    /**! The 32-bit unsigned integer value. Valid when `.type` is \ref TUPLE_UINT
-! and `.length` is 4 byte.*/
+    #[doc = "! The 32-bit unsigned integer value. Valid when `.type` is \\ref TUPLE_UINT\n! and `.length` is 4 byte."]
     pub uint32: __BindgenUnionField<u32>,
-    /**! The 8-bit signed integer value. Valid when `.type` is \ref TUPLE_INT
-! and `.length` is 1 byte.*/
+    #[doc = "! The 8-bit signed integer value. Valid when `.type` is \\ref TUPLE_INT\n! and `.length` is 1 byte."]
     pub int8: __BindgenUnionField<i8>,
-    /**! The 16-bit signed integer value. Valid when `.type` is \ref TUPLE_INT
-! and `.length` is 2 byte.*/
+    #[doc = "! The 16-bit signed integer value. Valid when `.type` is \\ref TUPLE_INT\n! and `.length` is 2 byte."]
     pub int16: __BindgenUnionField<i16>,
-    /**! The 32-bit signed integer value. Valid when `.type` is \ref TUPLE_INT
-! and `.length` is 4 byte.*/
+    #[doc = "! The 32-bit signed integer value. Valid when `.type` is \\ref TUPLE_INT\n! and `.length` is 4 byte."]
     pub int32: __BindgenUnionField<i32>,
     pub bindgen_union_field: u32,
 }
@@ -2171,21 +1522,18 @@ impl Tuple {
     #[inline]
     pub unsafe fn type__raw(this: *const Self) -> TupleType {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 0usize, 8u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                8u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_type_raw(this: *mut Self, val: TupleType) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 0usize,
                 8u8,
@@ -2196,15 +1544,10 @@ impl Tuple {
     #[inline]
     pub fn new_bitfield_1(type_: TupleType) -> __BindgenBitfieldUnit<[u8; 1usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
-        __bindgen_bitfield_unit
-            .set(
-                0usize,
-                8u8,
-                {
-                    let type_: u8 = unsafe { ::core::mem::transmute(type_) };
-                    type_ as u64
-                },
-            );
+        __bindgen_bitfield_unit.set(0usize, 8u8, {
+            let type_: u8 = unsafe { ::core::mem::transmute(type_) };
+            type_ as u64
+        });
         __bindgen_bitfield_unit
     }
 }
@@ -2213,22 +1556,15 @@ impl Tuple {
 pub struct Dictionary {
     _unused: [u8; 0],
 }
-/**! An iterator can be used to iterate over the key/value
-! tuples in an existing dictionary, using \ref dict_read_begin_from_buffer(),
-! \ref dict_read_first() and \ref dict_read_next().
-! An iterator can also be used to append key/value tuples to a dictionary,
-! for example using \ref dict_write_data() or \ref dict_write_cstring().*/
+#[doc = "! An iterator can be used to iterate over the key/value\n! tuples in an existing dictionary, using \\ref dict_read_begin_from_buffer(),\n! \\ref dict_read_first() and \\ref dict_read_next().\n! An iterator can also be used to append key/value tuples to a dictionary,\n! for example using \\ref dict_write_data() or \\ref dict_write_cstring()."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct DictionaryIterator {
-    ///!< The dictionary being iterated
+    #[doc = "!< The dictionary being iterated"]
     pub dictionary: *mut Dictionary,
-    ///!< Points to the first memory address after the last byte of the dictionary
+    #[doc = "!< Points to the first memory address after the last byte of the dictionary"]
     pub end: *const ::core::ffi::c_void,
-    /**! Points to the next Tuple in the dictionary. Given the end of the
-! Dictionary has not yet been reached: when writing, the next key/value
-! pair will be written at the cursor. When reading, the next call
-! to \ref dict_read_next() will return the cursor.*/
+    #[doc = "! Points to the next Tuple in the dictionary. Given the end of the\n! Dictionary has not yet been reached: when writing, the next key/value\n! pair will be written at the cursor. When reading, the next call\n! to \\ref dict_read_next() will return the cursor."]
     pub cursor: *mut Tuple,
 }
 impl Default for DictionaryIterator {
@@ -2241,36 +1577,15 @@ impl Default for DictionaryIterator {
     }
 }
 unsafe extern "C" {
-    /**! Calculates the number of bytes that a dictionary will occupy, given
-! one or more value lengths that need to be stored in the dictionary.
-! @note The formula to calculate the size of a Dictionary in bytes is:
-! <pre>1 + (n * 7) + D1 + ... + Dn</pre>
-! Where `n` is the number of Tuples in the Dictionary and `Dx` are the sizes
-! of the values in the Tuples. The size of the Dictionary header is 1 byte.
-! The size of the header for each Tuple is 7 bytes.
-! @param tuple_count The total number of key/value pairs in the dictionary.
-! @param ... The sizes of each of the values that need to be
-! stored in the dictionary.
-! @return The total number of bytes of storage needed.*/
+    #[doc = "! Calculates the number of bytes that a dictionary will occupy, given\n! one or more value lengths that need to be stored in the dictionary.\n! @note The formula to calculate the size of a Dictionary in bytes is:\n! <pre>1 + (n * 7) + D1 + ... + Dn</pre>\n! Where `n` is the number of Tuples in the Dictionary and `Dx` are the sizes\n! of the values in the Tuples. The size of the Dictionary header is 1 byte.\n! The size of the header for each Tuple is 7 bytes.\n! @param tuple_count The total number of key/value pairs in the dictionary.\n! @param ... The sizes of each of the values that need to be\n! stored in the dictionary.\n! @return The total number of bytes of storage needed."]
     pub fn dict_calc_buffer_size(tuple_count: u8, ...) -> u32;
 }
 unsafe extern "C" {
-    /**! Calculates the size of data that has been written to the dictionary.
-! AKA, the "dictionary size". Note that this is most likely different
-! than the size of the backing storage/backing buffer.
-! @param iter The dictionary iterator
-! @return The total number of bytes which have been written to the dictionary.*/
+    #[doc = "! Calculates the size of data that has been written to the dictionary.\n! AKA, the \"dictionary size\". Note that this is most likely different\n! than the size of the backing storage/backing buffer.\n! @param iter The dictionary iterator\n! @return The total number of bytes which have been written to the dictionary."]
     pub fn dict_size(iter: *mut DictionaryIterator) -> u32;
 }
 unsafe extern "C" {
-    /**! Initializes the dictionary iterator with a given buffer and size,
-! resets and empties it, in preparation of writing key/value tuples.
-! @param iter The dictionary iterator
-! @param buffer The storage of the dictionary
-! @param size The storage size of the dictionary
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS
-! @see dict_calc_buffer_size
-! @see dict_write_end*/
+    #[doc = "! Initializes the dictionary iterator with a given buffer and size,\n! resets and empties it, in preparation of writing key/value tuples.\n! @param iter The dictionary iterator\n! @param buffer The storage of the dictionary\n! @param size The storage size of the dictionary\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS\n! @see dict_calc_buffer_size\n! @see dict_write_end"]
     pub fn dict_write_begin(
         iter: *mut DictionaryIterator,
         buffer: *mut u8,
@@ -2278,14 +1593,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Adds a key with a byte array value pair to the dictionary.
-! @param iter The dictionary iterator
-! @param key The key
-! @param data Pointer to the byte array
-! @param size Length of the byte array
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS
-! @note The data will be copied into the backing storage of the dictionary.
-! @note There is _no_ checking for duplicate keys.*/
+    #[doc = "! Adds a key with a byte array value pair to the dictionary.\n! @param iter The dictionary iterator\n! @param key The key\n! @param data Pointer to the byte array\n! @param size Length of the byte array\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS\n! @note The data will be copied into the backing storage of the dictionary.\n! @note There is _no_ checking for duplicate keys."]
     pub fn dict_write_data(
         iter: *mut DictionaryIterator,
         key: u32,
@@ -2294,13 +1602,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Adds a key with a C string value pair to the dictionary.
-! @param iter The dictionary iterator
-! @param key The key
-! @param cstring Pointer to the zero-terminated C string
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS
-! @note The string will be copied into the backing storage of the dictionary.
-! @note There is _no_ checking for duplicate keys.*/
+    #[doc = "! Adds a key with a C string value pair to the dictionary.\n! @param iter The dictionary iterator\n! @param key The key\n! @param cstring Pointer to the zero-terminated C string\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS\n! @note The string will be copied into the backing storage of the dictionary.\n! @note There is _no_ checking for duplicate keys."]
     pub fn dict_write_cstring(
         iter: *mut DictionaryIterator,
         key: u32,
@@ -2308,15 +1610,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Adds a key with an integer value pair to the dictionary.
-! @param iter The dictionary iterator
-! @param key The key
-! @param integer Pointer to the integer value
-! @param width_bytes The width of the integer value
-! @param is_signed Whether the integer's type is signed or not
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS
-! @note There is _no_ checking for duplicate keys. dict_write_int() is only for serializing a single
-! integer. width_bytes can only be 1, 2, or 4.*/
+    #[doc = "! Adds a key with an integer value pair to the dictionary.\n! @param iter The dictionary iterator\n! @param key The key\n! @param integer Pointer to the integer value\n! @param width_bytes The width of the integer value\n! @param is_signed Whether the integer's type is signed or not\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS\n! @note There is _no_ checking for duplicate keys. dict_write_int() is only for serializing a single\n! integer. width_bytes can only be 1, 2, or 4."]
     pub fn dict_write_int(
         iter: *mut DictionaryIterator,
         key: u32,
@@ -2326,21 +1620,9 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Adds a key with an unsigned, 8-bit integer value pair to the dictionary.
-! @param iter The dictionary iterator
-! @param key The key
-! @param value The unsigned, 8-bit integer value
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS
-! @note There is _no_ checking for duplicate keys.
-! @note There are counterpart functions for different signedness and widths,
-! `dict_write_uint16()`, `dict_write_uint32()`, `dict_write_int8()`,
-! `dict_write_int16()` and `dict_write_int32()`. The documentation is not
-! repeated for brevity's sake.*/
-    pub fn dict_write_uint8(
-        iter: *mut DictionaryIterator,
-        key: u32,
-        value: u8,
-    ) -> DictionaryResult;
+    #[doc = "! Adds a key with an unsigned, 8-bit integer value pair to the dictionary.\n! @param iter The dictionary iterator\n! @param key The key\n! @param value The unsigned, 8-bit integer value\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS\n! @note There is _no_ checking for duplicate keys.\n! @note There are counterpart functions for different signedness and widths,\n! `dict_write_uint16()`, `dict_write_uint32()`, `dict_write_int8()`,\n! `dict_write_int16()` and `dict_write_int32()`. The documentation is not\n! repeated for brevity's sake."]
+    pub fn dict_write_uint8(iter: *mut DictionaryIterator, key: u32, value: u8)
+        -> DictionaryResult;
 }
 unsafe extern "C" {
     pub fn dict_write_uint16(
@@ -2357,11 +1639,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    pub fn dict_write_int8(
-        iter: *mut DictionaryIterator,
-        key: u32,
-        value: i8,
-    ) -> DictionaryResult;
+    pub fn dict_write_int8(iter: *mut DictionaryIterator, key: u32, value: i8) -> DictionaryResult;
 }
 unsafe extern "C" {
     pub fn dict_write_int16(
@@ -2378,19 +1656,11 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! End a series of writing operations to a dictionary.
-! This must be called before reading back from the dictionary.
-! @param iter The dictionary iterator
-! @return The size in bytes of the finalized dictionary, or 0 if the parameters were invalid.*/
+    #[doc = "! End a series of writing operations to a dictionary.\n! This must be called before reading back from the dictionary.\n! @param iter The dictionary iterator\n! @return The size in bytes of the finalized dictionary, or 0 if the parameters were invalid."]
     pub fn dict_write_end(iter: *mut DictionaryIterator) -> u32;
 }
 unsafe extern "C" {
-    /**! Initializes the dictionary iterator with a given buffer and size,
-! in preparation of reading key/value tuples.
-! @param iter The dictionary iterator
-! @param buffer The storage of the dictionary
-! @param size The storage size of the dictionary
-! @return The first tuple in the dictionary, or NULL in case the dictionary was empty or if there was a parsing error.*/
+    #[doc = "! Initializes the dictionary iterator with a given buffer and size,\n! in preparation of reading key/value tuples.\n! @param iter The dictionary iterator\n! @param buffer The storage of the dictionary\n! @param size The storage size of the dictionary\n! @return The first tuple in the dictionary, or NULL in case the dictionary was empty or if there was a parsing error."]
     pub fn dict_read_begin_from_buffer(
         iter: *mut DictionaryIterator,
         buffer: *const u8,
@@ -2398,36 +1668,24 @@ unsafe extern "C" {
     ) -> *mut Tuple;
 }
 unsafe extern "C" {
-    /**! Progresses the iterator to the next key/value pair.
-! @param iter The dictionary iterator
-! @return The next tuple in the dictionary, or NULL in case the end has been reached or if there was a parsing error.*/
+    #[doc = "! Progresses the iterator to the next key/value pair.\n! @param iter The dictionary iterator\n! @return The next tuple in the dictionary, or NULL in case the end has been reached or if there was a parsing error."]
     pub fn dict_read_next(iter: *mut DictionaryIterator) -> *mut Tuple;
 }
 unsafe extern "C" {
-    /**! Resets the iterator back to the same state as a call to \ref dict_read_begin_from_buffer() would do.
-! @param iter The dictionary iterator
-! @return The first tuple in the dictionary, or NULL in case the dictionary was empty or if there was a parsing error.*/
+    #[doc = "! Resets the iterator back to the same state as a call to \\ref dict_read_begin_from_buffer() would do.\n! @param iter The dictionary iterator\n! @return The first tuple in the dictionary, or NULL in case the dictionary was empty or if there was a parsing error."]
     pub fn dict_read_first(iter: *mut DictionaryIterator) -> *mut Tuple;
 }
-/**! Non-serialized, template data structure for a key/value pair.
-! For strings and byte arrays, it only has a pointer to the actual data.
-! For integers, it provides storage for integers up to 32-bits wide.
-! The Tuplet data structure is useful when creating dictionaries from values
-! that are already stored in arbitrary buffers.
-! See also \ref Tuple, with is the header of a serialized key/value pair.*/
+#[doc = "! Non-serialized, template data structure for a key/value pair.\n! For strings and byte arrays, it only has a pointer to the actual data.\n! For integers, it provides storage for integers up to 32-bits wide.\n! The Tuplet data structure is useful when creating dictionaries from values\n! that are already stored in arbitrary buffers.\n! See also \\ref Tuple, with is the header of a serialized key/value pair."]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Tuplet {
-    /**! The type of the Tuplet. This determines which of the struct fields in the
-! anonymomous union are valid.*/
+    #[doc = "! The type of the Tuplet. This determines which of the struct fields in the\n! anonymomous union are valid."]
     pub type_: TupleType,
-    ///! The key.
+    #[doc = "! The key."]
     pub key: u32,
     pub __bindgen_anon_1: Tuplet__bindgen_ty_1,
 }
-/**! Anonymous union containing the reference to the Tuplet's value, being
-! either a byte array, c-string or integer. See documentation of `.bytes`,
-! `.cstring` and `.integer` fields.*/
+#[doc = "! Anonymous union containing the reference to the Tuplet's value, being\n! either a byte array, c-string or integer. See documentation of `.bytes`,\n! `.cstring` and `.integer` fields."]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union Tuplet__bindgen_ty_1 {
@@ -2435,13 +1693,13 @@ pub union Tuplet__bindgen_ty_1 {
     pub cstring: Tuplet__bindgen_ty_1__bindgen_ty_2,
     pub integer: Tuplet__bindgen_ty_1__bindgen_ty_3,
 }
-///! Valid when `.type.` is \ref TUPLE_BYTE_ARRAY
+#[doc = "! Valid when `.type.` is \\ref TUPLE_BYTE_ARRAY"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Tuplet__bindgen_ty_1__bindgen_ty_1 {
-    ///! Pointer to the data
+    #[doc = "! Pointer to the data"]
     pub data: *const u8,
-    ///! Length of the data
+    #[doc = "! Length of the data"]
     pub length: u16,
 }
 impl Default for Tuplet__bindgen_ty_1__bindgen_ty_1 {
@@ -2453,13 +1711,13 @@ impl Default for Tuplet__bindgen_ty_1__bindgen_ty_1 {
         }
     }
 }
-///! Valid when `.type.` is \ref TUPLE_CSTRING
+#[doc = "! Valid when `.type.` is \\ref TUPLE_CSTRING"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Tuplet__bindgen_ty_1__bindgen_ty_2 {
-    ///! Pointer to the c-string data
+    #[doc = "! Pointer to the c-string data"]
     pub data: *const ::core::ffi::c_char,
-    ///! Length of the c-string, including terminating zero.
+    #[doc = "! Length of the c-string, including terminating zero."]
     pub length: u16,
 }
 impl Default for Tuplet__bindgen_ty_1__bindgen_ty_2 {
@@ -2471,14 +1729,13 @@ impl Default for Tuplet__bindgen_ty_1__bindgen_ty_2 {
         }
     }
 }
-///! Valid when `.type.` is \ref TUPLE_INT or \ref TUPLE_UINT
+#[doc = "! Valid when `.type.` is \\ref TUPLE_INT or \\ref TUPLE_UINT"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Tuplet__bindgen_ty_1__bindgen_ty_3 {
-    /**! Actual storage of the integer.
-! The signedness can be derived from the `.type` value.*/
+    #[doc = "! Actual storage of the integer.\n! The signedness can be derived from the `.type` value."]
     pub storage: u32,
-    ///! Width of the integer.
+    #[doc = "! Width of the integer."]
     pub width: u16,
 }
 impl Default for Tuplet__bindgen_ty_1 {
@@ -2499,24 +1756,12 @@ impl Default for Tuplet {
         }
     }
 }
-/**! Callback for \ref dict_serialize_tuplets() utility.
-! @param data The data of the serialized dictionary
-! @param size The size of data
-! @param context The context pointer as passed in to \ref dict_serialize_tuplets()
-! @see dict_serialize_tuplets*/
+#[doc = "! Callback for \\ref dict_serialize_tuplets() utility.\n! @param data The data of the serialized dictionary\n! @param size The size of data\n! @param context The context pointer as passed in to \\ref dict_serialize_tuplets()\n! @see dict_serialize_tuplets"]
 pub type DictionarySerializeCallback = ::core::option::Option<
     unsafe extern "C" fn(data: *const u8, size: u16, context: *mut ::core::ffi::c_void),
 >;
 unsafe extern "C" {
-    /**! Utility function that takes a list of Tuplets from which a dictionary
-! will be serialized, ready to transmit or store.
-! @note The callback will be called before the function returns, so the data that
-! that `context` points to, can be stack allocated.
-! @param callback The callback that will be called with the serialized data of the generated dictionary.
-! @param context Pointer to any application specific data that gets passed into the callback.
-! @param tuplets An array of Tuplets that need to be serialized into the dictionary.
-! @param tuplets_count The number of tuplets that follow.
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS*/
+    #[doc = "! Utility function that takes a list of Tuplets from which a dictionary\n! will be serialized, ready to transmit or store.\n! @note The callback will be called before the function returns, so the data that\n! that `context` points to, can be stack allocated.\n! @param callback The callback that will be called with the serialized data of the generated dictionary.\n! @param context Pointer to any application specific data that gets passed into the callback.\n! @param tuplets An array of Tuplets that need to be serialized into the dictionary.\n! @param tuplets_count The number of tuplets that follow.\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS"]
     pub fn dict_serialize_tuplets(
         callback: DictionarySerializeCallback,
         context: *mut ::core::ffi::c_void,
@@ -2525,14 +1770,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Utility function that takes an array of Tuplets and serializes them into
-! a dictionary with a given buffer and size.
-! @param tuplets The array of tuplets
-! @param tuplets_count The number of tuplets in the array
-! @param buffer The buffer in which to write the serialized dictionary
-! @param [in] size_in_out The available buffer size in bytes
-! @param [out] size_in_out The number of bytes written
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS*/
+    #[doc = "! Utility function that takes an array of Tuplets and serializes them into\n! a dictionary with a given buffer and size.\n! @param tuplets The array of tuplets\n! @param tuplets_count The number of tuplets in the array\n! @param buffer The buffer in which to write the serialized dictionary\n! @param [in] size_in_out The available buffer size in bytes\n! @param [out] size_in_out The number of bytes written\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS"]
     pub fn dict_serialize_tuplets_to_buffer(
         tuplets: *const Tuplet,
         tuplets_count: u8,
@@ -2541,14 +1779,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Serializes an array of Tuplets into a dictionary with a given buffer and size.
-! @param iter The dictionary iterator
-! @param tuplets The array of tuplets
-! @param tuplets_count The number of tuplets in the array
-! @param buffer The buffer in which to write the serialized dictionary
-! @param [in] size_in_out The available buffer size in bytes
-! @param [out] size_in_out The number of bytes written
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS*/
+    #[doc = "! Serializes an array of Tuplets into a dictionary with a given buffer and size.\n! @param iter The dictionary iterator\n! @param tuplets The array of tuplets\n! @param tuplets_count The number of tuplets in the array\n! @param buffer The buffer in which to write the serialized dictionary\n! @param [in] size_in_out The available buffer size in bytes\n! @param [out] size_in_out The number of bytes written\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS"]
     pub fn dict_serialize_tuplets_to_buffer_with_iter(
         iter: *mut DictionaryIterator,
         tuplets: *const Tuplet,
@@ -2558,41 +1789,17 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Serializes a Tuplet and writes the resulting Tuple into a dictionary.
-! @param iter The dictionary iterator
-! @param tuplet The Tuplet describing the key/value pair to write
-! @return \ref DICT_OK, \ref DICT_NOT_ENOUGH_STORAGE or \ref DICT_INVALID_ARGS*/
+    #[doc = "! Serializes a Tuplet and writes the resulting Tuple into a dictionary.\n! @param iter The dictionary iterator\n! @param tuplet The Tuplet describing the key/value pair to write\n! @return \\ref DICT_OK, \\ref DICT_NOT_ENOUGH_STORAGE or \\ref DICT_INVALID_ARGS"]
     pub fn dict_write_tuplet(
         iter: *mut DictionaryIterator,
         tuplet: *const Tuplet,
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Calculates the number of bytes that a dictionary will occupy, given
-! one or more Tuplets that need to be stored in the dictionary.
-! @note See \ref dict_calc_buffer_size() for the formula for the calculation.
-! @param tuplets An array of Tuplets that need to be stored in the dictionary.
-! @param tuplets_count The total number of Tuplets that follow.
-! @return The total number of bytes of storage needed.
-! @see Tuplet*/
-    pub fn dict_calc_buffer_size_from_tuplets(
-        tuplets: *const Tuplet,
-        tuplets_count: u8,
-    ) -> u32;
+    #[doc = "! Calculates the number of bytes that a dictionary will occupy, given\n! one or more Tuplets that need to be stored in the dictionary.\n! @note See \\ref dict_calc_buffer_size() for the formula for the calculation.\n! @param tuplets An array of Tuplets that need to be stored in the dictionary.\n! @param tuplets_count The total number of Tuplets that follow.\n! @return The total number of bytes of storage needed.\n! @see Tuplet"]
+    pub fn dict_calc_buffer_size_from_tuplets(tuplets: *const Tuplet, tuplets_count: u8) -> u32;
 }
-/**! Type of the callback used in \ref dict_merge()
-! @param key The key that is being updated.
-! @param new_tuple The new tuple. The tuple points to the actual, updated destination dictionary or NULL_TUPLE
-! in case there was an error (e.g. backing buffer was too small).
-! Therefore the Tuple can be used after the callback returns, until the destination dictionary
-! storage is free'd (by the application itself).
-! @param old_tuple The values that will be replaced with `new_tuple`. The key, value and type will be
-! equal to the previous tuple in the old destination dictionary, however the `old_tuple points
-! to a stack-allocated copy of the old data.
-! @param context Pointer to application specific data
-! The storage backing `old_tuple` can only be used during the callback and
-! will no longer be valid after the callback returns.
-! @see dict_merge*/
+#[doc = "! Type of the callback used in \\ref dict_merge()\n! @param key The key that is being updated.\n! @param new_tuple The new tuple. The tuple points to the actual, updated destination dictionary or NULL_TUPLE\n! in case there was an error (e.g. backing buffer was too small).\n! Therefore the Tuple can be used after the callback returns, until the destination dictionary\n! storage is free'd (by the application itself).\n! @param old_tuple The values that will be replaced with `new_tuple`. The key, value and type will be\n! equal to the previous tuple in the old destination dictionary, however the `old_tuple points\n! to a stack-allocated copy of the old data.\n! @param context Pointer to application specific data\n! The storage backing `old_tuple` can only be used during the callback and\n! will no longer be valid after the callback returns.\n! @see dict_merge"]
 pub type DictionaryKeyUpdatedCallback = ::core::option::Option<
     unsafe extern "C" fn(
         key: u32,
@@ -2602,16 +1809,7 @@ pub type DictionaryKeyUpdatedCallback = ::core::option::Option<
     ),
 >;
 unsafe extern "C" {
-    /**! Merges entries from another "source" dictionary into a "destination" dictionary.
-! All Tuples from the source are written into the destination dictionary, while
-! updating the exsting Tuples with matching keys.
-! @param dest The destination dictionary to update
-! @param [in,out] dest_max_size_in_out In: the maximum size of buffer backing `dest`. Out: the final size of the updated dictionary.
-! @param source The source dictionary of which its Tuples will be used to update dest.
-! @param update_existing_keys_only Specify True if only the existing keys in `dest` should be updated.
-! @param key_callback The callback that will be called for each Tuple in the merged destination dictionary.
-! @param context Pointer to app specific data that will get passed in when `update_key_callback` is called.
-! @return \ref DICT_OK, \ref DICT_INVALID_ARGS, \ref DICT_NOT_ENOUGH_STORAGE*/
+    #[doc = "! Merges entries from another \"source\" dictionary into a \"destination\" dictionary.\n! All Tuples from the source are written into the destination dictionary, while\n! updating the exsting Tuples with matching keys.\n! @param dest The destination dictionary to update\n! @param [in,out] dest_max_size_in_out In: the maximum size of buffer backing `dest`. Out: the final size of the updated dictionary.\n! @param source The source dictionary of which its Tuples will be used to update dest.\n! @param update_existing_keys_only Specify True if only the existing keys in `dest` should be updated.\n! @param key_callback The callback that will be called for each Tuple in the merged destination dictionary.\n! @param context Pointer to app specific data that will get passed in when `update_key_callback` is called.\n! @return \\ref DICT_OK, \\ref DICT_INVALID_ARGS, \\ref DICT_NOT_ENOUGH_STORAGE"]
     pub fn dict_merge(
         dest: *mut DictionaryIterator,
         dest_max_size_in_out: *mut u32,
@@ -2622,10 +1820,7 @@ unsafe extern "C" {
     ) -> DictionaryResult;
 }
 unsafe extern "C" {
-    /**! Tries to find a Tuple with specified key in a dictionary
-! @param iter Iterator to the dictionary to search in.
-! @param key The key for which to find a Tuple
-! @return Pointer to a found Tuple, or NULL if there was no Tuple with the specified key.*/
+    #[doc = "! Tries to find a Tuple with specified key in a dictionary\n! @param iter Iterator to the dictionary to search in.\n! @param key The key for which to find a Tuple\n! @return Pointer to a found Tuple, or NULL if there was no Tuple with the specified key."]
     pub fn dict_find(iter: *const DictionaryIterator, key: u32) -> *mut Tuple;
 }
 #[repr(C)]
@@ -2634,54 +1829,37 @@ pub struct DictationSession {
     _unused: [u8; 0],
 }
 impl DictationSessionStatus {
-    ///! Transcription successful, with a valid result
-    pub const DictationSessionStatusSuccess: DictationSessionStatus = DictationSessionStatus(
-        0,
-    );
-    ///! User rejected transcription and exited UI
-    pub const DictationSessionStatusFailureTranscriptionRejected: DictationSessionStatus = DictationSessionStatus(
-        1,
-    );
-    ///! User exited UI after transcription error
-    pub const DictationSessionStatusFailureTranscriptionRejectedWithError: DictationSessionStatus = DictationSessionStatus(
-        2,
-    );
-    ///! Too many errors occurred during transcription and the UI exited
-    pub const DictationSessionStatusFailureSystemAborted: DictationSessionStatus = DictationSessionStatus(
-        3,
-    );
-    ///! No speech was detected and UI exited
-    pub const DictationSessionStatusFailureNoSpeechDetected: DictationSessionStatus = DictationSessionStatus(
-        4,
-    );
-    ///! No BT or internet connection
-    pub const DictationSessionStatusFailureConnectivityError: DictationSessionStatus = DictationSessionStatus(
-        5,
-    );
-    ///! Voice transcription disabled for this user
-    pub const DictationSessionStatusFailureDisabled: DictationSessionStatus = DictationSessionStatus(
-        6,
-    );
-    ///! Voice transcription failed due to internal error
-    pub const DictationSessionStatusFailureInternalError: DictationSessionStatus = DictationSessionStatus(
-        7,
-    );
-    ///! Cloud recognizer failed to transcribe speech (only possible if error dialogs disabled)
-    pub const DictationSessionStatusFailureRecognizerError: DictationSessionStatus = DictationSessionStatus(
-        8,
-    );
+    #[doc = "! Transcription successful, with a valid result"]
+    pub const DictationSessionStatusSuccess: DictationSessionStatus = DictationSessionStatus(0);
+    #[doc = "! User rejected transcription and exited UI"]
+    pub const DictationSessionStatusFailureTranscriptionRejected: DictationSessionStatus =
+        DictationSessionStatus(1);
+    #[doc = "! User exited UI after transcription error"]
+    pub const DictationSessionStatusFailureTranscriptionRejectedWithError: DictationSessionStatus =
+        DictationSessionStatus(2);
+    #[doc = "! Too many errors occurred during transcription and the UI exited"]
+    pub const DictationSessionStatusFailureSystemAborted: DictationSessionStatus =
+        DictationSessionStatus(3);
+    #[doc = "! No speech was detected and UI exited"]
+    pub const DictationSessionStatusFailureNoSpeechDetected: DictationSessionStatus =
+        DictationSessionStatus(4);
+    #[doc = "! No BT or internet connection"]
+    pub const DictationSessionStatusFailureConnectivityError: DictationSessionStatus =
+        DictationSessionStatus(5);
+    #[doc = "! Voice transcription disabled for this user"]
+    pub const DictationSessionStatusFailureDisabled: DictationSessionStatus =
+        DictationSessionStatus(6);
+    #[doc = "! Voice transcription failed due to internal error"]
+    pub const DictationSessionStatusFailureInternalError: DictationSessionStatus =
+        DictationSessionStatus(7);
+    #[doc = "! Cloud recognizer failed to transcribe speech (only possible if error dialogs disabled)"]
+    pub const DictationSessionStatusFailureRecognizerError: DictationSessionStatus =
+        DictationSessionStatus(8);
 }
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct DictationSessionStatus(pub ::core::ffi::c_uchar);
-/**! Dictation status callback. Indicates success or failure of the dictation session and, if
-! successful, passes the transcribed string to the user of the dictation session. The transcribed
-! string will be freed after this call returns, so the string should be copied if it needs to be
-! retained afterwards.
-! @param session        dictation session from which the status was received
-! @param status         dictation status
-! @param transcription  transcribed string
-! @param context        callback context specified when starting the session*/
+#[doc = "! Dictation status callback. Indicates success or failure of the dictation session and, if\n! successful, passes the transcribed string to the user of the dictation session. The transcribed\n! string will be freed after this call returns, so the string should be copied if it needs to be\n! retained afterwards.\n! @param session        dictation session from which the status was received\n! @param status         dictation status\n! @param transcription  transcribed string\n! @param context        callback context specified when starting the session"]
 pub type DictationSessionStatusCallback = ::core::option::Option<
     unsafe extern "C" fn(
         session: *mut DictationSession,
@@ -2691,20 +1869,7 @@ pub type DictationSessionStatusCallback = ::core::option::Option<
     ),
 >;
 unsafe extern "C" {
-    /**! Create a dictation session. The session object can be used more than once to get a
-! transcription. When a transcription is received a buffer will be allocated to store the text in
-! with a maximum size specified by \ref buffer_size. When a transcription is accepted by the user
-! or a failure of some sort occurs, the callback specified will be called with the status and the
-! transcription if one was accepted.
-! @param buffer_size       size of buffer to allocate for the transcription text; text will be
-!                          truncated if it is longer than the maximum size specified; a size of 0
-!                          will allow the session to allocate as much as it needs and text will
-!                          not be truncated
-! @param callback          dictation session status handler (must be valid)
-! @param callback_context  context pointer for status handler
-! @return handle to the dictation session or NULL if the phone app is not connected or does not
-! support voice dictation, if this is called on a platform that doesn't support voice dictation,
-! or if an internal error occurs.*/
+    #[doc = "! Create a dictation session. The session object can be used more than once to get a\n! transcription. When a transcription is received a buffer will be allocated to store the text in\n! with a maximum size specified by \\ref buffer_size. When a transcription is accepted by the user\n! or a failure of some sort occurs, the callback specified will be called with the status and the\n! transcription if one was accepted.\n! @param buffer_size       size of buffer to allocate for the transcription text; text will be\n!                          truncated if it is longer than the maximum size specified; a size of 0\n!                          will allow the session to allocate as much as it needs and text will\n!                          not be truncated\n! @param callback          dictation session status handler (must be valid)\n! @param callback_context  context pointer for status handler\n! @return handle to the dictation session or NULL if the phone app is not connected or does not\n! support voice dictation, if this is called on a platform that doesn't support voice dictation,\n! or if an internal error occurs."]
     pub fn dictation_session_create(
         buffer_size: u32,
         callback: DictationSessionStatusCallback,
@@ -2712,178 +1877,82 @@ unsafe extern "C" {
     ) -> *mut DictationSession;
 }
 unsafe extern "C" {
-    /**! Destroy the dictation session and free its memory. Will terminate a session in progress.
-! @param session  dictation session to be destroyed*/
+    #[doc = "! Destroy the dictation session and free its memory. Will terminate a session in progress.\n! @param session  dictation session to be destroyed"]
     pub fn dictation_session_destroy(session: *mut DictationSession);
 }
 unsafe extern "C" {
-    /**! Start the dictation session. The dictation UI will be shown. When the user accepts a
-! transcription or exits the UI, or, when the confirmation dialog is disabled and a status is
-! received, the status callback will be called. Can only be called when no session is in progress.
-! The session can be restarted multiple times after the UI is exited or the session is stopped.
-! @param session  dictation session to start or restart
-! @return true if session was started, false if session is already in progress or is invalid.*/
-    pub fn dictation_session_start(
-        session: *mut DictationSession,
-    ) -> DictationSessionStatus;
+    #[doc = "! Start the dictation session. The dictation UI will be shown. When the user accepts a\n! transcription or exits the UI, or, when the confirmation dialog is disabled and a status is\n! received, the status callback will be called. Can only be called when no session is in progress.\n! The session can be restarted multiple times after the UI is exited or the session is stopped.\n! @param session  dictation session to start or restart\n! @return true if session was started, false if session is already in progress or is invalid."]
+    pub fn dictation_session_start(session: *mut DictationSession) -> DictationSessionStatus;
 }
 unsafe extern "C" {
-    /**! Stop the current dictation session. The UI will be hidden and no status callbacks will be
-! received after the session is stopped.
-! @param session  dictation session to stop
-! @return true if session was stopped, false if session was not started or is invalid*/
-    pub fn dictation_session_stop(
-        session: *mut DictationSession,
-    ) -> DictationSessionStatus;
+    #[doc = "! Stop the current dictation session. The UI will be hidden and no status callbacks will be\n! received after the session is stopped.\n! @param session  dictation session to stop\n! @return true if session was stopped, false if session was not started or is invalid"]
+    pub fn dictation_session_stop(session: *mut DictationSession) -> DictationSessionStatus;
 }
 unsafe extern "C" {
-    /**! Enable or disable user confirmation of transcribed text, which allows the user to accept or
-! reject (and restart) the transcription. Must be called before the session is started.
-! @param session      dictation session to modify
-! @param is_enabled   set to true to enable user confirmation of transcriptions (default), false
-! to disable*/
-    pub fn dictation_session_enable_confirmation(
-        session: *mut DictationSession,
-        is_enabled: bool,
-    );
+    #[doc = "! Enable or disable user confirmation of transcribed text, which allows the user to accept or\n! reject (and restart) the transcription. Must be called before the session is started.\n! @param session      dictation session to modify\n! @param is_enabled   set to true to enable user confirmation of transcriptions (default), false\n! to disable"]
+    pub fn dictation_session_enable_confirmation(session: *mut DictationSession, is_enabled: bool);
 }
 unsafe extern "C" {
-    /**! Enable or disable error dialogs when transcription fails. Must be called before the session
-! is started. Disabling error dialogs will also disable automatic retries if transcription fails.
-! @param session      dictation session to modify
-! @param is_enabled   set to true to enable error dialogs (default), false to disable*/
-    pub fn dictation_session_enable_error_dialogs(
-        session: *mut DictationSession,
-        is_enabled: bool,
-    );
+    #[doc = "! Enable or disable error dialogs when transcription fails. Must be called before the session\n! is started. Disabling error dialogs will also disable automatic retries if transcription fails.\n! @param session      dictation session to modify\n! @param is_enabled   set to true to enable error dialogs (default), false to disable"]
+    pub fn dictation_session_enable_error_dialogs(session: *mut DictationSession, is_enabled: bool);
 }
 impl AppMessageResult {
-    ///! (0) All good, operation was successful.
+    #[doc = "! (0) All good, operation was successful."]
     pub const APP_MSG_OK: AppMessageResult = AppMessageResult(0);
-    ///! (2) The other end did not confirm receiving the sent data with an (n)ack in time.
+    #[doc = "! (2) The other end did not confirm receiving the sent data with an (n)ack in time."]
     pub const APP_MSG_SEND_TIMEOUT: AppMessageResult = AppMessageResult(2);
-    ///! (4) The other end rejected the sent data, with a "nack" reply.
+    #[doc = "! (4) The other end rejected the sent data, with a \"nack\" reply."]
     pub const APP_MSG_SEND_REJECTED: AppMessageResult = AppMessageResult(4);
-    ///! (8) The other end was not connected.
+    #[doc = "! (8) The other end was not connected."]
     pub const APP_MSG_NOT_CONNECTED: AppMessageResult = AppMessageResult(8);
-    ///! (16) The local application was not running.
+    #[doc = "! (16) The local application was not running."]
     pub const APP_MSG_APP_NOT_RUNNING: AppMessageResult = AppMessageResult(16);
-    ///! (32) The function was called with invalid arguments.
+    #[doc = "! (32) The function was called with invalid arguments."]
     pub const APP_MSG_INVALID_ARGS: AppMessageResult = AppMessageResult(32);
-    /**! (64) There are pending (in or outbound) messages that need to be processed first before
-! new ones can be received or sent.*/
+    #[doc = "! (64) There are pending (in or outbound) messages that need to be processed first before\n! new ones can be received or sent."]
     pub const APP_MSG_BUSY: AppMessageResult = AppMessageResult(64);
-    ///! (128) The buffer was too small to contain the incoming message.
+    #[doc = "! (128) The buffer was too small to contain the incoming message."]
     pub const APP_MSG_BUFFER_OVERFLOW: AppMessageResult = AppMessageResult(128);
-    ///! (512) The resource had already been released.
+    #[doc = "! (512) The resource had already been released."]
     pub const APP_MSG_ALREADY_RELEASED: AppMessageResult = AppMessageResult(512);
-    ///! (1024) The callback was already registered.
-    pub const APP_MSG_CALLBACK_ALREADY_REGISTERED: AppMessageResult = AppMessageResult(
-        1024,
-    );
-    ///! (2048) The callback could not be deregistered, because it had not been registered before.
+    #[doc = "! (1024) The callback was already registered."]
+    pub const APP_MSG_CALLBACK_ALREADY_REGISTERED: AppMessageResult = AppMessageResult(1024);
+    #[doc = "! (2048) The callback could not be deregistered, because it had not been registered before."]
     pub const APP_MSG_CALLBACK_NOT_REGISTERED: AppMessageResult = AppMessageResult(2048);
-    /**! (4096) The system did not have sufficient application memory to
-! perform the requested operation.*/
+    #[doc = "! (4096) The system did not have sufficient application memory to\n! perform the requested operation."]
     pub const APP_MSG_OUT_OF_MEMORY: AppMessageResult = AppMessageResult(4096);
-    ///! (8192) App message was closed.
+    #[doc = "! (8192) App message was closed."]
     pub const APP_MSG_CLOSED: AppMessageResult = AppMessageResult(8192);
-    ///! (16384) An internal OS error prevented AppMessage from completing an operation.
+    #[doc = "! (16384) An internal OS error prevented AppMessage from completing an operation."]
     pub const APP_MSG_INTERNAL_ERROR: AppMessageResult = AppMessageResult(16384);
-    ///! (32768) The function was called while App Message was not in the appropriate state.
+    #[doc = "! (32768) The function was called while App Message was not in the appropriate state."]
     pub const APP_MSG_INVALID_STATE: AppMessageResult = AppMessageResult(32768);
 }
 #[repr(transparent)]
-///! AppMessage result codes.
+#[doc = "! AppMessage result codes."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppMessageResult(pub ::core::ffi::c_ushort);
 unsafe extern "C" {
-    /**! Open AppMessage to transfers.
-!
-! Use \ref dict_calc_buffer_size_from_tuplets() or \ref dict_calc_buffer_size() to estimate the size you need.
-!
-! \param[in] size_inbound The required size for the Inbox buffer
-! \param[in] size_outbound The required size for the Outbox buffer
-!
-! \return A result code such as \ref APP_MSG_OK or \ref APP_MSG_OUT_OF_MEMORY.
-!
-! \note It is recommended that if the Inbox will be used, that at least the Inbox callbacks should be registered
-!   before this call.  Otherwise it is possible for an Inbox message to be NACK'ed without being seen by the
-!   application.
-!*/
+    #[doc = "! Open AppMessage to transfers.\n!\n! Use \\ref dict_calc_buffer_size_from_tuplets() or \\ref dict_calc_buffer_size() to estimate the size you need.\n!\n! \\param[in] size_inbound The required size for the Inbox buffer\n! \\param[in] size_outbound The required size for the Outbox buffer\n!\n! \\return A result code such as \\ref APP_MSG_OK or \\ref APP_MSG_OUT_OF_MEMORY.\n!\n! \\note It is recommended that if the Inbox will be used, that at least the Inbox callbacks should be registered\n!   before this call.  Otherwise it is possible for an Inbox message to be NACK'ed without being seen by the\n!   application.\n!"]
     pub fn app_message_open(size_inbound: u32, size_outbound: u32) -> AppMessageResult;
 }
 unsafe extern "C" {
-    /**! Deregisters all callbacks and their context.
-!*/
+    #[doc = "! Deregisters all callbacks and their context.\n!"]
     pub fn app_message_deregister_callbacks();
 }
-/**! Called after an incoming message is received.
-!
-! \param[in] iterator
-!   The dictionary iterator to the received message.  Never NULL.  Note that the iterator cannot be modified or
-!   saved off.  The library may need to re-use the buffered space where this message is supplied.  Returning from
-!   the callback indicates to the library that the received message contents are no longer needed or have already
-!   been externalized outside its buffering space and iterator.
-!
-! \param[in] context
-!   Pointer to application data as specified when registering the callback.
-!*/
+#[doc = "! Called after an incoming message is received.\n!\n! \\param[in] iterator\n!   The dictionary iterator to the received message.  Never NULL.  Note that the iterator cannot be modified or\n!   saved off.  The library may need to re-use the buffered space where this message is supplied.  Returning from\n!   the callback indicates to the library that the received message contents are no longer needed or have already\n!   been externalized outside its buffering space and iterator.\n!\n! \\param[in] context\n!   Pointer to application data as specified when registering the callback.\n!"]
 pub type AppMessageInboxReceived = ::core::option::Option<
-    unsafe extern "C" fn(
-        iterator: *mut DictionaryIterator,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(iterator: *mut DictionaryIterator, context: *mut ::core::ffi::c_void),
 >;
-/**! Called after an incoming message is dropped.
-!
-! \param[in] result
-!   The reason why the message was dropped.  Some possibilities include \ref APP_MSG_BUSY and
-!   \ref APP_MSG_BUFFER_OVERFLOW.
-!
-! \param[in] context
-!   Pointer to application data as specified when registering the callback.
-!
-! Note that you can call app_message_outbox_begin() from this handler to prepare a new message.
-! This will invalidate the previous dictionary iterator; do not use it after calling app_message_outbox_begin().
-!*/
+#[doc = "! Called after an incoming message is dropped.\n!\n! \\param[in] result\n!   The reason why the message was dropped.  Some possibilities include \\ref APP_MSG_BUSY and\n!   \\ref APP_MSG_BUFFER_OVERFLOW.\n!\n! \\param[in] context\n!   Pointer to application data as specified when registering the callback.\n!\n! Note that you can call app_message_outbox_begin() from this handler to prepare a new message.\n! This will invalidate the previous dictionary iterator; do not use it after calling app_message_outbox_begin().\n!"]
 pub type AppMessageInboxDropped = ::core::option::Option<
     unsafe extern "C" fn(reason: AppMessageResult, context: *mut ::core::ffi::c_void),
 >;
-/**! Called after an outbound message has been sent and the reply has been received.
-!
-! \param[in] iterator
-!   The dictionary iterator to the sent message.  The iterator will be in the final state that was sent.  Note that
-!   the iterator cannot be modified or saved off as the library will re-open the dictionary with dict_begin() after
-!   this callback returns.
-!
-! \param[in] context
-!   Pointer to application data as specified when registering the callback.
-!*/
+#[doc = "! Called after an outbound message has been sent and the reply has been received.\n!\n! \\param[in] iterator\n!   The dictionary iterator to the sent message.  The iterator will be in the final state that was sent.  Note that\n!   the iterator cannot be modified or saved off as the library will re-open the dictionary with dict_begin() after\n!   this callback returns.\n!\n! \\param[in] context\n!   Pointer to application data as specified when registering the callback.\n!"]
 pub type AppMessageOutboxSent = ::core::option::Option<
-    unsafe extern "C" fn(
-        iterator: *mut DictionaryIterator,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(iterator: *mut DictionaryIterator, context: *mut ::core::ffi::c_void),
 >;
-/**! Called after an outbound message has not been sent successfully.
-!
-! \param[in] iterator
-!   The dictionary iterator to the sent message.  The iterator will be in the final state that was sent.  Note that
-!   the iterator cannot be modified or saved off as the library will re-open the dictionary with dict_begin() after
-!   this callback returns.
-!
-! \param[in] result
-!   The result of the operation.  Some possibilities for the value include \ref APP_MSG_SEND_TIMEOUT,
-!   \ref APP_MSG_SEND_REJECTED, \ref APP_MSG_NOT_CONNECTED, \ref APP_MSG_APP_NOT_RUNNING, and the combination
-!   `(APP_MSG_NOT_CONNECTED | APP_MSG_APP_NOT_RUNNING)`.
-!
-! \param context
-!   Pointer to application data as specified when registering the callback.
-!
-! Note that you can call app_message_outbox_begin() from this handler to prepare a new message.
-! This will invalidate the previous dictionary iterator; do not use it after calling app_message_outbox_begin().
-!*/
+#[doc = "! Called after an outbound message has not been sent successfully.\n!\n! \\param[in] iterator\n!   The dictionary iterator to the sent message.  The iterator will be in the final state that was sent.  Note that\n!   the iterator cannot be modified or saved off as the library will re-open the dictionary with dict_begin() after\n!   this callback returns.\n!\n! \\param[in] result\n!   The result of the operation.  Some possibilities for the value include \\ref APP_MSG_SEND_TIMEOUT,\n!   \\ref APP_MSG_SEND_REJECTED, \\ref APP_MSG_NOT_CONNECTED, \\ref APP_MSG_APP_NOT_RUNNING, and the combination\n!   `(APP_MSG_NOT_CONNECTED | APP_MSG_APP_NOT_RUNNING)`.\n!\n! \\param context\n!   Pointer to application data as specified when registering the callback.\n!\n! Note that you can call app_message_outbox_begin() from this handler to prepare a new message.\n! This will invalidate the previous dictionary iterator; do not use it after calling app_message_outbox_begin().\n!"]
 pub type AppMessageOutboxFailed = ::core::option::Option<
     unsafe extern "C" fn(
         iterator: *mut DictionaryIterator,
@@ -2892,156 +1961,54 @@ pub type AppMessageOutboxFailed = ::core::option::Option<
     ),
 >;
 unsafe extern "C" {
-    /**! Gets the context that will be passed to all AppMessage callbacks.
-!
-! \return The current context on record.
-!*/
+    #[doc = "! Gets the context that will be passed to all AppMessage callbacks.\n!\n! \\return The current context on record.\n!"]
     pub fn app_message_get_context() -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Sets the context that will be passed to all AppMessage callbacks.
-!
-! \param[in] context The context that will be passed to all AppMessage callbacks.
-!
-! \return The previous context that was on record.
-!*/
-    pub fn app_message_set_context(
-        context: *mut ::core::ffi::c_void,
-    ) -> *mut ::core::ffi::c_void;
+    #[doc = "! Sets the context that will be passed to all AppMessage callbacks.\n!\n! \\param[in] context The context that will be passed to all AppMessage callbacks.\n!\n! \\return The previous context that was on record.\n!"]
+    pub fn app_message_set_context(context: *mut ::core::ffi::c_void) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Registers a function that will be called after any Inbox message is received successfully.
-!
-! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous
-! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will
-! be called anymore.
-!
-! \param[in] received_callback The callback that will be called going forward; NULL to not have a callback.
-!
-! \return The previous callback (or NULL) that was on record.
-!*/
+    #[doc = "! Registers a function that will be called after any Inbox message is received successfully.\n!\n! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous\n! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will\n! be called anymore.\n!\n! \\param[in] received_callback The callback that will be called going forward; NULL to not have a callback.\n!\n! \\return The previous callback (or NULL) that was on record.\n!"]
     pub fn app_message_register_inbox_received(
         received_callback: AppMessageInboxReceived,
     ) -> AppMessageInboxReceived;
 }
 unsafe extern "C" {
-    /**! Registers a function that will be called after any Inbox message is received but dropped by the system.
-!
-! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous
-! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will
-! be called anymore.
-!
-! \param[in] dropped_callback The callback that will be called going forward; NULL to not have a callback.
-!
-! \return The previous callback (or NULL) that was on record.
-!*/
+    #[doc = "! Registers a function that will be called after any Inbox message is received but dropped by the system.\n!\n! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous\n! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will\n! be called anymore.\n!\n! \\param[in] dropped_callback The callback that will be called going forward; NULL to not have a callback.\n!\n! \\return The previous callback (or NULL) that was on record.\n!"]
     pub fn app_message_register_inbox_dropped(
         dropped_callback: AppMessageInboxDropped,
     ) -> AppMessageInboxDropped;
 }
 unsafe extern "C" {
-    /**! Registers a function that will be called after any Outbox message is sent and an ACK reply occurs in a timely
-! fashion.
-!
-! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous
-! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will
-! be called anymore.
-!
-! \param[in] sent_callback The callback that will be called going forward; NULL to not have a callback.
-!
-! \return The previous callback (or NULL) that was on record.
-!*/
+    #[doc = "! Registers a function that will be called after any Outbox message is sent and an ACK reply occurs in a timely\n! fashion.\n!\n! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous\n! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will\n! be called anymore.\n!\n! \\param[in] sent_callback The callback that will be called going forward; NULL to not have a callback.\n!\n! \\return The previous callback (or NULL) that was on record.\n!"]
     pub fn app_message_register_outbox_sent(
         sent_callback: AppMessageOutboxSent,
     ) -> AppMessageOutboxSent;
 }
 unsafe extern "C" {
-    /**! Registers a function that will be called after any Outbox message is not sent with a timely ACK reply.
-! The call to \ref app_message_outbox_send() must have succeeded.
-!
-! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous
-! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will
-! be called anymore.
-!
-! \param[in] failed_callback The callback that will be called going forward; NULL to not have a callback.
-!
-! \return The previous callback (or NULL) that was on record.
-!*/
+    #[doc = "! Registers a function that will be called after any Outbox message is not sent with a timely ACK reply.\n! The call to \\ref app_message_outbox_send() must have succeeded.\n!\n! Only one callback may be registered at a time.  Each subsequent call to this function will replace the previous\n! callback.  The callback is optional; setting it to NULL will deregister the current callback and no function will\n! be called anymore.\n!\n! \\param[in] failed_callback The callback that will be called going forward; NULL to not have a callback.\n!\n! \\return The previous callback (or NULL) that was on record.\n!"]
     pub fn app_message_register_outbox_failed(
         failed_callback: AppMessageOutboxFailed,
     ) -> AppMessageOutboxFailed;
 }
 unsafe extern "C" {
-    /**! Programatically determine the inbox size maximum in the current configuration.
-!
-! \return The inbox size maximum on this firmware.
-!
-! \sa APP_MESSAGE_INBOX_SIZE_MINIMUM
-! \sa app_message_outbox_size_maximum()
-!*/
+    #[doc = "! Programatically determine the inbox size maximum in the current configuration.\n!\n! \\return The inbox size maximum on this firmware.\n!\n! \\sa APP_MESSAGE_INBOX_SIZE_MINIMUM\n! \\sa app_message_outbox_size_maximum()\n!"]
     pub fn app_message_inbox_size_maximum() -> u32;
 }
 unsafe extern "C" {
-    /**! Programatically determine the outbox size maximum in the current configuration.
-!
-! \return The outbox size maximum on this firmware.
-!
-! \sa APP_MESSAGE_OUTBOX_SIZE_MINIMUM
-! \sa app_message_inbox_size_maximum()
-!*/
+    #[doc = "! Programatically determine the outbox size maximum in the current configuration.\n!\n! \\return The outbox size maximum on this firmware.\n!\n! \\sa APP_MESSAGE_OUTBOX_SIZE_MINIMUM\n! \\sa app_message_inbox_size_maximum()\n!"]
     pub fn app_message_outbox_size_maximum() -> u32;
 }
 unsafe extern "C" {
-    /**! Begin writing to the Outbox's Dictionary buffer.
-!
-! \param[out] iterator Location to write the DictionaryIterator pointer.  This will be NULL on failure.
-!
-! \return A result code, including but not limited to \ref APP_MSG_OK, \ref APP_MSG_INVALID_ARGS or
-!   \ref APP_MSG_BUSY.
-!
-! \note After a successful call, one can add values to the dictionary using functions like \ref dict_write_data()
-!   and friends.
-!
-! \sa Dictionary
-!*/
-    pub fn app_message_outbox_begin(
-        iterator: *mut *mut DictionaryIterator,
-    ) -> AppMessageResult;
+    #[doc = "! Begin writing to the Outbox's Dictionary buffer.\n!\n! \\param[out] iterator Location to write the DictionaryIterator pointer.  This will be NULL on failure.\n!\n! \\return A result code, including but not limited to \\ref APP_MSG_OK, \\ref APP_MSG_INVALID_ARGS or\n!   \\ref APP_MSG_BUSY.\n!\n! \\note After a successful call, one can add values to the dictionary using functions like \\ref dict_write_data()\n!   and friends.\n!\n! \\sa Dictionary\n!"]
+    pub fn app_message_outbox_begin(iterator: *mut *mut DictionaryIterator) -> AppMessageResult;
 }
 unsafe extern "C" {
-    /**! Sends the outbound dictionary.
-!
-! \return A result code, including but not limited to \ref APP_MSG_OK or \ref APP_MSG_BUSY.  The APP_MSG_OK code does
-!         not mean that the message was sent successfully, but only that the start of processing was successful.
-!         Since this call is asynchronous, callbacks provide the final result instead.
-!
-! \sa AppMessageOutboxSent
-! \sa AppMessageOutboxFailed
-!*/
+    #[doc = "! Sends the outbound dictionary.\n!\n! \\return A result code, including but not limited to \\ref APP_MSG_OK or \\ref APP_MSG_BUSY.  The APP_MSG_OK code does\n!         not mean that the message was sent successfully, but only that the start of processing was successful.\n!         Since this call is asynchronous, callbacks provide the final result instead.\n!\n! \\sa AppMessageOutboxSent\n! \\sa AppMessageOutboxFailed\n!"]
     pub fn app_message_outbox_send() -> AppMessageResult;
 }
-/**! Called whenever a Tuple changes. This does not necessarily mean the value in
-! the Tuple has changed. When the internal "current" dictionary gets updated,
-! existing Tuples might get shuffled around in the backing buffer, even though
-! the values stay the same. In this callback, the client code gets the chance
-! to remove the old reference and start using the new one.
-! In this callback, your application MUST clean up any references to the
-! `old_tuple` of a PREVIOUS call to this callback (and replace it with the
-! `new_tuple` that is passed in with the current call).
-! @param key The key for which the Tuple was changed.
-! @param new_tuple The new tuple. The tuple points to the actual, updated
-! "current" dictionary, as backed by the buffer internal to the AppSync
-! struct. Therefore the Tuple can be used after the callback returns, until
-! the AppSync is deinited. In case there was an error (e.g. storage shortage),
-! this `new_tuple` can be `NULL_TUPLE`.
-! @param old_tuple The values that will be replaced with `new_tuple`. The key,
-! value and type will be equal to the previous tuple in the old destination
-! dictionary; however, the `old_tuple` points to a stack-allocated copy of the
-! old data. This value will be `NULL_TUPLE` when the initial values are
-! being set.
-! @param context Pointer to application specific data, as set using
-! \ref app_sync_init()
-! @see \ref app_sync_init()*/
+#[doc = "! Called whenever a Tuple changes. This does not necessarily mean the value in\n! the Tuple has changed. When the internal \"current\" dictionary gets updated,\n! existing Tuples might get shuffled around in the backing buffer, even though\n! the values stay the same. In this callback, the client code gets the chance\n! to remove the old reference and start using the new one.\n! In this callback, your application MUST clean up any references to the\n! `old_tuple` of a PREVIOUS call to this callback (and replace it with the\n! `new_tuple` that is passed in with the current call).\n! @param key The key for which the Tuple was changed.\n! @param new_tuple The new tuple. The tuple points to the actual, updated\n! \"current\" dictionary, as backed by the buffer internal to the AppSync\n! struct. Therefore the Tuple can be used after the callback returns, until\n! the AppSync is deinited. In case there was an error (e.g. storage shortage),\n! this `new_tuple` can be `NULL_TUPLE`.\n! @param old_tuple The values that will be replaced with `new_tuple`. The key,\n! value and type will be equal to the previous tuple in the old destination\n! dictionary; however, the `old_tuple` points to a stack-allocated copy of the\n! old data. This value will be `NULL_TUPLE` when the initial values are\n! being set.\n! @param context Pointer to application specific data, as set using\n! \\ref app_sync_init()\n! @see \\ref app_sync_init()"]
 pub type AppSyncTupleChangedCallback = ::core::option::Option<
     unsafe extern "C" fn(
         key: u32,
@@ -3050,14 +2017,7 @@ pub type AppSyncTupleChangedCallback = ::core::option::Option<
         context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Called whenever there was an error.
-! @param dict_error The dictionary result error code, if the error was
-! dictionary related.
-! @param app_message_error The app_message result error code, if the error
-! was app_message related.
-! @param context Pointer to application specific data, as set using
-! \ref app_sync_init()
-! @see \ref app_sync_init()*/
+#[doc = "! Called whenever there was an error.\n! @param dict_error The dictionary result error code, if the error was\n! dictionary related.\n! @param app_message_error The app_message result error code, if the error\n! was app_message related.\n! @param context Pointer to application specific data, as set using\n! \\ref app_sync_init()\n! @see \\ref app_sync_init()"]
 pub type AppSyncErrorCallback = ::core::option::Option<
     unsafe extern "C" fn(
         dict_error: DictionaryResult,
@@ -3114,26 +2074,7 @@ impl Default for AppSync {
     }
 }
 unsafe extern "C" {
-    /**! Initialized an AppSync system with specific buffer size and initial keys and
-! values. The `callback.value_changed` callback will be called
-! __asynchronously__ with the initial keys and values, as to avoid duplicating
-! code to update your app's UI.
-! @param s The AppSync context to initialize
-! @param buffer The buffer that AppSync should use
-! @param buffer_size The size of the backing storage of the "current"
-! dictionary. Use \ref dict_calc_buffer_size_from_tuplets() to estimate the
-! size you need.
-! @param keys_and_initial_values An array of Tuplets with the initial keys and
-! values.
-! @param count The number of Tuplets in the `keys_and_initial_values` array.
-! @param tuple_changed_callback The callback that will handle changed
-! key/value pairs
-! @param error_callback The callback that will handle errors
-! @param context Pointer to app specific data that will get passed into calls
-! to the callbacks
-! @note Only updates for the keys specified in this initial array will be
-! accepted by AppSync, updates for other keys that might come in will just be
-! ignored.*/
+    #[doc = "! Initialized an AppSync system with specific buffer size and initial keys and\n! values. The `callback.value_changed` callback will be called\n! __asynchronously__ with the initial keys and values, as to avoid duplicating\n! code to update your app's UI.\n! @param s The AppSync context to initialize\n! @param buffer The buffer that AppSync should use\n! @param buffer_size The size of the backing storage of the \"current\"\n! dictionary. Use \\ref dict_calc_buffer_size_from_tuplets() to estimate the\n! size you need.\n! @param keys_and_initial_values An array of Tuplets with the initial keys and\n! values.\n! @param count The number of Tuplets in the `keys_and_initial_values` array.\n! @param tuple_changed_callback The callback that will handle changed\n! key/value pairs\n! @param error_callback The callback that will handle errors\n! @param context Pointer to app specific data that will get passed into calls\n! to the callbacks\n! @note Only updates for the keys specified in this initial array will be\n! accepted by AppSync, updates for other keys that might come in will just be\n! ignored."]
     pub fn app_sync_init(
         s: *mut AppSync,
         buffer: *mut u8,
@@ -3146,26 +2087,11 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Cleans up an AppSync system.
-! It frees the buffer allocated by an \ref app_sync_init() call and
-! deregisters itself from the \ref AppMessage subsystem.
-! @param s The AppSync context to deinit.*/
+    #[doc = "! Cleans up an AppSync system.\n! It frees the buffer allocated by an \\ref app_sync_init() call and\n! deregisters itself from the \\ref AppMessage subsystem.\n! @param s The AppSync context to deinit."]
     pub fn app_sync_deinit(s: *mut AppSync);
 }
 unsafe extern "C" {
-    /**! Updates key/value pairs using an array of Tuplets.
-! @note The call will attempt to send the updated keys and values to the
-! application on the other end.
-! Only after the other end has acknowledged the update, the `.value_changed`
-! callback will be called to confirm the update has completed and your
-! application code can update its user interface.
-! @param s The AppSync context
-! @param keys_and_values_to_update An array of Tuplets with the keys and
-! values to update. The data in the Tuplets are copied during the call, so the
-! array can be stack-allocated.
-! @param count The number of Tuplets in the `keys_and_values_to_update` array.
-! @return The result code from the \ref AppMessage subsystem.
-! Can be \ref APP_MSG_OK, \ref APP_MSG_BUSY or \ref APP_MSG_INVALID_ARGS*/
+    #[doc = "! Updates key/value pairs using an array of Tuplets.\n! @note The call will attempt to send the updated keys and values to the\n! application on the other end.\n! Only after the other end has acknowledged the update, the `.value_changed`\n! callback will be called to confirm the update has completed and your\n! application code can update its user interface.\n! @param s The AppSync context\n! @param keys_and_values_to_update An array of Tuplets with the keys and\n! values to update. The data in the Tuplets are copied during the call, so the\n! array can be stack-allocated.\n! @param count The number of Tuplets in the `keys_and_values_to_update` array.\n! @return The result code from the \\ref AppMessage subsystem.\n! Can be \\ref APP_MSG_OK, \\ref APP_MSG_BUSY or \\ref APP_MSG_INVALID_ARGS"]
     pub fn app_sync_set(
         s: *mut AppSync,
         keys_and_values_to_update: *const Tuplet,
@@ -3173,65 +2099,25 @@ unsafe extern "C" {
     ) -> AppMessageResult;
 }
 unsafe extern "C" {
-    /**! Finds and gets a tuple in the "current" dictionary.
-! @param s The AppSync context
-! @param key The key for which to find a Tuple
-! @return Pointer to a found Tuple, or NULL if there was no Tuple with the
-! specified key.*/
+    #[doc = "! Finds and gets a tuple in the \"current\" dictionary.\n! @param s The AppSync context\n! @param key The key for which to find a Tuple\n! @return Pointer to a found Tuple, or NULL if there was no Tuple with the\n! specified key."]
     pub fn app_sync_get(s: *const AppSync, key: u32) -> *const Tuple;
 }
-/**! Opaque reference to a resource.
-! @see \ref resource_get_handle()*/
+#[doc = "! Opaque reference to a resource.\n! @see \\ref resource_get_handle()"]
 pub type ResHandle = *mut ::core::ffi::c_void;
 unsafe extern "C" {
-    /**! Gets the resource handle for a file identifier.
-! @param resource_id The resource ID
-!
-! The resource IDs are auto-generated by the Pebble build process, based
-! on the `appinfo.json`. The "name" field of each resource is prefixed
-! by `RESOURCE_ID_` and made visible to the application (through the
-! `build/src/resource_ids.auto.h` header which is automatically included).
-!
-! For example, given the following fragment of `appinfo.json`:
-! \code{.json}
-!   ...
-!   "resources" : {
-!     "media": [
-!        {
-!           "name": "MY_ICON",
-!           "file": "img/icon.png",
-!           "type": "png",
-!        },
-!    ...
-! \endcode
-! The generated file identifier for this resource is `RESOURCE_ID_MY_ICON`.
-! To get a resource handle for that resource write:
-! \code{.c}
-! ResHandle rh = resource_get_handle(RESOURCE_ID_MY_ICON);
-! \endcode*/
+    #[doc = "! Gets the resource handle for a file identifier.\n! @param resource_id The resource ID\n!\n! The resource IDs are auto-generated by the Pebble build process, based\n! on the `appinfo.json`. The \"name\" field of each resource is prefixed\n! by `RESOURCE_ID_` and made visible to the application (through the\n! `build/src/resource_ids.auto.h` header which is automatically included).\n!\n! For example, given the following fragment of `appinfo.json`:\n! \\code{.json}\n!   ...\n!   \"resources\" : {\n!     \"media\": [\n!        {\n!           \"name\": \"MY_ICON\",\n!           \"file\": \"img/icon.png\",\n!           \"type\": \"png\",\n!        },\n!    ...\n! \\endcode\n! The generated file identifier for this resource is `RESOURCE_ID_MY_ICON`.\n! To get a resource handle for that resource write:\n! \\code{.c}\n! ResHandle rh = resource_get_handle(RESOURCE_ID_MY_ICON);\n! \\endcode"]
     pub fn resource_get_handle(resource_id: u32) -> ResHandle;
 }
 unsafe extern "C" {
-    /**! Gets the size of the resource given a resource handle.
-! @param h The handle to the resource
-! @return The size of the resource in bytes*/
+    #[doc = "! Gets the size of the resource given a resource handle.\n! @param h The handle to the resource\n! @return The size of the resource in bytes"]
     pub fn resource_size(h: ResHandle) -> usize;
 }
 unsafe extern "C" {
-    /**! Copies the bytes for the resource with a given handle from flash storage into a given buffer.
-! @param h The handle to the resource
-! @param buffer The buffer to load the resource data into
-! @param max_length The maximum number of bytes to copy
-! @return The number of bytes actually copied*/
+    #[doc = "! Copies the bytes for the resource with a given handle from flash storage into a given buffer.\n! @param h The handle to the resource\n! @param buffer The buffer to load the resource data into\n! @param max_length The maximum number of bytes to copy\n! @return The number of bytes actually copied"]
     pub fn resource_load(h: ResHandle, buffer: *mut u8, max_length: usize) -> usize;
 }
 unsafe extern "C" {
-    /**! Copies a range of bytes from a resource with a given handle into a given buffer.
-! @param h The handle to the resource
-! @param start_offset The offset in bytes at which to start reading from the resource
-! @param buffer The buffer to load the resource data into
-! @param num_bytes The maximum number of bytes to copy
-! @return The number of bytes actually copied*/
+    #[doc = "! Copies a range of bytes from a resource with a given handle into a given buffer.\n! @param h The handle to the resource\n! @param start_offset The offset in bytes at which to start reading from the resource\n! @param buffer The buffer to load the resource data into\n! @param num_bytes The maximum number of bytes to copy\n! @return The number of bytes actually copied"]
     pub fn resource_load_byte_range(
         h: ResHandle,
         start_offset: u32,
@@ -3240,27 +2126,24 @@ unsafe extern "C" {
     ) -> usize;
 }
 unsafe extern "C" {
-    /**! The event loop for C apps, to be used in app's main().
-! Will block until the app is ready to exit.*/
+    #[doc = "! The event loop for C apps, to be used in app's main().\n! Will block until the app is ready to exit."]
     pub fn app_event_loop();
 }
-/**! Configuration record for creating a Moddable XS virtual machine.
-! Used with moddable_createMachine() to customize the JS runtime.
-! Set recordSize to sizeof(ModdableCreationRecord) for version compatibility.*/
+#[doc = "! Configuration record for creating a Moddable XS virtual machine.\n! Used with moddable_createMachine() to customize the JS runtime.\n! Set recordSize to sizeof(ModdableCreationRecord) for version compatibility."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ModdableCreationRecord {
-    ///!< Size of this struct in bytes (for versioning)
+    #[doc = "!< Size of this struct in bytes (for versioning)"]
     pub recordSize: u32,
-    ///!< Stack size in bytes (0 for default)
+    #[doc = "!< Stack size in bytes (0 for default)"]
     pub stack: u32,
-    ///!< Slot heap size in bytes (0 for default)
+    #[doc = "!< Slot heap size in bytes (0 for default)"]
     pub slot: u32,
-    ///!< Chunk heap size in bytes (0 for default)
+    #[doc = "!< Chunk heap size in bytes (0 for default)"]
     pub chunk: u32,
-    ///!< Combination of kModdableCreationFlag* values
+    #[doc = "!< Combination of kModdableCreationFlag* values"]
     pub flags: u32,
-    ///!< Optional pointer to an fxBuildFFI function for custom native bindings
+    #[doc = "!< Optional pointer to an fxBuildFFI function for custom native bindings"]
     pub fxBuildFFI: *mut ::core::ffi::c_void,
 }
 impl Default for ModdableCreationRecord {
@@ -3273,32 +2156,28 @@ impl Default for ModdableCreationRecord {
     }
 }
 unsafe extern "C" {
-    /**! Create and start a Moddable XS virtual machine for an Alloy app.
-! @param creation Configuration record, or NULL for default settings.
-! @see ModdableCreationRecord*/
+    #[doc = "! Create and start a Moddable XS virtual machine for an Alloy app.\n! @param creation Configuration record, or NULL for default settings.\n! @see ModdableCreationRecord"]
     pub fn moddable_createMachine(creation: *mut ModdableCreationRecord);
 }
 impl AppWorkerResult {
-    ///! Success
+    #[doc = "! Success"]
     pub const APP_WORKER_RESULT_SUCCESS: AppWorkerResult = AppWorkerResult(0);
-    ///! No worker found for the current app
+    #[doc = "! No worker found for the current app"]
     pub const APP_WORKER_RESULT_NO_WORKER: AppWorkerResult = AppWorkerResult(1);
-    ///! A worker for a different app is already running
+    #[doc = "! A worker for a different app is already running"]
     pub const APP_WORKER_RESULT_DIFFERENT_APP: AppWorkerResult = AppWorkerResult(2);
-    ///! The worker is not running
+    #[doc = "! The worker is not running"]
     pub const APP_WORKER_RESULT_NOT_RUNNING: AppWorkerResult = AppWorkerResult(3);
-    ///! The worker is already running
+    #[doc = "! The worker is already running"]
     pub const APP_WORKER_RESULT_ALREADY_RUNNING: AppWorkerResult = AppWorkerResult(4);
-    ///! The user will be asked for confirmation
-    pub const APP_WORKER_RESULT_ASKING_CONFIRMATION: AppWorkerResult = AppWorkerResult(
-        5,
-    );
+    #[doc = "! The user will be asked for confirmation"]
+    pub const APP_WORKER_RESULT_ASKING_CONFIRMATION: AppWorkerResult = AppWorkerResult(5);
 }
 #[repr(transparent)]
-///! Possible error codes from app_worker_launch, app_worker_kill
+#[doc = "! Possible error codes from app_worker_launch, app_worker_kill"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppWorkerResult(pub ::core::ffi::c_uchar);
-///! Generic structure of a worker message that can be sent between an app and its worker
+#[doc = "! Generic structure of a worker message that can be sent between an app and its worker"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AppWorkerMessage {
@@ -3307,84 +2186,52 @@ pub struct AppWorkerMessage {
     pub data2: u16,
 }
 unsafe extern "C" {
-    /**! Determine if the worker for the current app is running
-! @return true if running*/
+    #[doc = "! Determine if the worker for the current app is running\n! @return true if running"]
     pub fn app_worker_is_running() -> bool;
 }
 unsafe extern "C" {
-    /**! Launch the worker for the current app. Note that this is an asynchronous operation, a result code
-! of APP_WORKER_RESULT_SUCCESS merely means that the request was successfully queued up.
-! @return result code*/
+    #[doc = "! Launch the worker for the current app. Note that this is an asynchronous operation, a result code\n! of APP_WORKER_RESULT_SUCCESS merely means that the request was successfully queued up.\n! @return result code"]
     pub fn app_worker_launch() -> AppWorkerResult;
 }
 unsafe extern "C" {
-    /**! Kill the worker for the current app. Note that this is an asynchronous operation, a result code
-! of APP_WORKER_RESULT_SUCCESS merely means that the request was successfully queued up.
-! @return result code*/
+    #[doc = "! Kill the worker for the current app. Note that this is an asynchronous operation, a result code\n! of APP_WORKER_RESULT_SUCCESS merely means that the request was successfully queued up.\n! @return result code"]
     pub fn app_worker_kill() -> AppWorkerResult;
 }
-/**! Callback type for worker messages. Messages can be sent from worker to app or vice versa.
-! @param type An application defined message type
-! @param data pointer to message data. The receiver must know the structure of the data provided by the sender.*/
-pub type AppWorkerMessageHandler = ::core::option::Option<
-    unsafe extern "C" fn(type_: u16, data: *mut AppWorkerMessage),
->;
+#[doc = "! Callback type for worker messages. Messages can be sent from worker to app or vice versa.\n! @param type An application defined message type\n! @param data pointer to message data. The receiver must know the structure of the data provided by the sender."]
+pub type AppWorkerMessageHandler =
+    ::core::option::Option<unsafe extern "C" fn(type_: u16, data: *mut AppWorkerMessage)>;
 unsafe extern "C" {
-    /**! Subscribe to worker messages. Once subscribed, the handler gets called on every message emitted by the other task
-! (either worker or app).
-! @param handler A callback to be executed when the event is received
-! @return true on success*/
+    #[doc = "! Subscribe to worker messages. Once subscribed, the handler gets called on every message emitted by the other task\n! (either worker or app).\n! @param handler A callback to be executed when the event is received\n! @return true on success"]
     pub fn app_worker_message_subscribe(handler: AppWorkerMessageHandler) -> bool;
 }
 unsafe extern "C" {
-    /**! Unsubscribe from worker messages. Once unsubscribed, the previously registered handler will no longer be called.
-! @return true on success*/
+    #[doc = "! Unsubscribe from worker messages. Once unsubscribed, the previously registered handler will no longer be called.\n! @return true on success"]
     pub fn app_worker_message_unsubscribe() -> bool;
 }
 unsafe extern "C" {
-    /**! Send a message to the other task (either worker or app).
-! @param type An application defined message type
-! @param data the message data structure*/
+    #[doc = "! Send a message to the other task (either worker or app).\n! @param type An application defined message type\n! @param data the message data structure"]
     pub fn app_worker_send_message(type_: u8, data: *mut AppWorkerMessage);
 }
 impl SniffInterval {
-    ///! Set the sniff interval to normal (power-saving) mode
+    #[doc = "! Set the sniff interval to normal (power-saving) mode"]
     pub const SNIFF_INTERVAL_NORMAL: SniffInterval = SniffInterval(0);
-    /**! Reduce the sniff interval to increase the responsiveness of the radio at
-! the expense of increasing Bluetooth energy consumption by a multiple of 2-5
-! (very significant)*/
+    #[doc = "! Reduce the sniff interval to increase the responsiveness of the radio at\n! the expense of increasing Bluetooth energy consumption by a multiple of 2-5\n! (very significant)"]
     pub const SNIFF_INTERVAL_REDUCED: SniffInterval = SniffInterval(1);
 }
 #[repr(transparent)]
-/**! Intervals during which the Bluetooth module may enter a low power mode.
-! The sniff interval defines the period during which the Bluetooth module may
-! not exchange (ACL) packets. The longer the sniff interval, the more time the
-! Bluetooth module may spend in a low power mode.
-! It may be necessary to reduce the sniff interval if an app requires reduced
-! latency when sending messages.
-! @note These settings have a dramatic effect on the Pebble's energy
-! consumption. Use the normal sniff interval whenever possible.
-! Note, however, that switching between modes increases power consumption
-! during the process. Frequent switching between modes is thus
-! discouraged. Ensure you do not drop to normal frequently. The Bluetooth module
-! is a major consumer of the Pebble's energy.*/
+#[doc = "! Intervals during which the Bluetooth module may enter a low power mode.\n! The sniff interval defines the period during which the Bluetooth module may\n! not exchange (ACL) packets. The longer the sniff interval, the more time the\n! Bluetooth module may spend in a low power mode.\n! It may be necessary to reduce the sniff interval if an app requires reduced\n! latency when sending messages.\n! @note These settings have a dramatic effect on the Pebble's energy\n! consumption. Use the normal sniff interval whenever possible.\n! Note, however, that switching between modes increases power consumption\n! during the process. Frequent switching between modes is thus\n! discouraged. Ensure you do not drop to normal frequently. The Bluetooth module\n! is a major consumer of the Pebble's energy."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SniffInterval(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Set the Bluetooth module's sniff interval.
-! The sniff interval will be restored to normal by the OS after the app's
-! de-init handler is called. Set the sniff interval to normal whenever
-! possible.*/
+    #[doc = "! Set the Bluetooth module's sniff interval.\n! The sniff interval will be restored to normal by the OS after the app's\n! de-init handler is called. Set the sniff interval to normal whenever\n! possible."]
     pub fn app_comm_set_sniff_interval(interval: SniffInterval);
 }
 unsafe extern "C" {
-    /**! Get the Bluetooth module's sniff interval
-! @return The SniffInterval value corresponding to the current interval*/
+    #[doc = "! Get the Bluetooth module's sniff interval\n! @return The SniffInterval value corresponding to the current interval"]
     pub fn app_comm_get_sniff_interval() -> SniffInterval;
 }
 unsafe extern "C" {
-    /**! Waits for a certain amount of milliseconds
-! @param millis The number of milliseconds to wait for*/
+    #[doc = "! Waits for a certain amount of milliseconds\n! @param millis The number of milliseconds to wait for"]
     pub fn psleep(millis: ::core::ffi::c_int);
 }
 #[repr(C)]
@@ -3392,17 +2239,11 @@ unsafe extern "C" {
 pub struct AppTimer {
     _unused: [u8; 0],
 }
-/**! The type of function which can be called when a timer fires.  The argument will be the @p callback_data passed to
-! @ref app_timer_register().*/
-pub type AppTimerCallback = ::core::option::Option<
-    unsafe extern "C" fn(data: *mut ::core::ffi::c_void),
->;
+#[doc = "! The type of function which can be called when a timer fires.  The argument will be the @p callback_data passed to\n! @ref app_timer_register()."]
+pub type AppTimerCallback =
+    ::core::option::Option<unsafe extern "C" fn(data: *mut ::core::ffi::c_void)>;
 unsafe extern "C" {
-    /**! Registers a timer that ends up in callback being called some specified time in the future.
-! @param timeout_ms The expiry time in milliseconds from the current time
-! @param callback The callback that gets called at expiry time
-! @param callback_data The data that will be passed to callback
-! @return A pointer to an `AppTimer` that can be used to later reschedule or cancel this timer*/
+    #[doc = "! Registers a timer that ends up in callback being called some specified time in the future.\n! @param timeout_ms The expiry time in milliseconds from the current time\n! @param callback The callback that gets called at expiry time\n! @param callback_data The data that will be passed to callback\n! @return A pointer to an `AppTimer` that can be used to later reschedule or cancel this timer"]
     pub fn app_timer_register(
         timeout_ms: u32,
         callback: AppTimerCallback,
@@ -3410,127 +2251,89 @@ unsafe extern "C" {
     ) -> *mut AppTimer;
 }
 unsafe extern "C" {
-    /**! Reschedules an already running timer for some point in the future.
-! Elapsed timers cannot be rescheduled.
-! @param timer_handle The timer to reschedule
-! @param new_timeout_ms The new expiry time in milliseconds from the current time
-! @return true if the timer was rescheduled, false if the timer has already elapsed*/
-    pub fn app_timer_reschedule(
-        timer_handle: *mut AppTimer,
-        new_timeout_ms: u32,
-    ) -> bool;
+    #[doc = "! Reschedules an already running timer for some point in the future.\n! Elapsed timers cannot be rescheduled.\n! @param timer_handle The timer to reschedule\n! @param new_timeout_ms The new expiry time in milliseconds from the current time\n! @return true if the timer was rescheduled, false if the timer has already elapsed"]
+    pub fn app_timer_reschedule(timer_handle: *mut AppTimer, new_timeout_ms: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Cancels an already registered timer.
-! Once cancelled the handle may no longer be used for any purpose.
-! Elapsed timers do not need to be cancelled.*/
+    #[doc = "! Cancels an already registered timer.\n! Once cancelled the handle may no longer be used for any purpose.\n! Elapsed timers do not need to be cancelled."]
     pub fn app_timer_cancel(timer_handle: *mut AppTimer);
 }
 unsafe extern "C" {
-    /**! Calculates the number of bytes of heap memory \a not currently being used by the application.
-! @return The number of bytes on the heap not currently being used.*/
+    #[doc = "! Calculates the number of bytes of heap memory \\a not currently being used by the application.\n! @return The number of bytes on the heap not currently being used."]
     pub fn heap_bytes_free() -> usize;
 }
 unsafe extern "C" {
-    /**! Calculates the number of bytes of heap memory currently being used by the application.
-! @return The number of bytes on the heap currently being used.*/
+    #[doc = "! Calculates the number of bytes of heap memory currently being used by the application.\n! @return The number of bytes on the heap currently being used."]
     pub fn heap_bytes_used() -> usize;
 }
 unsafe extern "C" {
-    /**! Flushes the data cache and invalidates the instruction cache for the given region of memory,
-! if necessary. This is only required when your app is loading or modifying code in memory and
-! intends to execute it. On some platforms, code executed may be cached internally to improve
-! performance. After writing to memory, but before executing, this function must be called in
-! order to avoid undefined behavior. On platforms without caching, this performs no operation.
-! @param start The beginning of the buffer to flush
-! @param size How many bytes to flush*/
+    #[doc = "! Flushes the data cache and invalidates the instruction cache for the given region of memory,\n! if necessary. This is only required when your app is loading or modifying code in memory and\n! intends to execute it. On some platforms, code executed may be cached internally to improve\n! performance. After writing to memory, but before executing, this function must be called in\n! order to avoid undefined behavior. On platforms without caching, this performs no operation.\n! @param start The beginning of the buffer to flush\n! @param size How many bytes to flush"]
     pub fn memory_cache_flush(start: *mut ::core::ffi::c_void, size: usize);
 }
 impl StatusCode {
-    ///! Operation completed successfully.
+    #[doc = "! Operation completed successfully."]
     pub const S_SUCCESS: StatusCode = StatusCode(0);
-    ///! An error occurred (no description).
+    #[doc = "! An error occurred (no description)."]
     pub const E_ERROR: StatusCode = StatusCode(-1);
-    ///! No idea what went wrong.
+    #[doc = "! No idea what went wrong."]
     pub const E_UNKNOWN: StatusCode = StatusCode(-2);
-    ///! There was a generic internal logic error.
+    #[doc = "! There was a generic internal logic error."]
     pub const E_INTERNAL: StatusCode = StatusCode(-3);
-    ///! The function was not called correctly.
+    #[doc = "! The function was not called correctly."]
     pub const E_INVALID_ARGUMENT: StatusCode = StatusCode(-4);
-    ///! Insufficient allocatable memory available.
+    #[doc = "! Insufficient allocatable memory available."]
     pub const E_OUT_OF_MEMORY: StatusCode = StatusCode(-5);
-    ///! Insufficient long-term storage available.
+    #[doc = "! Insufficient long-term storage available."]
     pub const E_OUT_OF_STORAGE: StatusCode = StatusCode(-6);
-    ///! Insufficient resources available.
+    #[doc = "! Insufficient resources available."]
     pub const E_OUT_OF_RESOURCES: StatusCode = StatusCode(-7);
-    ///! Argument out of range (may be dynamic).
+    #[doc = "! Argument out of range (may be dynamic)."]
     pub const E_RANGE: StatusCode = StatusCode(-8);
-    ///! Target of operation does not exist.
+    #[doc = "! Target of operation does not exist."]
     pub const E_DOES_NOT_EXIST: StatusCode = StatusCode(-9);
-    ///! Operation not allowed (may depend on state).
+    #[doc = "! Operation not allowed (may depend on state)."]
     pub const E_INVALID_OPERATION: StatusCode = StatusCode(-10);
-    ///! Another operation prevented this one.
+    #[doc = "! Another operation prevented this one."]
     pub const E_BUSY: StatusCode = StatusCode(-11);
-    ///! Operation not completed; try again.
+    #[doc = "! Operation not completed; try again."]
     pub const E_AGAIN: StatusCode = StatusCode(-12);
-    ///! Equivalent of boolean true.
+    #[doc = "! Equivalent of boolean true."]
     pub const S_TRUE: StatusCode = StatusCode(1);
-    ///! Equivalent of boolean false.
+    #[doc = "! Equivalent of boolean false."]
     pub const S_FALSE: StatusCode = StatusCode(0);
-    ///! For list-style requests.  At end of list.
+    #[doc = "! For list-style requests.  At end of list."]
     pub const S_NO_MORE_ITEMS: StatusCode = StatusCode(2);
-    ///! No action was taken as none was required.
+    #[doc = "! No action was taken as none was required."]
     pub const S_NO_ACTION_REQUIRED: StatusCode = StatusCode(3);
 }
 #[repr(transparent)]
-///! Status codes. See \ref status_t
+#[doc = "! Status codes. See \\ref status_t"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct StatusCode(pub ::core::ffi::c_schar);
-///! Return value for system operations. See \ref StatusCode for possible values.
+#[doc = "! Return value for system operations. See \\ref StatusCode for possible values."]
 pub type status_t = i32;
 unsafe extern "C" {
-    /**! Checks whether a value has been set for a given key in persistent storage.
-! @param key The key of the field to check.
-! @return true if a value exists, otherwise false.*/
+    #[doc = "! Checks whether a value has been set for a given key in persistent storage.\n! @param key The key of the field to check.\n! @return true if a value exists, otherwise false."]
     pub fn persist_exists(key: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the maximum total size in bytes of all persisted values for the
-! current app on this firmware. Apps targeting older SDKs that don't have
-! this function should assume a 4 KB limit.
-! @return The per-app persistent storage capacity in bytes.*/
+    #[doc = "! Gets the maximum total size in bytes of all persisted values for the\n! current app on this firmware. Apps targeting older SDKs that don't have\n! this function should assume a 4 KB limit.\n! @return The per-app persistent storage capacity in bytes."]
     pub fn persist_get_max_size() -> usize;
 }
 unsafe extern "C" {
-    /**! Gets the size of a value for a given key in persistent storage.
-! @param key The key of the field to lookup the data size.
-! @return The size of the value in bytes or \ref E_DOES_NOT_EXIST
-! if there is no field matching the given key.*/
+    #[doc = "! Gets the size of a value for a given key in persistent storage.\n! @param key The key of the field to lookup the data size.\n! @return The size of the value in bytes or \\ref E_DOES_NOT_EXIST\n! if there is no field matching the given key."]
     pub fn persist_get_size(key: u32) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Reads a bool value for a given key from persistent storage.
-! If the value has not yet been set, this will return false.
-! @param key The key of the field to read from.
-! @return The bool value of the key to read from.*/
+    #[doc = "! Reads a bool value for a given key from persistent storage.\n! If the value has not yet been set, this will return false.\n! @param key The key of the field to read from.\n! @return The bool value of the key to read from."]
     pub fn persist_read_bool(key: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Reads an int value for a given key from persistent storage.
-! @note The int is a signed 32-bit integer.
-! If the value has not yet been set, this will return 0.
-! @param key The key of the field to read from.
-! @return The int value of the key to read from.*/
+    #[doc = "! Reads an int value for a given key from persistent storage.\n! @note The int is a signed 32-bit integer.\n! If the value has not yet been set, this will return 0.\n! @param key The key of the field to read from.\n! @return The int value of the key to read from."]
     pub fn persist_read_int(key: u32) -> i32;
 }
 unsafe extern "C" {
-    /**! Reads a blob of data for a given key from persistent storage into a given buffer.
-! If the value has not yet been set, the given buffer is left unchanged.
-! @param key The key of the field to read from.
-! @param buffer The pointer to a buffer to be written to.
-! @param buffer_size The maximum size of the given buffer.
-! @return The number of bytes written into the buffer or \ref E_DOES_NOT_EXIST
-! if there is no field matching the given key.*/
+    #[doc = "! Reads a blob of data for a given key from persistent storage into a given buffer.\n! If the value has not yet been set, the given buffer is left unchanged.\n! @param key The key of the field to read from.\n! @param buffer The pointer to a buffer to be written to.\n! @param buffer_size The maximum size of the given buffer.\n! @return The number of bytes written into the buffer or \\ref E_DOES_NOT_EXIST\n! if there is no field matching the given key."]
     pub fn persist_read_data(
         key: u32,
         buffer: *mut ::core::ffi::c_void,
@@ -3538,14 +2341,7 @@ unsafe extern "C" {
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Reads a string for a given key from persistent storage into a given buffer.
-! The string will be null terminated.
-! If the value has not yet been set, the given buffer is left unchanged.
-! @param key The key of the field to read from.
-! @param buffer The pointer to a buffer to be written to.
-! @param buffer_size The maximum size of the given buffer. This includes the null character.
-! @return The number of bytes written into the buffer or \ref E_DOES_NOT_EXIST
-! if there is no field matching the given key.*/
+    #[doc = "! Reads a string for a given key from persistent storage into a given buffer.\n! The string will be null terminated.\n! If the value has not yet been set, the given buffer is left unchanged.\n! @param key The key of the field to read from.\n! @param buffer The pointer to a buffer to be written to.\n! @param buffer_size The maximum size of the given buffer. This includes the null character.\n! @return The number of bytes written into the buffer or \\ref E_DOES_NOT_EXIST\n! if there is no field matching the given key."]
     pub fn persist_read_string(
         key: u32,
         buffer: *mut ::core::ffi::c_char,
@@ -3553,27 +2349,15 @@ unsafe extern "C" {
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Writes a bool value flag for a given key into persistent storage.
-! @param key The key of the field to write to.
-! @param value The boolean value to write.
-! @return The number of bytes written if successful, a value from \ref StatusCode otherwise.*/
+    #[doc = "! Writes a bool value flag for a given key into persistent storage.\n! @param key The key of the field to write to.\n! @param value The boolean value to write.\n! @return The number of bytes written if successful, a value from \\ref StatusCode otherwise."]
     pub fn persist_write_bool(key: u32, value: bool) -> status_t;
 }
 unsafe extern "C" {
-    /**! Writes an int value for a given key into persistent storage.
-! @note The int is a signed 32-bit integer.
-! @param key The key of the field to write to.
-! @param value The int value to write.
-! @return The number of bytes written if successful, a value from \ref StatusCode otherwise.*/
+    #[doc = "! Writes an int value for a given key into persistent storage.\n! @note The int is a signed 32-bit integer.\n! @param key The key of the field to write to.\n! @param value The int value to write.\n! @return The number of bytes written if successful, a value from \\ref StatusCode otherwise."]
     pub fn persist_write_int(key: u32, value: i32) -> status_t;
 }
 unsafe extern "C" {
-    /**! Writes a blob of data of a specified size in bytes for a given key into persistent storage.
-! The maximum size is \ref PERSIST_DATA_MAX_LENGTH
-! @param key The key of the field to write to.
-! @param data The pointer to the blob of data.
-! @param size The size in bytes.
-! @return The number of bytes written if successful, a value from \ref StatusCode otherwise.*/
+    #[doc = "! Writes a blob of data of a specified size in bytes for a given key into persistent storage.\n! The maximum size is \\ref PERSIST_DATA_MAX_LENGTH\n! @param key The key of the field to write to.\n! @param data The pointer to the blob of data.\n! @param size The size in bytes.\n! @return The number of bytes written if successful, a value from \\ref StatusCode otherwise."]
     pub fn persist_write_data(
         key: u32,
         data: *const ::core::ffi::c_void,
@@ -3581,51 +2365,27 @@ unsafe extern "C" {
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Writes a string a given key into persistent storage.
-! The maximum size is \ref PERSIST_STRING_MAX_LENGTH including the null terminator.
-! @param key The key of the field to write to.
-! @param cstring The pointer to null terminated string.
-! @return The number of bytes written if successful, a value from \ref StatusCode otherwise.*/
+    #[doc = "! Writes a string a given key into persistent storage.\n! The maximum size is \\ref PERSIST_STRING_MAX_LENGTH including the null terminator.\n! @param key The key of the field to write to.\n! @param cstring The pointer to null terminated string.\n! @return The number of bytes written if successful, a value from \\ref StatusCode otherwise."]
     pub fn persist_write_string(
         key: u32,
         cstring: *const ::core::ffi::c_char,
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Deletes the value of a key from persistent storage.
-! @param key The key of the field to delete from.
-! @return S_TRUE if successful, E_DOES_NOT_EXIST if a value was not set, or another error value from \ref StatusCode.*/
+    #[doc = "! Deletes the value of a key from persistent storage.\n! @param key The key of the field to delete from.\n! @return S_TRUE if successful, E_DOES_NOT_EXIST if a value was not set, or another error value from \\ref StatusCode."]
     pub fn persist_delete(key: u32) -> status_t;
 }
-///! WakeupId is an identifier for a wakeup event
+#[doc = "! WakeupId is an identifier for a wakeup event"]
 pub type WakeupId = i32;
-/**! The type of function which can be called when a wakeup event occurs.
-! The arguments will be the id of the wakeup event that occurred,
-! as well as the scheduled cookie provided to \ref wakeup_schedule.*/
-pub type WakeupHandler = ::core::option::Option<
-    unsafe extern "C" fn(wakeup_id: WakeupId, cookie: i32),
->;
+#[doc = "! The type of function which can be called when a wakeup event occurs.\n! The arguments will be the id of the wakeup event that occurred,\n! as well as the scheduled cookie provided to \\ref wakeup_schedule."]
+pub type WakeupHandler =
+    ::core::option::Option<unsafe extern "C" fn(wakeup_id: WakeupId, cookie: i32)>;
 unsafe extern "C" {
-    /**! Registers a WakeupHandler to be called when wakeup events occur.
-! @note The handler is only called for wakeup events which occur while the app is already running;
-!       use \ref launch_reason() === \ref APP_LAUNCH_WAKEUP to detect when the app was launched by a wakeup event.
-! @param handler The callback that gets called when the wakeup event occurs*/
+    #[doc = "! Registers a WakeupHandler to be called when wakeup events occur.\n! @note The handler is only called for wakeup events which occur while the app is already running;\n!       use \\ref launch_reason() === \\ref APP_LAUNCH_WAKEUP to detect when the app was launched by a wakeup event.\n! @param handler The callback that gets called when the wakeup event occurs"]
     pub fn wakeup_service_subscribe(handler: WakeupHandler);
 }
 unsafe extern "C" {
-    /**! Registers a wakeup event that triggers a callback at the specified time.
-! Applications may only schedule up to 8 wakeup events.
-! Wakeup events are given a 1 minute duration window, in that no application may schedule a
-! wakeup event with 1 minute of a currently scheduled wakeup event.
-! @param timestamp The requested time (UTC) for the wakeup event to occur
-! @param cookie The application specific reason for the wakeup event
-! @param notify_if_missed On powering on Pebble, will alert user when
-! notifications were missed due to Pebble being off.
-! @return negative values indicate errors (StatusCode)
-! E_RANGE if the event cannot be scheduled due to another event in that period.
-! E_INVALID_ARGUMENT if the time requested is in the past.
-! E_OUT_OF_RESOURCES if the application has already scheduled all 8 wakeup events.
-! E_INTERNAL if a system error occurred during scheduling.*/
+    #[doc = "! Registers a wakeup event that triggers a callback at the specified time.\n! Applications may only schedule up to 8 wakeup events.\n! Wakeup events are given a 1 minute duration window, in that no application may schedule a\n! wakeup event with 1 minute of a currently scheduled wakeup event.\n! @param timestamp The requested time (UTC) for the wakeup event to occur\n! @param cookie The application specific reason for the wakeup event\n! @param notify_if_missed On powering on Pebble, will alert user when\n! notifications were missed due to Pebble being off.\n! @return negative values indicate errors (StatusCode)\n! E_RANGE if the event cannot be scheduled due to another event in that period.\n! E_INVALID_ARGUMENT if the time requested is in the past.\n! E_OUT_OF_RESOURCES if the application has already scheduled all 8 wakeup events.\n! E_INTERNAL if a system error occurred during scheduling."]
     pub fn wakeup_schedule(
         timestamp: ::core::ffi::c_long,
         cookie: i32,
@@ -3633,138 +2393,98 @@ unsafe extern "C" {
     ) -> WakeupId;
 }
 unsafe extern "C" {
-    /**! Cancels a wakeup event.
-! @param wakeup_id Wakeup event to cancel*/
+    #[doc = "! Cancels a wakeup event.\n! @param wakeup_id Wakeup event to cancel"]
     pub fn wakeup_cancel(wakeup_id: WakeupId);
 }
 unsafe extern "C" {
-    ///! Cancels all wakeup event for the app.
+    #[doc = "! Cancels all wakeup event for the app."]
     pub fn wakeup_cancel_all();
 }
 unsafe extern "C" {
-    /**! Retrieves the wakeup event info for an app that was launched
-! by a wakeup_event (ie. \ref launch_reason() === APP_LAUNCH_WAKEUP)
-! so that an app may display information regarding the wakeup event
-! @param wakeup_id WakeupId for the wakeup event that caused the app to wakeup
-! @param cookie App provided reason for the wakeup event
-! @return True if app was launched due to a wakeup event, false otherwise*/
+    #[doc = "! Retrieves the wakeup event info for an app that was launched\n! by a wakeup_event (ie. \\ref launch_reason() === APP_LAUNCH_WAKEUP)\n! so that an app may display information regarding the wakeup event\n! @param wakeup_id WakeupId for the wakeup event that caused the app to wakeup\n! @param cookie App provided reason for the wakeup event\n! @return True if app was launched due to a wakeup event, false otherwise"]
     pub fn wakeup_get_launch_event(wakeup_id: *mut WakeupId, cookie: *mut i32) -> bool;
 }
 unsafe extern "C" {
-    /**! Checks if the current WakeupId is still scheduled and therefore valid
-! @param wakeup_id Wakeup event to query for validity and scheduled time
-! @param timestamp Optionally points to an address of a time_t variable to
-! store the time that the wakeup event is scheduled to occur.
-! (The time is in UTC, but local time when \ref clock_is_timezone_set
-! returns false).
-! You may pass NULL instead if you do not need it.
-! @return True if WakeupId is still scheduled, false if it doesn't exist or has
-! already occurred*/
-    pub fn wakeup_query(
-        wakeup_id: WakeupId,
-        timestamp: *mut ::core::ffi::c_long,
-    ) -> bool;
+    #[doc = "! Checks if the current WakeupId is still scheduled and therefore valid\n! @param wakeup_id Wakeup event to query for validity and scheduled time\n! @param timestamp Optionally points to an address of a time_t variable to\n! store the time that the wakeup event is scheduled to occur.\n! (The time is in UTC, but local time when \\ref clock_is_timezone_set\n! returns false).\n! You may pass NULL instead if you do not need it.\n! @return True if WakeupId is still scheduled, false if it doesn't exist or has\n! already occurred"]
+    pub fn wakeup_query(wakeup_id: WakeupId, timestamp: *mut ::core::ffi::c_long) -> bool;
 }
 impl AppLaunchReason {
-    ///!< App launched by the system
+    #[doc = "!< App launched by the system"]
     pub const APP_LAUNCH_SYSTEM: AppLaunchReason = AppLaunchReason(0);
-    ///!< App launched by user selection in launcher menu
+    #[doc = "!< App launched by user selection in launcher menu"]
     pub const APP_LAUNCH_USER: AppLaunchReason = AppLaunchReason(1);
-    ///!< App launched by mobile or companion app
+    #[doc = "!< App launched by mobile or companion app"]
     pub const APP_LAUNCH_PHONE: AppLaunchReason = AppLaunchReason(2);
-    ///!< App launched by wakeup event
+    #[doc = "!< App launched by wakeup event"]
     pub const APP_LAUNCH_WAKEUP: AppLaunchReason = AppLaunchReason(3);
-    ///!< App launched by worker calling worker_launch_app()
+    #[doc = "!< App launched by worker calling worker_launch_app()"]
     pub const APP_LAUNCH_WORKER: AppLaunchReason = AppLaunchReason(4);
-    ///!< App launched by user using quick launch
+    #[doc = "!< App launched by user using quick launch"]
     pub const APP_LAUNCH_QUICK_LAUNCH: AppLaunchReason = AppLaunchReason(5);
-    ///!< App launched by user opening it from a pin
+    #[doc = "!< App launched by user opening it from a pin"]
     pub const APP_LAUNCH_TIMELINE_ACTION: AppLaunchReason = AppLaunchReason(6);
-    ///!< App launched by a smartstrap
+    #[doc = "!< App launched by a smartstrap"]
     pub const APP_LAUNCH_SMARTSTRAP: AppLaunchReason = AppLaunchReason(7);
 }
 #[repr(transparent)]
-/**! AppLaunchReason is used to inform the application about how it was launched
-! @note New launch reasons may be added in the future. As a best practice, it
-! is recommended to only handle the cases that the app needs to know about,
-! rather than trying to handle all possible launch reasons.*/
+#[doc = "! AppLaunchReason is used to inform the application about how it was launched\n! @note New launch reasons may be added in the future. As a best practice, it\n! is recommended to only handle the cases that the app needs to know about,\n! rather than trying to handle all possible launch reasons."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppLaunchReason(pub ::core::ffi::c_uchar);
 impl AppQuickLaunchAction {
-    ///!< App was not launched via Quick Launch
-    pub const APP_QUICK_LAUNCH_ACTION_NONE: AppQuickLaunchAction = AppQuickLaunchAction(
-        0,
-    );
-    ///!< User held a single button
-    pub const APP_QUICK_LAUNCH_ACTION_HOLD: AppQuickLaunchAction = AppQuickLaunchAction(
-        1,
-    );
-    ///!< User tapped a button (single click)
-    pub const APP_QUICK_LAUNCH_ACTION_TAP: AppQuickLaunchAction = AppQuickLaunchAction(
-        2,
-    );
-    ///!< User held a button combination
-    pub const APP_QUICK_LAUNCH_ACTION_COMBO: AppQuickLaunchAction = AppQuickLaunchAction(
-        3,
-    );
+    #[doc = "!< App was not launched via Quick Launch"]
+    pub const APP_QUICK_LAUNCH_ACTION_NONE: AppQuickLaunchAction = AppQuickLaunchAction(0);
+    #[doc = "!< User held a single button"]
+    pub const APP_QUICK_LAUNCH_ACTION_HOLD: AppQuickLaunchAction = AppQuickLaunchAction(1);
+    #[doc = "!< User tapped a button (single click)"]
+    pub const APP_QUICK_LAUNCH_ACTION_TAP: AppQuickLaunchAction = AppQuickLaunchAction(2);
+    #[doc = "!< User held a button combination"]
+    pub const APP_QUICK_LAUNCH_ACTION_COMBO: AppQuickLaunchAction = AppQuickLaunchAction(3);
 }
 #[repr(transparent)]
-/**! Details about how an app was quick launched.
-! Returned by \ref app_launch_get_quick_launch_action.*/
+#[doc = "! Details about how an app was quick launched.\n! Returned by \\ref app_launch_get_quick_launch_action."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppQuickLaunchAction(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Provides the method used to launch the current application.
-! @return The method or reason the current application was launched*/
+    #[doc = "! Provides the method used to launch the current application.\n! @return The method or reason the current application was launched"]
     pub fn launch_reason() -> AppLaunchReason;
 }
 unsafe extern "C" {
-    /**! Get the argument passed to the app when it was launched.
-! @note Currently the only way to pass arguments to apps is by using an openWatchApp action
-! on a pin.
-! @return The argument passed to the app, or 0 if the app wasn't launched from a Launch App action*/
+    #[doc = "! Get the argument passed to the app when it was launched.\n! @note Currently the only way to pass arguments to apps is by using an openWatchApp action\n! on a pin.\n! @return The argument passed to the app, or 0 if the app wasn't launched from a Launch App action"]
     pub fn launch_get_args() -> u32;
 }
 unsafe extern "C" {
-    /**! Get the button id used to launch the app.
-! Only valid if the launch reason is APP_LAUNCH_USER or APP_LAUNCH_QUICK_LAUNCH.*/
+    #[doc = "! Get the button id used to launch the app.\n! Only valid if the launch reason is APP_LAUNCH_USER or APP_LAUNCH_QUICK_LAUNCH."]
     pub fn launch_button() -> ButtonId;
 }
 unsafe extern "C" {
-    /**! Get the action that was used to quick launch the app.
-! @return The \ref AppQuickLaunchAction used to launch the app, or
-! APP_QUICK_LAUNCH_ACTION_NONE if the app was not launched via Quick Launch.*/
+    #[doc = "! Get the action that was used to quick launch the app.\n! @return The \\ref AppQuickLaunchAction used to launch the app, or\n! APP_QUICK_LAUNCH_ACTION_NONE if the app was not launched via Quick Launch."]
     pub fn launch_get_quick_launch_action() -> AppQuickLaunchAction;
 }
 impl AppExitReason {
-    ///!< Exit reason not specified
+    #[doc = "!< Exit reason not specified"]
     pub const APP_EXIT_NOT_SPECIFIED: AppExitReason = AppExitReason(0);
-    ///!< Application performed an action when it exited
+    #[doc = "!< Application performed an action when it exited"]
     pub const APP_EXIT_ACTION_PERFORMED_SUCCESSFULLY: AppExitReason = AppExitReason(1);
-    ///!< Number of AppExitReason options
+    #[doc = "!< Number of AppExitReason options"]
     pub const NUM_EXIT_REASONS: AppExitReason = AppExitReason(2);
 }
 #[repr(transparent)]
-/**! AppExitReason is used to notify the system of the reason of an application exiting, which may
-! affect the part of the system UI that is presented after the application terminates.*/
+#[doc = "! AppExitReason is used to notify the system of the reason of an application exiting, which may\n! affect the part of the system UI that is presented after the application terminates."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppExitReason(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Set the app exit reason to a new reason.
-! @param reason The new app exit reason*/
+    #[doc = "! Set the app exit reason to a new reason.\n! @param reason The new app exit reason"]
     pub fn exit_reason_set(exit_reason: AppExitReason);
 }
-///! The ID of a published app resource defined within the publishedMedia section of package.json.
+#[doc = "! The ID of a published app resource defined within the publishedMedia section of package.json."]
 pub type PublishedId = u32;
-///! Describes how the slice should be visualized in the app's glance in the launcher.
+#[doc = "! Describes how the slice should be visualized in the app's glance in the launcher."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AppGlanceSliceLayout {
-    /**! The published resource ID of the bitmap icon to display in the app's glance. Use \ref
-! APP_GLANCE_SLICE_DEFAULT_ICON to use the app's default bitmap icon.*/
+    #[doc = "! The published resource ID of the bitmap icon to display in the app's glance. Use \\ref\n! APP_GLANCE_SLICE_DEFAULT_ICON to use the app's default bitmap icon."]
     pub icon: PublishedId,
-    /**! A template string to visualize in the app's glance. The string will be copied, so it is safe
-! to destroy after adding the slice to the glance. Use NULL if no string should be displayed.*/
+    #[doc = "! A template string to visualize in the app's glance. The string will be copied, so it is safe\n! to destroy after adding the slice to the glance. Use NULL if no string should be displayed."]
     pub subtitle_template_string: *const ::core::ffi::c_char,
 }
 impl Default for AppGlanceSliceLayout {
@@ -3776,16 +2496,13 @@ impl Default for AppGlanceSliceLayout {
         }
     }
 }
-/**! An app's glance can change over time as defined by zero or more app glance slices that each
-! describe the state of the app glance at a particular point in time. Slices are displayed in the
-! order they are added, and they are removed at the specified expiration time.*/
+#[doc = "! An app's glance can change over time as defined by zero or more app glance slices that each\n! describe the state of the app glance at a particular point in time. Slices are displayed in the\n! order they are added, and they are removed at the specified expiration time."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AppGlanceSlice {
-    ///! Describes how the slice should be visualized in the app's glance in the launcher.
+    #[doc = "! Describes how the slice should be visualized in the app's glance in the launcher."]
     pub layout: AppGlanceSliceLayout,
-    /**! The UTC time after which this slice should no longer be shown in the app's glance. Use \ref
-! APP_GLANCE_SLICE_NO_EXPIRATION if the slice should never expire.*/
+    #[doc = "! The UTC time after which this slice should no longer be shown in the app's glance. Use \\ref\n! APP_GLANCE_SLICE_NO_EXPIRATION if the slice should never expire."]
     pub expiration_time: ::core::ffi::c_long,
 }
 impl Default for AppGlanceSlice {
@@ -3798,31 +2515,23 @@ impl Default for AppGlanceSlice {
     }
 }
 impl AppGlanceResult {
-    ///! The slice was successfully added to the app's glance.
+    #[doc = "! The slice was successfully added to the app's glance."]
     pub const APP_GLANCE_RESULT_SUCCESS: AppGlanceResult = AppGlanceResult(0);
-    ///! The subtitle_template_string provided in the slice was invalid.
-    pub const APP_GLANCE_RESULT_INVALID_TEMPLATE_STRING: AppGlanceResult = AppGlanceResult(
-        1,
-    );
-    ///! The subtitle_template_string provided in the slice was longer than 150 bytes.
-    pub const APP_GLANCE_RESULT_TEMPLATE_STRING_TOO_LONG: AppGlanceResult = AppGlanceResult(
-        2,
-    );
-    ///! The icon provided in the slice was invalid.
+    #[doc = "! The subtitle_template_string provided in the slice was invalid."]
+    pub const APP_GLANCE_RESULT_INVALID_TEMPLATE_STRING: AppGlanceResult = AppGlanceResult(1);
+    #[doc = "! The subtitle_template_string provided in the slice was longer than 150 bytes."]
+    pub const APP_GLANCE_RESULT_TEMPLATE_STRING_TOO_LONG: AppGlanceResult = AppGlanceResult(2);
+    #[doc = "! The icon provided in the slice was invalid."]
     pub const APP_GLANCE_RESULT_INVALID_ICON: AppGlanceResult = AppGlanceResult(4);
-    ///! The provided slice would exceed the app glance's slice capacity.
-    pub const APP_GLANCE_RESULT_SLICE_CAPACITY_EXCEEDED: AppGlanceResult = AppGlanceResult(
-        8,
-    );
-    ///! The expiration_time provided in the slice expires in the past.
-    pub const APP_GLANCE_RESULT_EXPIRES_IN_THE_PAST: AppGlanceResult = AppGlanceResult(
-        16,
-    );
-    ///! The \ref AppGlanceReloadSession provided was invalid.
+    #[doc = "! The provided slice would exceed the app glance's slice capacity."]
+    pub const APP_GLANCE_RESULT_SLICE_CAPACITY_EXCEEDED: AppGlanceResult = AppGlanceResult(8);
+    #[doc = "! The expiration_time provided in the slice expires in the past."]
+    pub const APP_GLANCE_RESULT_EXPIRES_IN_THE_PAST: AppGlanceResult = AppGlanceResult(16);
+    #[doc = "! The \\ref AppGlanceReloadSession provided was invalid."]
     pub const APP_GLANCE_RESULT_INVALID_SESSION: AppGlanceResult = AppGlanceResult(32);
 }
 #[repr(transparent)]
-///! Bitfield enum describing the result of trying to add an AppGlanceSlice to an app's glance.
+#[doc = "! Bitfield enum describing the result of trying to add an AppGlanceSlice to an app's glance."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AppGlanceResult(pub ::core::ffi::c_uchar);
 #[repr(C)]
@@ -3831,21 +2540,13 @@ pub struct AppGlanceReloadSession {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Add a slice to the app's glance. This function will only succeed if called with a valid
-! \ref AppGlanceReloadSession that is provided in an \ref AppGlanceReloadCallback.
-! @param session The session variable provided in an \ref AppGlanceReloadCallback
-! @param slice The slice to add to the app's glance
-! @return The result of trying to add the slice to the app's glance*/
+    #[doc = "! Add a slice to the app's glance. This function will only succeed if called with a valid\n! \\ref AppGlanceReloadSession that is provided in an \\ref AppGlanceReloadCallback.\n! @param session The session variable provided in an \\ref AppGlanceReloadCallback\n! @param slice The slice to add to the app's glance\n! @return The result of trying to add the slice to the app's glance"]
     pub fn app_glance_add_slice(
         session: *mut AppGlanceReloadSession,
         slice: AppGlanceSlice,
     ) -> AppGlanceResult;
 }
-/**! User-provided callback for reloading the slices in the app's glance.
-! @param session A session variable that must be passed to \ref app_glance_add_slice when adding
-! slices to the app's glance; it becomes invalid when the \ref AppGlanceReloadCallback returns
-! @param limit The number of entries that can be added to the app's glance
-! @param context User-provided context provided when calling \ref app_glance_reload()*/
+#[doc = "! User-provided callback for reloading the slices in the app's glance.\n! @param session A session variable that must be passed to \\ref app_glance_add_slice when adding\n! slices to the app's glance; it becomes invalid when the \\ref AppGlanceReloadCallback returns\n! @param limit The number of entries that can be added to the app's glance\n! @param context User-provided context provided when calling \\ref app_glance_reload()"]
 pub type AppGlanceReloadCallback = ::core::option::Option<
     unsafe extern "C" fn(
         session: *mut AppGlanceReloadSession,
@@ -3854,19 +2555,10 @@ pub type AppGlanceReloadCallback = ::core::option::Option<
     ),
 >;
 unsafe extern "C" {
-    /**! Clear any existing slices in the app's glance and trigger a reload via the provided callback.
-! @param callback A function that will be called to add new slices to the app's glance; even if
-! the provided callback is NULL, any existing slices will still be cleared from the app's glance
-! @param context User-provided context that will be passed to the callback*/
-    pub fn app_glance_reload(
-        callback: AppGlanceReloadCallback,
-        context: *mut ::core::ffi::c_void,
-    );
+    #[doc = "! Clear any existing slices in the app's glance and trigger a reload via the provided callback.\n! @param callback A function that will be called to add new slices to the app's glance; even if\n! the provided callback is NULL, any existing slices will still be cleared from the app's glance\n! @param context User-provided context that will be passed to the callback"]
+    pub fn app_glance_reload(callback: AppGlanceReloadCallback, context: *mut ::core::ffi::c_void);
 }
-/**! @addtogroup GraphicsTypes Graphics Types
-! \brief Basic graphics types (point, rect, size, color, bitmaps, etc.) and utility functions.
-!
-! @{*/
+#[doc = "! @addtogroup GraphicsTypes Graphics Types\n! \\brief Basic graphics types (point, rect, size, color, bitmaps, etc.) and utility functions.\n!\n! @{"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union GColor8 {
@@ -3894,21 +2586,18 @@ impl GColor8__bindgen_ty_1 {
     #[inline]
     pub unsafe fn b_raw(this: *const Self) -> u8 {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 0usize, 2u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                0usize,
+                2u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_b_raw(this: *mut Self, val: u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 0usize,
                 2u8,
@@ -3930,21 +2619,18 @@ impl GColor8__bindgen_ty_1 {
     #[inline]
     pub unsafe fn g_raw(this: *const Self) -> u8 {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 2usize, 2u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                2usize,
+                2u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_g_raw(this: *mut Self, val: u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 2usize,
                 2u8,
@@ -3966,21 +2652,18 @@ impl GColor8__bindgen_ty_1 {
     #[inline]
     pub unsafe fn r_raw(this: *const Self) -> u8 {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 4usize, 2u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                4usize,
+                2u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_r_raw(this: *mut Self, val: u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 4usize,
                 2u8,
@@ -4002,21 +2685,18 @@ impl GColor8__bindgen_ty_1 {
     #[inline]
     pub unsafe fn a_raw(this: *const Self) -> u8 {
         unsafe {
-            ::core::mem::transmute(
-                <__BindgenBitfieldUnit<
-                    [u8; 1usize],
-                >>::raw_get(::core::ptr::addr_of!((*this)._bitfield_1), 6usize, 2u8)
-                    as u8,
-            )
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
+                ::core::ptr::addr_of!((*this)._bitfield_1),
+                6usize,
+                2u8,
+            ) as u8)
         }
     }
     #[inline]
     pub unsafe fn set_a_raw(this: *mut Self, val: u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<
-                [u8; 1usize],
-            >>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 6usize,
                 2u8,
@@ -4025,49 +2705,24 @@ impl GColor8__bindgen_ty_1 {
         }
     }
     #[inline]
-    pub fn new_bitfield_1(
-        b: u8,
-        g: u8,
-        r: u8,
-        a: u8,
-    ) -> __BindgenBitfieldUnit<[u8; 1usize]> {
+    pub fn new_bitfield_1(b: u8, g: u8, r: u8, a: u8) -> __BindgenBitfieldUnit<[u8; 1usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
-        __bindgen_bitfield_unit
-            .set(
-                0usize,
-                2u8,
-                {
-                    let b: u8 = unsafe { ::core::mem::transmute(b) };
-                    b as u64
-                },
-            );
-        __bindgen_bitfield_unit
-            .set(
-                2usize,
-                2u8,
-                {
-                    let g: u8 = unsafe { ::core::mem::transmute(g) };
-                    g as u64
-                },
-            );
-        __bindgen_bitfield_unit
-            .set(
-                4usize,
-                2u8,
-                {
-                    let r: u8 = unsafe { ::core::mem::transmute(r) };
-                    r as u64
-                },
-            );
-        __bindgen_bitfield_unit
-            .set(
-                6usize,
-                2u8,
-                {
-                    let a: u8 = unsafe { ::core::mem::transmute(a) };
-                    a as u64
-                },
-            );
+        __bindgen_bitfield_unit.set(0usize, 2u8, {
+            let b: u8 = unsafe { ::core::mem::transmute(b) };
+            b as u64
+        });
+        __bindgen_bitfield_unit.set(2usize, 2u8, {
+            let g: u8 = unsafe { ::core::mem::transmute(g) };
+            g as u64
+        });
+        __bindgen_bitfield_unit.set(4usize, 2u8, {
+            let r: u8 = unsafe { ::core::mem::transmute(r) };
+            r as u64
+        });
+        __bindgen_bitfield_unit.set(6usize, 2u8, {
+            let a: u8 = unsafe { ::core::mem::transmute(a) };
+            a as u64
+        });
         __bindgen_bitfield_unit
     }
 }
@@ -4080,124 +2735,77 @@ impl Default for GColor8 {
         }
     }
 }
-/**! @addtogroup GraphicsTypes Graphics Types
-! \brief Basic graphics types (point, rect, size, color, bitmaps, etc.) and utility functions.
-!
-! @{*/
+#[doc = "! @addtogroup GraphicsTypes Graphics Types\n! \\brief Basic graphics types (point, rect, size, color, bitmaps, etc.) and utility functions.\n!\n! @{"]
 pub type GColor = GColor8;
 unsafe extern "C" {
-    ///! True if both colors are identical or both are invisible (i.e. both have alpha values of .a=0).
+    #[doc = "! True if both colors are identical or both are invisible (i.e. both have alpha values of .a=0)."]
     pub fn gcolor_equal(x: GColor8, y: GColor8) -> bool;
 }
 unsafe extern "C" {
-    /**! This method assists in improving the legibility of text on various background colors.
-! It takes the background color for the region in question and computes a color for
-! maximum legibility.
-! @param background_color Background color for the region in question
-! @return A legible color for the given background color*/
+    #[doc = "! This method assists in improving the legibility of text on various background colors.\n! It takes the background color for the region in question and computes a color for\n! maximum legibility.\n! @param background_color Background color for the region in question\n! @return A legible color for the given background color"]
     pub fn gcolor_legible_over(background_color: GColor8) -> GColor8;
 }
-/**! Represents a point in a 2-dimensional coordinate system.
-! @note Conventionally, the origin of Pebble's 2D coordinate system is in the upper,
-! lefthand corner
-! its x-axis extends to the right and its y-axis extends to the bottom of the screen.*/
+#[doc = "! Represents a point in a 2-dimensional coordinate system.\n! @note Conventionally, the origin of Pebble's 2D coordinate system is in the upper,\n! lefthand corner\n! its x-axis extends to the right and its y-axis extends to the bottom of the screen."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GPoint {
-    ///! The x-coordinate.
+    #[doc = "! The x-coordinate."]
     pub x: i16,
-    ///! The y-coordinate.
+    #[doc = "! The y-coordinate."]
     pub y: i16,
 }
 unsafe extern "C" {
-    /**! Tests whether 2 points are equal.
-! @param point_a Pointer to the first point
-! @param point_b Pointer to the second point
-! @return `true` if both points are equal, `false` if not.*/
+    #[doc = "! Tests whether 2 points are equal.\n! @param point_a Pointer to the first point\n! @param point_b Pointer to the second point\n! @return `true` if both points are equal, `false` if not."]
     pub fn gpoint_equal(point_a: *const GPoint, point_b: *const GPoint) -> bool;
 }
-///! Represents a 2-dimensional size.
+#[doc = "! Represents a 2-dimensional size."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GSize {
-    ///! The width
+    #[doc = "! The width"]
     pub w: i16,
-    ///! The height
+    #[doc = "! The height"]
     pub h: i16,
 }
 unsafe extern "C" {
-    /**! Tests whether 2 sizes are equal.
-! @param size_a Pointer to the first size
-! @param size_b Pointer to the second size
-! @return `true` if both sizes are equal, `false` if not.*/
+    #[doc = "! Tests whether 2 sizes are equal.\n! @param size_a Pointer to the first size\n! @param size_b Pointer to the second size\n! @return `true` if both sizes are equal, `false` if not."]
     pub fn gsize_equal(size_a: *const GSize, size_b: *const GSize) -> bool;
 }
-/**! Represents a rectangle and defining it using the origin of
-! the upper-lefthand corner and its size.*/
+#[doc = "! Represents a rectangle and defining it using the origin of\n! the upper-lefthand corner and its size."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GRect {
-    ///! The coordinate of the upper-lefthand corner point of the rectangle.
+    #[doc = "! The coordinate of the upper-lefthand corner point of the rectangle."]
     pub origin: GPoint,
-    ///! The size of the rectangle.
+    #[doc = "! The size of the rectangle."]
     pub size: GSize,
 }
 unsafe extern "C" {
-    /**! Tests whether 2 rectangles are equal.
-! @param rect_a Pointer to the first rectangle
-! @param rect_b Pointer to the second rectangle
-! @return `true` if both rectangles are equal, `false` if not.*/
+    #[doc = "! Tests whether 2 rectangles are equal.\n! @param rect_a Pointer to the first rectangle\n! @param rect_b Pointer to the second rectangle\n! @return `true` if both rectangles are equal, `false` if not."]
     pub fn grect_equal(rect_a: *const GRect, rect_b: *const GRect) -> bool;
 }
 unsafe extern "C" {
-    /**! Tests whether the size of the rectangle is (0, 0).
-! @param rect Pointer to the rectangle
-! @return `true` if the rectangle its size is (0, 0), or `false` if not.
-! @note If the width and/or height of a rectangle is negative, this
-! function will return `true`!*/
+    #[doc = "! Tests whether the size of the rectangle is (0, 0).\n! @param rect Pointer to the rectangle\n! @return `true` if the rectangle its size is (0, 0), or `false` if not.\n! @note If the width and/or height of a rectangle is negative, this\n! function will return `true`!"]
     pub fn grect_is_empty(rect: *const GRect) -> bool;
 }
 unsafe extern "C" {
-    /**! Converts a rectangle's values so that the components of its size
-! (width and/or height) are both positive. In the width and/or height are negative,
-! the origin will offset, so that the final rectangle overlaps with the original.
-! For example, a GRect with size (-10, -5) and origin (20, 20), will be standardized
-! to size (10, 5) and origin (10, 15).
-! @param[in] rect The rectangle to convert.
-! @param[out] rect The standardized rectangle.*/
+    #[doc = "! Converts a rectangle's values so that the components of its size\n! (width and/or height) are both positive. In the width and/or height are negative,\n! the origin will offset, so that the final rectangle overlaps with the original.\n! For example, a GRect with size (-10, -5) and origin (20, 20), will be standardized\n! to size (10, 5) and origin (10, 15).\n! @param[in] rect The rectangle to convert.\n! @param[out] rect The standardized rectangle."]
     pub fn grect_standardize(rect: *mut GRect);
 }
 unsafe extern "C" {
-    /**! Trim one rectangle using the edges of a second rectangle.
-! @param[in] rect_to_clip The rectangle that needs to be clipped (in place).
-! @param[out] rect_to_clip The clipped rectangle.
-! @param rect_clipper The rectangle of which the edges will serve as "scissors"
-! in order to trim `rect_to_clip`.*/
+    #[doc = "! Trim one rectangle using the edges of a second rectangle.\n! @param[in] rect_to_clip The rectangle that needs to be clipped (in place).\n! @param[out] rect_to_clip The clipped rectangle.\n! @param rect_clipper The rectangle of which the edges will serve as \"scissors\"\n! in order to trim `rect_to_clip`."]
     pub fn grect_clip(rect_to_clip: *mut GRect, rect_clipper: *const GRect);
 }
 unsafe extern "C" {
-    /**! Tests whether a rectangle contains a point.
-! @param rect The rectangle
-! @param point The point
-! @return `true` if the rectangle contains the point, or `false` if it does not.*/
+    #[doc = "! Tests whether a rectangle contains a point.\n! @param rect The rectangle\n! @param point The point\n! @return `true` if the rectangle contains the point, or `false` if it does not."]
     pub fn grect_contains_point(rect: *const GRect, point: *const GPoint) -> bool;
 }
 unsafe extern "C" {
-    /**! Convenience function to compute the center-point of a given rectangle.
-! This is equal to `(rect->x + rect->width / 2, rect->y + rect->height / 2)`.
-! @param rect The rectangle for which to calculate the center point.
-! @return The point at the center of `rect`*/
+    #[doc = "! Convenience function to compute the center-point of a given rectangle.\n! This is equal to `(rect->x + rect->width / 2, rect->y + rect->height / 2)`.\n! @param rect The rectangle for which to calculate the center point.\n! @return The point at the center of `rect`"]
     pub fn grect_center_point(rect: *const GRect) -> GPoint;
 }
 unsafe extern "C" {
-    /**! Reduce the width and height of a rectangle by insetting each of the edges with
-! a fixed inset. The returned rectangle will be centered relative to the input rectangle.
-! @note The function will trip an assertion if the crop yields a rectangle with negative width or height.
-! @param rect The rectangle that will be inset
-! @param crop_size_px The inset by which each of the rectangle will be inset.
-! A positive inset value results in a smaller rectangle, while negative inset value results
-! in a larger rectangle.
-! @return The cropped rectangle.*/
+    #[doc = "! Reduce the width and height of a rectangle by insetting each of the edges with\n! a fixed inset. The returned rectangle will be centered relative to the input rectangle.\n! @note The function will trip an assertion if the crop yields a rectangle with negative width or height.\n! @param rect The rectangle that will be inset\n! @param crop_size_px The inset by which each of the rectangle will be inset.\n! A positive inset value results in a smaller rectangle, while negative inset value results\n! in a larger rectangle.\n! @return The cropped rectangle."]
     pub fn grect_crop(rect: GRect, crop_size_px: i32) -> GRect;
 }
 impl GBitmapFormat {
@@ -4209,7 +2817,7 @@ impl GBitmapFormat {
     pub const GBitmapFormat8BitCircular: GBitmapFormat = GBitmapFormat(5);
 }
 #[repr(transparent)]
-///! The format of a GBitmap can either be 1-bit or 8-bit.
+#[doc = "! The format of a GBitmap can either be 1-bit or 8-bit."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GBitmapFormat(pub ::core::ffi::c_uchar);
 #[repr(C)]
@@ -4223,42 +2831,19 @@ pub struct GBitmapSequence {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Get the number of bytes per row in the bitmap data for the given \ref GBitmap.
-! On rectangular displays, this can be used as a safe way of iterating over the rows in the
-! bitmap, since bytes per row should be set according to format. On circular displays with pixel
-! format of \ref GBitmapFormat8BitCircular this will return 0, and should not be used for
-! iteration over frame buffer pixels. Instead, use \ref GBitmapDataRowInfo, which provides safe
-! minimum and maximum x values for a given row's y value.
-! @param bitmap A pointer to the GBitmap to get the bytes per row
-! @return The number of bytes per row of the GBitmap
-! @see \ref gbitmap_get_data*/
+    #[doc = "! Get the number of bytes per row in the bitmap data for the given \\ref GBitmap.\n! On rectangular displays, this can be used as a safe way of iterating over the rows in the\n! bitmap, since bytes per row should be set according to format. On circular displays with pixel\n! format of \\ref GBitmapFormat8BitCircular this will return 0, and should not be used for\n! iteration over frame buffer pixels. Instead, use \\ref GBitmapDataRowInfo, which provides safe\n! minimum and maximum x values for a given row's y value.\n! @param bitmap A pointer to the GBitmap to get the bytes per row\n! @return The number of bytes per row of the GBitmap\n! @see \\ref gbitmap_get_data"]
     pub fn gbitmap_get_bytes_per_row(bitmap: *const GBitmap) -> u16;
 }
 unsafe extern "C" {
-    /**! Get the \ref GBitmapFormat for the \ref GBitmap.
-! @param bitmap A pointer to the GBitmap to get the format
-! @return The format of the given \ref GBitmap.*/
+    #[doc = "! Get the \\ref GBitmapFormat for the \\ref GBitmap.\n! @param bitmap A pointer to the GBitmap to get the format\n! @return The format of the given \\ref GBitmap."]
     pub fn gbitmap_get_format(bitmap: *const GBitmap) -> GBitmapFormat;
 }
 unsafe extern "C" {
-    /**! Get a pointer to the raw image data section of the given \ref GBitmap as specified by the format
-! of the bitmap.
-! @param bitmap A pointer to the GBitmap to get the data
-! @return pointer to the raw image data for the GBitmap
-! @see \ref gbitmap_get_bytes_per_row
-! @see \ref GBitmap*/
+    #[doc = "! Get a pointer to the raw image data section of the given \\ref GBitmap as specified by the format\n! of the bitmap.\n! @param bitmap A pointer to the GBitmap to get the data\n! @return pointer to the raw image data for the GBitmap\n! @see \\ref gbitmap_get_bytes_per_row\n! @see \\ref GBitmap"]
     pub fn gbitmap_get_data(bitmap: *const GBitmap) -> *mut u8;
 }
 unsafe extern "C" {
-    /**! Set the bitmap data for the given \ref GBitmap.
-! @param bitmap A pointer to the GBitmap to set data to
-! @param data A pointer to the bitmap data
-! @param format the format of the bitmap data. If this is a palettized format, make sure that
-! there is an accompanying call to \ref gbitmap_set_palette.
-! @param row_size_bytes How many bytes a single row takes. For example, bitmap data of format
-! \ref GBitmapFormat1Bit must have a row size as a multiple of 4 bytes.
-! @param free_on_destroy Set whether the data should be freed when the GBitmap is destroyed.
-! @see \ref gbitmap_destroy*/
+    #[doc = "! Set the bitmap data for the given \\ref GBitmap.\n! @param bitmap A pointer to the GBitmap to set data to\n! @param data A pointer to the bitmap data\n! @param format the format of the bitmap data. If this is a palettized format, make sure that\n! there is an accompanying call to \\ref gbitmap_set_palette.\n! @param row_size_bytes How many bytes a single row takes. For example, bitmap data of format\n! \\ref GBitmapFormat1Bit must have a row size as a multiple of 4 bytes.\n! @param free_on_destroy Set whether the data should be freed when the GBitmap is destroyed.\n! @see \\ref gbitmap_destroy"]
     pub fn gbitmap_set_data(
         bitmap: *mut GBitmap,
         data: *mut u8,
@@ -4268,126 +2853,46 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Gets the bounds of the content for the \ref GBitmap. This is set when loading the image or
-! if changed by \ref gbitmap_set_bounds.
-! @param bitmap A pointer to the GBitmap to get the bounding box from.
-! @return The bounding box for the GBitmap.
-! @see \ref gbitmap_set_bounds*/
+    #[doc = "! Gets the bounds of the content for the \\ref GBitmap. This is set when loading the image or\n! if changed by \\ref gbitmap_set_bounds.\n! @param bitmap A pointer to the GBitmap to get the bounding box from.\n! @return The bounding box for the GBitmap.\n! @see \\ref gbitmap_set_bounds"]
     pub fn gbitmap_get_bounds(bitmap: *const GBitmap) -> GRect;
 }
 unsafe extern "C" {
-    /**! Set the bounds of the given \ref GBitmap.
-! @param bitmap A pointer to the GBitmap to set the bounding box.
-! @param bounds The bounding box to set.
-! @see \ref gbitmap_get_bounds*/
+    #[doc = "! Set the bounds of the given \\ref GBitmap.\n! @param bitmap A pointer to the GBitmap to set the bounding box.\n! @param bounds The bounding box to set.\n! @see \\ref gbitmap_get_bounds"]
     pub fn gbitmap_set_bounds(bitmap: *mut GBitmap, bounds: GRect);
 }
 unsafe extern "C" {
-    /**! Get the palette for the given \ref GBitmap.
-! @param bitmap A pointer to the GBitmap to get the palette from.
-! @return Pointer to a \ref GColor array containing the palette colors.
-! @see \ref gbitmap_set_palette*/
+    #[doc = "! Get the palette for the given \\ref GBitmap.\n! @param bitmap A pointer to the GBitmap to get the palette from.\n! @return Pointer to a \\ref GColor array containing the palette colors.\n! @see \\ref gbitmap_set_palette"]
     pub fn gbitmap_get_palette(bitmap: *const GBitmap) -> *mut GColor;
 }
 unsafe extern "C" {
-    /**! Set the palette for the given \ref GBitmap.
-! @param bitmap A pointer to the GBitmap to set the palette to
-! @param palette The palette to be used. Make sure that the palette is large enough for the
-! bitmap's format.
-! @param free_on_destroy Set whether the palette data should be freed when the GBitmap is
-! destroyed or when another palette is set.
-! @see \ref gbitmap_get_format
-! @see \ref gbitmap_destroy
-! @see \ref gbitmap_set_palette*/
-    pub fn gbitmap_set_palette(
-        bitmap: *mut GBitmap,
-        palette: *mut GColor,
-        free_on_destroy: bool,
-    );
+    #[doc = "! Set the palette for the given \\ref GBitmap.\n! @param bitmap A pointer to the GBitmap to set the palette to\n! @param palette The palette to be used. Make sure that the palette is large enough for the\n! bitmap's format.\n! @param free_on_destroy Set whether the palette data should be freed when the GBitmap is\n! destroyed or when another palette is set.\n! @see \\ref gbitmap_get_format\n! @see \\ref gbitmap_destroy\n! @see \\ref gbitmap_set_palette"]
+    pub fn gbitmap_set_palette(bitmap: *mut GBitmap, palette: *mut GColor, free_on_destroy: bool);
 }
 unsafe extern "C" {
-    /**! Creates a new \ref GBitmap on the heap using a Pebble image file stored as a resource.
-! The resulting GBitmap must be destroyed using \ref gbitmap_destroy().
-! @param resource_id The ID of the bitmap resource to load
-! @return A pointer to the \ref GBitmap. `NULL` if the GBitmap could not
-! be created*/
+    #[doc = "! Creates a new \\ref GBitmap on the heap using a Pebble image file stored as a resource.\n! The resulting GBitmap must be destroyed using \\ref gbitmap_destroy().\n! @param resource_id The ID of the bitmap resource to load\n! @return A pointer to the \\ref GBitmap. `NULL` if the GBitmap could not\n! be created"]
     pub fn gbitmap_create_with_resource(resource_id: u32) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Creates a new GBitmap on the heap initialized with the provided Pebble image data.
-!
-! The resulting \ref GBitmap must be destroyed using \ref gbitmap_destroy() but the image
-! data will not be freed automatically. The developer is responsible for keeping the image
-! data in memory as long as the bitmap is used and releasing it after the bitmap is destroyed.
-! @note One way to generate Pebble image data is to use bitmapgen.py in the Pebble
-! SDK to generate a .pbi file.
-! @param data The Pebble image data. Must not be NULL. The function
-! assumes the data to be correct; there are no sanity checks performed on the
-! data. The data will not be copied and the pointer must remain valid for the
-! lifetime of this GBitmap.
-! @return A pointer to the \ref GBitmap. `NULL` if the \ref GBitmap could not
-! be created*/
+    #[doc = "! Creates a new GBitmap on the heap initialized with the provided Pebble image data.\n!\n! The resulting \\ref GBitmap must be destroyed using \\ref gbitmap_destroy() but the image\n! data will not be freed automatically. The developer is responsible for keeping the image\n! data in memory as long as the bitmap is used and releasing it after the bitmap is destroyed.\n! @note One way to generate Pebble image data is to use bitmapgen.py in the Pebble\n! SDK to generate a .pbi file.\n! @param data The Pebble image data. Must not be NULL. The function\n! assumes the data to be correct; there are no sanity checks performed on the\n! data. The data will not be copied and the pointer must remain valid for the\n! lifetime of this GBitmap.\n! @return A pointer to the \\ref GBitmap. `NULL` if the \\ref GBitmap could not\n! be created"]
     pub fn gbitmap_create_with_data(data: *const u8) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Create a new \ref GBitmap on the heap as a sub-bitmap of a 'base' \ref
-! GBitmap, using a GRect to indicate what portion of the base to use. The
-! sub-bitmap will just reference the image data and palette of the base bitmap.
-! No deep-copying occurs as a result of calling this function, thus the caller
-! is responsible for making sure the base bitmap and palette will remain available when
-! using the sub-bitmap. Note that you should not destroy the parent bitmap until
-! the sub_bitmap has been destroyed.
-! The resulting \ref GBitmap must be destroyed using \ref gbitmap_destroy().
-! @param[in] base_bitmap The bitmap that the sub-bitmap of which the image data
-! will be used by the sub-bitmap
-! @param sub_rect The rectangle within the image data of the base bitmap. The
-! bounds of the base bitmap will be used to clip `sub_rect`.
-! @return A pointer to the \ref GBitmap. `NULL` if the GBitmap could not
-! be created*/
+    #[doc = "! Create a new \\ref GBitmap on the heap as a sub-bitmap of a 'base' \\ref\n! GBitmap, using a GRect to indicate what portion of the base to use. The\n! sub-bitmap will just reference the image data and palette of the base bitmap.\n! No deep-copying occurs as a result of calling this function, thus the caller\n! is responsible for making sure the base bitmap and palette will remain available when\n! using the sub-bitmap. Note that you should not destroy the parent bitmap until\n! the sub_bitmap has been destroyed.\n! The resulting \\ref GBitmap must be destroyed using \\ref gbitmap_destroy().\n! @param[in] base_bitmap The bitmap that the sub-bitmap of which the image data\n! will be used by the sub-bitmap\n! @param sub_rect The rectangle within the image data of the base bitmap. The\n! bounds of the base bitmap will be used to clip `sub_rect`.\n! @return A pointer to the \\ref GBitmap. `NULL` if the GBitmap could not\n! be created"]
     pub fn gbitmap_create_as_sub_bitmap(
         base_bitmap: *const GBitmap,
         sub_rect: GRect,
     ) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Create a \ref GBitmap based on raw PNG data.
-! The resulting \ref GBitmap must be destroyed using \ref gbitmap_destroy().
-! The developer is responsible for freeing png_data following this call.
-! @note PNG decoding currently supports 1,2,4 and 8 bit palettized and grayscale images.
-! @param png_data PNG image data.
-! @param png_data_size PNG image size in bytes.
-! @return A pointer to the \ref GBitmap. `NULL` if the \ref GBitmap could not
-! be created*/
-    pub fn gbitmap_create_from_png_data(
-        png_data: *const u8,
-        png_data_size: usize,
-    ) -> *mut GBitmap;
+    #[doc = "! Create a \\ref GBitmap based on raw PNG data.\n! The resulting \\ref GBitmap must be destroyed using \\ref gbitmap_destroy().\n! The developer is responsible for freeing png_data following this call.\n! @note PNG decoding currently supports 1,2,4 and 8 bit palettized and grayscale images.\n! @param png_data PNG image data.\n! @param png_data_size PNG image size in bytes.\n! @return A pointer to the \\ref GBitmap. `NULL` if the \\ref GBitmap could not\n! be created"]
+    pub fn gbitmap_create_from_png_data(png_data: *const u8, png_data_size: usize) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Creates a new blank GBitmap on the heap initialized to zeroes.
-! In the case that the format indicates a palettized bitmap, a palette of appropriate size will
-! also be allocated on the heap.
-! The resulting \ref GBitmap must be destroyed using \ref gbitmap_destroy().
-! @param size The Pebble image dimensions as a \ref GSize.
-! @param format The \ref GBitmapFormat the created image should be in.
-! @return A pointer to the \ref GBitmap. `NULL` if the \ref GBitmap could not
-! be created*/
+    #[doc = "! Creates a new blank GBitmap on the heap initialized to zeroes.\n! In the case that the format indicates a palettized bitmap, a palette of appropriate size will\n! also be allocated on the heap.\n! The resulting \\ref GBitmap must be destroyed using \\ref gbitmap_destroy().\n! @param size The Pebble image dimensions as a \\ref GSize.\n! @param format The \\ref GBitmapFormat the created image should be in.\n! @return A pointer to the \\ref GBitmap. `NULL` if the \\ref GBitmap could not\n! be created"]
     pub fn gbitmap_create_blank(size: GSize, format: GBitmapFormat) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Creates a new blank GBitmap on the heap, initialized to zeroes, and assigns it the given
-! palette.
-! No deep-copying of the palette occurs, so the caller is responsible for making sure the palette
-! remains available when using the resulting bitmap. Management of that memory can be handed off
-! to the system with the free_on_destroy argument.
-! @param size The Pebble image dimensions as a \ref GSize.
-! @param format the \ref GBitmapFormat the created image and palette should be in.
-! @param palette a pointer to a palette that is to be used for this GBitmap. The palette should
-! be large enough to hold enough colors for the specified format. For example,
-! \ref GBitmapFormat2BitPalette should have 4 colors, since 2^2 = 4.
-! @param free_on_destroy Set whether the palette data should be freed along with the bitmap data
-! when the GBitmap is destroyed.
-! @return A Pointer to the \ref GBitmap. `NULL` if the \ref GBitmap could not be created.*/
+    #[doc = "! Creates a new blank GBitmap on the heap, initialized to zeroes, and assigns it the given\n! palette.\n! No deep-copying of the palette occurs, so the caller is responsible for making sure the palette\n! remains available when using the resulting bitmap. Management of that memory can be handed off\n! to the system with the free_on_destroy argument.\n! @param size The Pebble image dimensions as a \\ref GSize.\n! @param format the \\ref GBitmapFormat the created image and palette should be in.\n! @param palette a pointer to a palette that is to be used for this GBitmap. The palette should\n! be large enough to hold enough colors for the specified format. For example,\n! \\ref GBitmapFormat2BitPalette should have 4 colors, since 2^2 = 4.\n! @param free_on_destroy Set whether the palette data should be freed along with the bitmap data\n! when the GBitmap is destroyed.\n! @return A Pointer to the \\ref GBitmap. `NULL` if the \\ref GBitmap could not be created."]
     pub fn gbitmap_create_blank_with_palette(
         size: GSize,
         format: GBitmapFormat,
@@ -4396,47 +2901,19 @@ unsafe extern "C" {
     ) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Given a 1-bit GBitmap, create a new bitmap of format GBitmapFormat1BitPalette.
-! The new data buffer is allocated on the heap, and a 2-color palette is allocated as well.
-! @param src_bitmap A GBitmap of format GBitmapFormat1Bit which is to be copied into a newly
-! created GBitmap of format GBitmapFormat1BitPalettized.
-! @returns The newly created 1-bit palettized GBitmap, or NULL if there is not sufficient space.
-! @note The new bitmap does not depend on any data from src_bitmap, so src_bitmap can be freed
-! without worry.*/
-    pub fn gbitmap_create_palettized_from_1bit(
-        src_bitmap: *const GBitmap,
-    ) -> *mut GBitmap;
+    #[doc = "! Given a 1-bit GBitmap, create a new bitmap of format GBitmapFormat1BitPalette.\n! The new data buffer is allocated on the heap, and a 2-color palette is allocated as well.\n! @param src_bitmap A GBitmap of format GBitmapFormat1Bit which is to be copied into a newly\n! created GBitmap of format GBitmapFormat1BitPalettized.\n! @returns The newly created 1-bit palettized GBitmap, or NULL if there is not sufficient space.\n! @note The new bitmap does not depend on any data from src_bitmap, so src_bitmap can be freed\n! without worry."]
+    pub fn gbitmap_create_palettized_from_1bit(src_bitmap: *const GBitmap) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Destroy a \ref GBitmap.
-! This must be called for every bitmap that's been created with gbitmap_create_*
-!
-! This function will also free the memory of the bitmap data (bitmap->addr) if the bitmap was created with \ref gbitmap_create_blank()
-! or \ref gbitmap_create_with_resource().
-!
-! If the GBitmap was created with \ref gbitmap_create_with_data(), you must release the memory
-! after calling gbitmap_destroy().*/
+    #[doc = "! Destroy a \\ref GBitmap.\n! This must be called for every bitmap that's been created with gbitmap_create_*\n!\n! This function will also free the memory of the bitmap data (bitmap->addr) if the bitmap was created with \\ref gbitmap_create_blank()\n! or \\ref gbitmap_create_with_resource().\n!\n! If the GBitmap was created with \\ref gbitmap_create_with_data(), you must release the memory\n! after calling gbitmap_destroy()."]
     pub fn gbitmap_destroy(bitmap: *mut GBitmap);
 }
 unsafe extern "C" {
-    /**! Creates a GBitmapSequence from the specified resource (APNG/PNG files)
-! @param resource_id Resource to load and create GBitmapSequence from.
-! @return GBitmapSequence pointer if the resource was loaded, NULL otherwise*/
-    pub fn gbitmap_sequence_create_with_resource(
-        resource_id: u32,
-    ) -> *mut GBitmapSequence;
+    #[doc = "! Creates a GBitmapSequence from the specified resource (APNG/PNG files)\n! @param resource_id Resource to load and create GBitmapSequence from.\n! @return GBitmapSequence pointer if the resource was loaded, NULL otherwise"]
+    pub fn gbitmap_sequence_create_with_resource(resource_id: u32) -> *mut GBitmapSequence;
 }
 unsafe extern "C" {
-    /**! Updates the contents of the bitmap sequence to the next frame
-! and optionally returns the delay in milliseconds until the next frame.
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @param bitmap Pointer to the initialized GBitmap in which to render the bitmap sequence
-! @param[out] delay_ms If not NULL, returns the delay in milliseconds until the next frame.
-! @return True if frame was rendered.  False if all frames (and loops) have been rendered
-! for the sequence.  Will also return false if frame could not be rendered
-! (includes out of memory errors).
-! @note GBitmap must be large enough to accommodate the bitmap_sequence image
-! \ref gbitmap_sequence_get_bitmap_size*/
+    #[doc = "! Updates the contents of the bitmap sequence to the next frame\n! and optionally returns the delay in milliseconds until the next frame.\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @param bitmap Pointer to the initialized GBitmap in which to render the bitmap sequence\n! @param[out] delay_ms If not NULL, returns the delay in milliseconds until the next frame.\n! @return True if frame was rendered.  False if all frames (and loops) have been rendered\n! for the sequence.  Will also return false if frame could not be rendered\n! (includes out of memory errors).\n! @note GBitmap must be large enough to accommodate the bitmap_sequence image\n! \\ref gbitmap_sequence_get_bitmap_size"]
     pub fn gbitmap_sequence_update_bitmap_next_frame(
         bitmap_sequence: *mut GBitmapSequence,
         bitmap: *mut GBitmap,
@@ -4444,20 +2921,7 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Updates the contents of the bitmap sequence to the frame at elapsed in the sequence.
-! For looping animations this accounts for the loop, for example an animation of 1 second that
-! is configured to loop 2 times updated to 1500 ms elapsed time will display the sequence
-! frame at 500 ms.  Elapsed time is the time from the start of the animation, and will
-! be ignored if it is for a time earlier than the last rendered frame.
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @param bitmap Pointer to the initialized GBitmap in which to render the bitmap sequence
-! @param elapsed_ms Elapsed time in milliseconds in the sequence relative to start
-! @return True if a frame was rendered.  False if all frames (and loops) have already
-! been rendered for the sequence.  Will also return false if frame could not be rendered
-! (includes out of memory errors).
-! @note GBitmap must be large enough to accommodate the bitmap_sequence image
-! \ref gbitmap_sequence_get_bitmap_size
-! @note This function is disabled for play_count 0*/
+    #[doc = "! Updates the contents of the bitmap sequence to the frame at elapsed in the sequence.\n! For looping animations this accounts for the loop, for example an animation of 1 second that\n! is configured to loop 2 times updated to 1500 ms elapsed time will display the sequence\n! frame at 500 ms.  Elapsed time is the time from the start of the animation, and will\n! be ignored if it is for a time earlier than the last rendered frame.\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @param bitmap Pointer to the initialized GBitmap in which to render the bitmap sequence\n! @param elapsed_ms Elapsed time in milliseconds in the sequence relative to start\n! @return True if a frame was rendered.  False if all frames (and loops) have already\n! been rendered for the sequence.  Will also return false if frame could not be rendered\n! (includes out of memory errors).\n! @note GBitmap must be large enough to accommodate the bitmap_sequence image\n! \\ref gbitmap_sequence_get_bitmap_size\n! @note This function is disabled for play_count 0"]
     pub fn gbitmap_sequence_update_bitmap_by_elapsed(
         bitmap_sequence: *mut GBitmapSequence,
         bitmap: *mut GBitmap,
@@ -4465,83 +2929,42 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Deletes the GBitmapSequence structure and frees any allocated memory/decoder_data
-! @param bitmap_sequence Pointer to the bitmap sequence to free (delete)*/
+    #[doc = "! Deletes the GBitmapSequence structure and frees any allocated memory/decoder_data\n! @param bitmap_sequence Pointer to the bitmap sequence to free (delete)"]
     pub fn gbitmap_sequence_destroy(bitmap_sequence: *mut GBitmapSequence);
 }
 unsafe extern "C" {
-    /**! Restarts the GBitmapSequence to the first frame \ref gbitmap_sequence_update_bitmap_next_frame
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @return True if sequence was restarted, false otherwise*/
+    #[doc = "! Restarts the GBitmapSequence to the first frame \\ref gbitmap_sequence_update_bitmap_next_frame\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @return True if sequence was restarted, false otherwise"]
     pub fn gbitmap_sequence_restart(bitmap_sequence: *mut GBitmapSequence) -> bool;
 }
 unsafe extern "C" {
-    /**! This function gets the current frame number for the bitmap sequence
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @return index of current frame in the current loop of the bitmap sequence*/
-    pub fn gbitmap_sequence_get_current_frame_idx(
-        bitmap_sequence: *mut GBitmapSequence,
-    ) -> i32;
+    #[doc = "! This function gets the current frame number for the bitmap sequence\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @return index of current frame in the current loop of the bitmap sequence"]
+    pub fn gbitmap_sequence_get_current_frame_idx(bitmap_sequence: *mut GBitmapSequence) -> i32;
 }
 unsafe extern "C" {
-    /**! This function sets the total number of frames for the bitmap sequence
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @return number of frames contained in a single loop of the bitmap sequence*/
-    pub fn gbitmap_sequence_get_total_num_frames(
-        bitmap_sequence: *mut GBitmapSequence,
-    ) -> u32;
+    #[doc = "! This function sets the total number of frames for the bitmap sequence\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @return number of frames contained in a single loop of the bitmap sequence"]
+    pub fn gbitmap_sequence_get_total_num_frames(bitmap_sequence: *mut GBitmapSequence) -> u32;
 }
 unsafe extern "C" {
-    /**! This function gets the play count (number of times to repeat) the bitmap sequence
-! @note This value is initialized by the bitmap sequence data, and is modified by
-! \ref gbitmap_sequence_set_play_count
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @return Play count of bitmap sequence, PLAY_COUNT_INFINITE for infinite looping*/
+    #[doc = "! This function gets the play count (number of times to repeat) the bitmap sequence\n! @note This value is initialized by the bitmap sequence data, and is modified by\n! \\ref gbitmap_sequence_set_play_count\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @return Play count of bitmap sequence, PLAY_COUNT_INFINITE for infinite looping"]
     pub fn gbitmap_sequence_get_play_count(bitmap_sequence: *mut GBitmapSequence) -> u32;
 }
 unsafe extern "C" {
-    /**! This function sets the play count (number of times to repeat) the bitmap sequence
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @param play_count Number of times to repeat the bitmap sequence
-! with 0 disabling update_by_elapsed and update_next_frame, and
-! PLAY_COUNT_INFINITE for infinite looping of the animation*/
-    pub fn gbitmap_sequence_set_play_count(
-        bitmap_sequence: *mut GBitmapSequence,
-        play_count: u32,
-    );
+    #[doc = "! This function sets the play count (number of times to repeat) the bitmap sequence\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @param play_count Number of times to repeat the bitmap sequence\n! with 0 disabling update_by_elapsed and update_next_frame, and\n! PLAY_COUNT_INFINITE for infinite looping of the animation"]
+    pub fn gbitmap_sequence_set_play_count(bitmap_sequence: *mut GBitmapSequence, play_count: u32);
 }
 unsafe extern "C" {
-    /**! This function gets the minimum required size (dimensions) necessary
-! to render the bitmap sequence to a GBitmap
-! using the /ref gbitmap_sequence_update_bitmap_next_frame
-! @param bitmap_sequence Pointer to loaded bitmap sequence
-! @return Dimensions required to render the bitmap sequence to a GBitmap*/
-    pub fn gbitmap_sequence_get_bitmap_size(
-        bitmap_sequence: *mut GBitmapSequence,
-    ) -> GSize;
+    #[doc = "! This function gets the minimum required size (dimensions) necessary\n! to render the bitmap sequence to a GBitmap\n! using the /ref gbitmap_sequence_update_bitmap_next_frame\n! @param bitmap_sequence Pointer to loaded bitmap sequence\n! @return Dimensions required to render the bitmap sequence to a GBitmap"]
+    pub fn gbitmap_sequence_get_bitmap_size(bitmap_sequence: *mut GBitmapSequence) -> GSize;
 }
-/**! Description of a single data row in the pixel data of a bitmap
-! @note This data type describes the actual pixel data of a bitmap and does not respect the
-!       bitmap's bounds.
-! @see \ref gbitmap_get_data_row_info
-! @see \ref gbitmap_get_data
-! @see \ref gbitmap_get_bounds*/
+#[doc = "! Description of a single data row in the pixel data of a bitmap\n! @note This data type describes the actual pixel data of a bitmap and does not respect the\n!       bitmap's bounds.\n! @see \\ref gbitmap_get_data_row_info\n! @see \\ref gbitmap_get_data\n! @see \\ref gbitmap_get_bounds"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct GBitmapDataRowInfo {
-    /**! Address of the byte at column 0 of a given data row in a bitmap. Use this to calculate the
-! memory address of a pixel. For GBitmapFormat8BitCircular or GBitmapFormat8Bit this would
-! be: `uint8_t *pixel_addr = row_info.addr + x`.
-! Note that this byte can be outside of the valid range for this row.
-! For example: The first valid pixel (`min_x=76`) of a row might start at 76 bytes after the
-! given data pointer (assuming that 1 pixel is represented as 1 byte as in
-! GBitmapFormat8BitCircular or GBitmapFormat8Bit).*/
+    #[doc = "! Address of the byte at column 0 of a given data row in a bitmap. Use this to calculate the\n! memory address of a pixel. For GBitmapFormat8BitCircular or GBitmapFormat8Bit this would\n! be: `uint8_t *pixel_addr = row_info.addr + x`.\n! Note that this byte can be outside of the valid range for this row.\n! For example: The first valid pixel (`min_x=76`) of a row might start at 76 bytes after the\n! given data pointer (assuming that 1 pixel is represented as 1 byte as in\n! GBitmapFormat8BitCircular or GBitmapFormat8Bit)."]
     pub data: *mut u8,
-    ///! The absolute column of a first valid pixel for a given data row.
+    #[doc = "! The absolute column of a first valid pixel for a given data row."]
     pub min_x: i16,
-    /**! The absolute column of the last valid pixel for a given data row.
-! For optimization reasons the result can be anywhere between
-! grect_get_max_x(bitmap_bounds) - 1 and the physical data boundary.*/
+    #[doc = "! The absolute column of the last valid pixel for a given data row.\n! For optimization reasons the result can be anywhere between\n! grect_get_max_x(bitmap_bounds) - 1 and the physical data boundary."]
     pub max_x: i16,
 }
 impl Default for GBitmapDataRowInfo {
@@ -4554,116 +2977,53 @@ impl Default for GBitmapDataRowInfo {
     }
 }
 unsafe extern "C" {
-    /**! Provides information about a pixel data row
-! @param bitmap A pointer to the GBitmap to get row info
-! @param y Absolute row number in the pixel data, independent from the bitmap's bounds
-! @return Description of the row
-! @note This function does not respect the bitmap's bounds but purely operates on the pixel data.
-!       This function works with every bitmap format including GBitmapFormat1Bit.
-!       The result of the function for invalid rows is undefined.
-! @see \ref gbitmap_get_data*/
-    pub fn gbitmap_get_data_row_info(
-        bitmap: *const GBitmap,
-        y: u16,
-    ) -> GBitmapDataRowInfo;
+    #[doc = "! Provides information about a pixel data row\n! @param bitmap A pointer to the GBitmap to get row info\n! @param y Absolute row number in the pixel data, independent from the bitmap's bounds\n! @return Description of the row\n! @note This function does not respect the bitmap's bounds but purely operates on the pixel data.\n!       This function works with every bitmap format including GBitmapFormat1Bit.\n!       The result of the function for invalid rows is undefined.\n! @see \\ref gbitmap_get_data"]
+    pub fn gbitmap_get_data_row_info(bitmap: *const GBitmap, y: u16) -> GBitmapDataRowInfo;
 }
 impl GAlign {
-    ///! Align by centering
+    #[doc = "! Align by centering"]
     pub const GAlignCenter: GAlign = GAlign(0);
-    ///! Align by making the top edges overlap and left edges overlap
+    #[doc = "! Align by making the top edges overlap and left edges overlap"]
     pub const GAlignTopLeft: GAlign = GAlign(1);
-    ///! Align by making the top edges overlap and left edges overlap
+    #[doc = "! Align by making the top edges overlap and left edges overlap"]
     pub const GAlignTopRight: GAlign = GAlign(2);
-    ///! Align by making the top edges overlap and centered horizontally
+    #[doc = "! Align by making the top edges overlap and centered horizontally"]
     pub const GAlignTop: GAlign = GAlign(3);
-    ///! Align by making the left edges overlap and centered vertically
+    #[doc = "! Align by making the left edges overlap and centered vertically"]
     pub const GAlignLeft: GAlign = GAlign(4);
-    ///! Align by making the bottom edges overlap and centered horizontally
+    #[doc = "! Align by making the bottom edges overlap and centered horizontally"]
     pub const GAlignBottom: GAlign = GAlign(5);
-    ///! Align by making the right edges overlap and centered vertically
+    #[doc = "! Align by making the right edges overlap and centered vertically"]
     pub const GAlignRight: GAlign = GAlign(6);
-    ///! Align by making the bottom edges overlap and right edges overlap
+    #[doc = "! Align by making the bottom edges overlap and right edges overlap"]
     pub const GAlignBottomRight: GAlign = GAlign(7);
-    ///! Align by making the bottom edges overlap and left edges overlap
+    #[doc = "! Align by making the bottom edges overlap and left edges overlap"]
     pub const GAlignBottomLeft: GAlign = GAlign(8);
 }
 #[repr(transparent)]
-/**! Values to specify how two things should be aligned relative to each other.
-! ![](galign.png)
-! @see \ref bitmap_layer_set_alignment()*/
+#[doc = "! Values to specify how two things should be aligned relative to each other.\n! ![](galign.png)\n! @see \\ref bitmap_layer_set_alignment()"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GAlign(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Aligns one rectangle within another rectangle, using an alignment parameter.
-! The relative coordinate systems of both rectangles are assumed to be the same.
-! When clip is true, `rect` is also clipped by the constraint.
-! @param[in] rect The rectangle to align (in place)
-! @param[out] rect The aligned and optionally clipped rectangle
-! @param inside_rect The rectangle in which to align `rect`
-! @param alignment Determines the alignment of `rect` within `inside_rect` by
-! specifying what edges of should overlap.
-! @param clip Determines whether `rect` should be trimmed using the edges of `inside_rect`
-! in case `rect` extends outside of the area that `inside_rect` covers after the alignment.*/
-    pub fn grect_align(
-        rect: *mut GRect,
-        inside_rect: *const GRect,
-        alignment: GAlign,
-        clip: bool,
-    );
+    #[doc = "! Aligns one rectangle within another rectangle, using an alignment parameter.\n! The relative coordinate systems of both rectangles are assumed to be the same.\n! When clip is true, `rect` is also clipped by the constraint.\n! @param[in] rect The rectangle to align (in place)\n! @param[out] rect The aligned and optionally clipped rectangle\n! @param inside_rect The rectangle in which to align `rect`\n! @param alignment Determines the alignment of `rect` within `inside_rect` by\n! specifying what edges of should overlap.\n! @param clip Determines whether `rect` should be trimmed using the edges of `inside_rect`\n! in case `rect` extends outside of the area that `inside_rect` covers after the alignment."]
+    pub fn grect_align(rect: *mut GRect, inside_rect: *const GRect, alignment: GAlign, clip: bool);
 }
 impl GCompOp {
-    /**! Assign the pixel values of the source image to the destination pixels,
-! effectively replacing the previous values for those pixels. For color displays, when drawing
-! a palettized or 8-bit \ref GBitmap image, the opacity value is ignored.*/
+    #[doc = "! Assign the pixel values of the source image to the destination pixels,\n! effectively replacing the previous values for those pixels. For color displays, when drawing\n! a palettized or 8-bit \\ref GBitmap image, the opacity value is ignored."]
     pub const GCompOpAssign: GCompOp = GCompOp(0);
-    /**! Assign the **inverted** pixel values of the source image to the destination pixels,
-! effectively replacing the previous values for those pixels.
-! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported
-!     and the resulting behavior is undefined.*/
+    #[doc = "! Assign the **inverted** pixel values of the source image to the destination pixels,\n! effectively replacing the previous values for those pixels.\n! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported\n!     and the resulting behavior is undefined."]
     pub const GCompOpAssignInverted: GCompOp = GCompOp(1);
-    /**! Use the boolean operator `OR` to composite the source and destination pixels.
-! The visual result of this compositing mode is the source's white pixels
-! are painted onto the destination and the source's black pixels are treated
-! as clear.
-! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported
-!     and the resulting behavior is undefined.*/
+    #[doc = "! Use the boolean operator `OR` to composite the source and destination pixels.\n! The visual result of this compositing mode is the source's white pixels\n! are painted onto the destination and the source's black pixels are treated\n! as clear.\n! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported\n!     and the resulting behavior is undefined."]
     pub const GCompOpOr: GCompOp = GCompOp(2);
-    /**! Use the boolean operator `AND` to composite the source and destination pixels.
-! The visual result of this compositing mode is the source's black pixels
-! are painted onto the destination and the source's white pixels are treated
-! as clear.
-! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported
-!     and the resulting behavior is undefined.*/
+    #[doc = "! Use the boolean operator `AND` to composite the source and destination pixels.\n! The visual result of this compositing mode is the source's black pixels\n! are painted onto the destination and the source's white pixels are treated\n! as clear.\n! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported\n!     and the resulting behavior is undefined."]
     pub const GCompOpAnd: GCompOp = GCompOp(3);
-    /**! Clears the bits in the destination image, using the source image as mask.
-! The visual result of this compositing mode is that for the parts where the source image is
-! white, the destination image will be painted black. Other parts will be left untouched.
-! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported
-!     and the resulting behavior is undefined.*/
+    #[doc = "! Clears the bits in the destination image, using the source image as mask.\n! The visual result of this compositing mode is that for the parts where the source image is\n! white, the destination image will be painted black. Other parts will be left untouched.\n! @note For bitmaps with a format different from GBitmapFormat1Bit, this mode is not supported\n!     and the resulting behavior is undefined."]
     pub const GCompOpClear: GCompOp = GCompOp(4);
-    /**! Sets the bits in the destination image, using the source image as mask.
-! This mode is required to apply any transparency of your bitmap.
-! @note For bitmaps of the format GBitmapFormat1Bit, the visual result of this compositing
-!   mode is that for the parts where the source image is black, the destination image will be
-!   painted white. Other parts will be left untouched.*/
+    #[doc = "! Sets the bits in the destination image, using the source image as mask.\n! This mode is required to apply any transparency of your bitmap.\n! @note For bitmaps of the format GBitmapFormat1Bit, the visual result of this compositing\n!   mode is that for the parts where the source image is black, the destination image will be\n!   painted white. Other parts will be left untouched."]
     pub const GCompOpSet: GCompOp = GCompOp(5);
 }
 #[repr(transparent)]
-/**! Values to specify how the source image should be composited onto the destination image.
-!
-! ![](compops.png)
-! Contrived example of how the different compositing modes affect drawing.
-! Often, the "destination image" is the render buffer and thus contains the image of
-! what has been drawn before or "underneath".
-!
-! For color displays, only two compositing modes are supported, \ref GCompOpAssign and
-! \ref GCompOpSet. The behavior of other compositing modes are undefined and may change in the
-! future. Transparency can be achieved using \ref GCompOpSet and requires pixel values with alpha
-! value .a < 3.
-! @see \ref bitmap_layer_set_compositing_mode()
-! @see \ref graphics_context_set_compositing_mode()
-! @see \ref graphics_draw_bitmap_in_rect()
-! @see \ref graphics_draw_rotated_bitmap()*/
+#[doc = "! Values to specify how the source image should be composited onto the destination image.\n!\n! ![](compops.png)\n! Contrived example of how the different compositing modes affect drawing.\n! Often, the \"destination image\" is the render buffer and thus contains the image of\n! what has been drawn before or \"underneath\".\n!\n! For color displays, only two compositing modes are supported, \\ref GCompOpAssign and\n! \\ref GCompOpSet. The behavior of other compositing modes are undefined and may change in the\n! future. Transparency can be achieved using \\ref GCompOpSet and requires pixel values with alpha\n! value .a < 3.\n! @see \\ref bitmap_layer_set_compositing_mode()\n! @see \\ref graphics_context_set_compositing_mode()\n! @see \\ref graphics_draw_bitmap_in_rect()\n! @see \\ref graphics_draw_rotated_bitmap()"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GCompOp(pub ::core::ffi::c_uchar);
 #[repr(C)]
@@ -4671,139 +3031,87 @@ pub struct GCompOp(pub ::core::ffi::c_uchar);
 pub struct GContext {
     _unused: [u8; 0],
 }
-/**! Represents insets for four sides. Negative values mean a side extends.
-! @see \ref grect_inset*/
+#[doc = "! Represents insets for four sides. Negative values mean a side extends.\n! @see \\ref grect_inset"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct GEdgeInsets {
-    ///! The inset at the top of an object.
+    #[doc = "! The inset at the top of an object."]
     pub top: i16,
-    ///! The inset at the right of an object.
+    #[doc = "! The inset at the right of an object."]
     pub right: i16,
-    ///! The inset at the bottom of an object.
+    #[doc = "! The inset at the bottom of an object."]
     pub bottom: i16,
-    ///! The inset at the left of an object.
+    #[doc = "! The inset at the left of an object."]
     pub left: i16,
 }
 unsafe extern "C" {
-    /**! Returns a rectangle that is shrinked or expanded by the given edge insets.
-! @note The rectangle is standardized and then the inset parameters are applied.
-! If the resulting rectangle would have a negative height or width, a GRectZero is returned.
-! @param rect The rectangle that will be inset
-! @param insets The insets that will be applied
-! @return The resulting rectangle
-! @note Use this function in together with the \ref GEdgeInsets macro
-! \code{.c}
-! GRect r_inset_all_sides = grect_inset(r, GEdgeInsets(10));
-! GRect r_inset_vertical_horizontal = grect_inset(r, GEdgeInsets(10, 20));
-! GRect r_expand_top_right_shrink_bottom_left = grect_inset(r, GEdgeInsets(-10, -10, 10, 10));
-! \endcode*/
+    #[doc = "! Returns a rectangle that is shrinked or expanded by the given edge insets.\n! @note The rectangle is standardized and then the inset parameters are applied.\n! If the resulting rectangle would have a negative height or width, a GRectZero is returned.\n! @param rect The rectangle that will be inset\n! @param insets The insets that will be applied\n! @return The resulting rectangle\n! @note Use this function in together with the \\ref GEdgeInsets macro\n! \\code{.c}\n! GRect r_inset_all_sides = grect_inset(r, GEdgeInsets(10));\n! GRect r_inset_vertical_horizontal = grect_inset(r, GEdgeInsets(10, 20));\n! GRect r_expand_top_right_shrink_bottom_left = grect_inset(r, GEdgeInsets(-10, -10, 10, 10));\n! \\endcode"]
     pub fn grect_inset(rect: GRect, insets: GEdgeInsets) -> GRect;
 }
 unsafe extern "C" {
-    /**! Sets the current stroke color of the graphics context.
-! @param ctx The graphics context onto which to set the stroke color
-! @param color The new stroke color*/
+    #[doc = "! Sets the current stroke color of the graphics context.\n! @param ctx The graphics context onto which to set the stroke color\n! @param color The new stroke color"]
     pub fn graphics_context_set_stroke_color(ctx: *mut GContext, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the current fill color of the graphics context.
-! @param ctx The graphics context onto which to set the fill color
-! @param color The new fill color*/
+    #[doc = "! Sets the current fill color of the graphics context.\n! @param ctx The graphics context onto which to set the fill color\n! @param color The new fill color"]
     pub fn graphics_context_set_fill_color(ctx: *mut GContext, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the current text color of the graphics context.
-! @param ctx The graphics context onto which to set the text color
-! @param color The new text color*/
+    #[doc = "! Sets the current text color of the graphics context.\n! @param ctx The graphics context onto which to set the text color\n! @param color The new text color"]
     pub fn graphics_context_set_text_color(ctx: *mut GContext, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the current bitmap compositing mode of the graphics context.
-! The default mode is GCompOpAssign i.e. bitmap transparency disabled.
-! @param ctx The graphics context onto which to set the compositing mode
-! @param mode The new compositing mode
-! @see \ref GCompOp
-! @see \ref bitmap_layer_set_compositing_mode()
-! @note At the moment, this only affects the bitmaps drawing operations
-! -- \ref graphics_draw_bitmap_in_rect(), \ref graphics_draw_rotated_bitmap, and
-! anything that uses those APIs --, but it currently does not affect the filling or stroking
-! operations.*/
+    #[doc = "! Sets the current bitmap compositing mode of the graphics context.\n! The default mode is GCompOpAssign i.e. bitmap transparency disabled.\n! @param ctx The graphics context onto which to set the compositing mode\n! @param mode The new compositing mode\n! @see \\ref GCompOp\n! @see \\ref bitmap_layer_set_compositing_mode()\n! @note At the moment, this only affects the bitmaps drawing operations\n! -- \\ref graphics_draw_bitmap_in_rect(), \\ref graphics_draw_rotated_bitmap, and\n! anything that uses those APIs --, but it currently does not affect the filling or stroking\n! operations."]
     pub fn graphics_context_set_compositing_mode(ctx: *mut GContext, mode: GCompOp);
 }
 unsafe extern "C" {
-    /**! Sets whether antialiasing is applied to stroke drawing
-! @param ctx The graphics context onto which to set the antialiasing
-! @param enable True = antialiasing enabled, False = antialiasing disabled
-! @note Default value is true.*/
+    #[doc = "! Sets whether antialiasing is applied to stroke drawing\n! @param ctx The graphics context onto which to set the antialiasing\n! @param enable True = antialiasing enabled, False = antialiasing disabled\n! @note Default value is true."]
     pub fn graphics_context_set_antialiased(ctx: *mut GContext, enable: bool);
 }
 unsafe extern "C" {
-    /**! Sets the width of the stroke for drawing routines
-! @param ctx The graphics context onto which to set the stroke width
-! @param stroke_width Width in pixels of the stroke.
-! @note If stroke width of zero is passed, it will be ignored and will not change the value
-! stored in GContext. Currently, only odd stroke_width values are supported. If an even value
-! is passed in, the value will be stored as is, but the drawing routines will round down to the
-! previous integral value when drawing. Default value is 1.*/
+    #[doc = "! Sets the width of the stroke for drawing routines\n! @param ctx The graphics context onto which to set the stroke width\n! @param stroke_width Width in pixels of the stroke.\n! @note If stroke width of zero is passed, it will be ignored and will not change the value\n! stored in GContext. Currently, only odd stroke_width values are supported. If an even value\n! is passed in, the value will be stored as is, but the drawing routines will round down to the\n! previous integral value when drawing. Default value is 1."]
     pub fn graphics_context_set_stroke_width(ctx: *mut GContext, stroke_width: u8);
 }
 impl GCornerMask {
-    ///! No corners
+    #[doc = "! No corners"]
     pub const GCornerNone: GCornerMask = GCornerMask(0);
-    ///! Top-Left corner
+    #[doc = "! Top-Left corner"]
     pub const GCornerTopLeft: GCornerMask = GCornerMask(1);
-    ///! Top-Right corner
+    #[doc = "! Top-Right corner"]
     pub const GCornerTopRight: GCornerMask = GCornerMask(2);
-    ///! Bottom-Left corner
+    #[doc = "! Bottom-Left corner"]
     pub const GCornerBottomLeft: GCornerMask = GCornerMask(4);
-    ///! Bottom-Right corner
+    #[doc = "! Bottom-Right corner"]
     pub const GCornerBottomRight: GCornerMask = GCornerMask(8);
-    ///! All corners
+    #[doc = "! All corners"]
     pub const GCornersAll: GCornerMask = GCornerMask(15);
-    ///! Top corners
+    #[doc = "! Top corners"]
     pub const GCornersTop: GCornerMask = GCornerMask(3);
-    ///! Bottom corners
+    #[doc = "! Bottom corners"]
     pub const GCornersBottom: GCornerMask = GCornerMask(12);
-    ///! Left corners
+    #[doc = "! Left corners"]
     pub const GCornersLeft: GCornerMask = GCornerMask(5);
-    ///! Right corners
+    #[doc = "! Right corners"]
     pub const GCornersRight: GCornerMask = GCornerMask(10);
 }
 #[repr(transparent)]
-/**! Bit mask values to specify the corners of a rectangle.
-! The values can be combines using binary OR (`|`),
-! For example: the mask to indicate top left and bottom right corners can:
-! be created as follows: `(GCornerTopLeft | GCornerBottomRight)`*/
+#[doc = "! Bit mask values to specify the corners of a rectangle.\n! The values can be combines using binary OR (`|`),\n! For example: the mask to indicate top left and bottom right corners can:\n! be created as follows: `(GCornerTopLeft | GCornerBottomRight)`"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GCornerMask(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Draws a pixel at given point in the current stroke color
-! @param ctx The destination graphics context in which to draw
-! @param point The point at which to draw the pixel*/
+    #[doc = "! Draws a pixel at given point in the current stroke color\n! @param ctx The destination graphics context in which to draw\n! @param point The point at which to draw the pixel"]
     pub fn graphics_draw_pixel(ctx: *mut GContext, point: GPoint);
 }
 unsafe extern "C" {
-    /**! Draws line in the current stroke color, current stroke width and AA flag
-! @param ctx The destination graphics context in which to draw
-! @param p0 The starting point of the line
-! @param p1 The ending point of the line*/
+    #[doc = "! Draws line in the current stroke color, current stroke width and AA flag\n! @param ctx The destination graphics context in which to draw\n! @param p0 The starting point of the line\n! @param p1 The ending point of the line"]
     pub fn graphics_draw_line(ctx: *mut GContext, p0: GPoint, p1: GPoint);
 }
 unsafe extern "C" {
-    /**! Draws a 1-pixel wide rectangle outline in the current stroke color
-! @param ctx The destination graphics context in which to draw
-! @param rect The rectangle for which to draw the outline*/
+    #[doc = "! Draws a 1-pixel wide rectangle outline in the current stroke color\n! @param ctx The destination graphics context in which to draw\n! @param rect The rectangle for which to draw the outline"]
     pub fn graphics_draw_rect(ctx: *mut GContext, rect: GRect);
 }
 unsafe extern "C" {
-    /**! Fills a rectangle with the current fill color, optionally rounding all or a
-! selection of its corners.
-! @param ctx The destination graphics context in which to draw
-! @param rect The rectangle to fill
-! @param corner_radius The rounding radius of the corners in pixels (maximum is 8 pixels)
-! @param corner_mask Bitmask of the corners that need to be rounded.
-! @see \ref GCornerMask*/
+    #[doc = "! Fills a rectangle with the current fill color, optionally rounding all or a\n! selection of its corners.\n! @param ctx The destination graphics context in which to draw\n! @param rect The rectangle to fill\n! @param corner_radius The rounding radius of the corners in pixels (maximum is 8 pixels)\n! @param corner_mask Bitmask of the corners that need to be rounded.\n! @see \\ref GCornerMask"]
     pub fn graphics_fill_rect(
         ctx: *mut GContext,
         rect: GRect,
@@ -4812,111 +3120,42 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Draws the outline of a circle in the current stroke color
-! @param ctx The destination graphics context in which to draw
-! @param p The center point of the circle
-! @param radius The radius in pixels*/
+    #[doc = "! Draws the outline of a circle in the current stroke color\n! @param ctx The destination graphics context in which to draw\n! @param p The center point of the circle\n! @param radius The radius in pixels"]
     pub fn graphics_draw_circle(ctx: *mut GContext, p: GPoint, radius: u16);
 }
 unsafe extern "C" {
-    /**! Fills a circle in the current fill color
-! @param ctx The destination graphics context in which to draw
-! @param p The center point of the circle
-! @param radius The radius in pixels*/
+    #[doc = "! Fills a circle in the current fill color\n! @param ctx The destination graphics context in which to draw\n! @param p The center point of the circle\n! @param radius The radius in pixels"]
     pub fn graphics_fill_circle(ctx: *mut GContext, p: GPoint, radius: u16);
 }
 unsafe extern "C" {
-    /**! Draws the outline of a rounded rectangle in the current stroke color
-! @param ctx The destination graphics context in which to draw
-! @param rect The rectangle defining the dimensions of the rounded rectangle to draw
-! @param radius The corner radius in pixels*/
+    #[doc = "! Draws the outline of a rounded rectangle in the current stroke color\n! @param ctx The destination graphics context in which to draw\n! @param rect The rectangle defining the dimensions of the rounded rectangle to draw\n! @param radius The corner radius in pixels"]
     pub fn graphics_draw_round_rect(ctx: *mut GContext, rect: GRect, radius: u16);
 }
 unsafe extern "C" {
-    /**! Draws a bitmap into the graphics context, inside the specified rectangle
-! @param ctx The destination graphics context in which to draw the bitmap
-! @param bitmap The bitmap to draw
-! @param rect The rectangle in which to draw the bitmap
-! @note If the size of `rect` is smaller than the size of the bitmap,
-! the bitmap will be clipped on right and bottom edges.
-! If the size of `rect` is larger than the size of the bitmap,
-! the bitmap will be tiled automatically in both horizontal and vertical
-! directions, effectively drawing a repeating pattern.
-! @see GBitmap
-! @see GContext*/
-    pub fn graphics_draw_bitmap_in_rect(
-        ctx: *mut GContext,
-        bitmap: *const GBitmap,
-        rect: GRect,
-    );
+    #[doc = "! Draws a bitmap into the graphics context, inside the specified rectangle\n! @param ctx The destination graphics context in which to draw the bitmap\n! @param bitmap The bitmap to draw\n! @param rect The rectangle in which to draw the bitmap\n! @note If the size of `rect` is smaller than the size of the bitmap,\n! the bitmap will be clipped on right and bottom edges.\n! If the size of `rect` is larger than the size of the bitmap,\n! the bitmap will be tiled automatically in both horizontal and vertical\n! directions, effectively drawing a repeating pattern.\n! @see GBitmap\n! @see GContext"]
+    pub fn graphics_draw_bitmap_in_rect(ctx: *mut GContext, bitmap: *const GBitmap, rect: GRect);
 }
 unsafe extern "C" {
-    /**! A shortcut to capture the framebuffer in the native format of the watch.
-! @see graphics_capture_frame_buffer_format*/
+    #[doc = "! A shortcut to capture the framebuffer in the native format of the watch.\n! @see graphics_capture_frame_buffer_format"]
     pub fn graphics_capture_frame_buffer(ctx: *mut GContext) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Captures the frame buffer for direct access, using the given format.
-! Graphics functions will not affect the frame buffer while it is captured.
-! The frame buffer is released when {@link graphics_release_frame_buffer} is called.
-! The frame buffer must be released before the end of a layer's `.update_proc`
-! for the layer to be drawn properly.
-!
-! While the frame buffer is captured calling {@link graphics_capture_frame_buffer}
-! will fail and return `NULL`.
-! @note When writing to the frame buffer, you should respect the visible boundaries of a
-! window on the screen. Use layer_get_frame(window_get_root_layer(window)).origin to obtain its
-! position relative to the frame buffer. For example, drawing to (5, 5) in the frame buffer
-! while the window is transitioning to the left with its origin at (-20, 0) would
-! effectively draw that point at (25, 5) relative to the window. For this reason you should
-! consider the window's root layer frame when calculating drawing coordinates.
-! @see GBitmap
-! @see GBitmapFormat
-! @see layer_get_frame
-! @see window_get_root_layer
-! @param ctx The graphics context providing the frame buffer
-! @param format The format in which the framebuffer should be captured. Supported formats
-! are \ref GBitmapFormat1Bit and \ref GBitmapFormat8Bit.
-! @return A pointer to the frame buffer. `NULL` if failed.*/
+    #[doc = "! Captures the frame buffer for direct access, using the given format.\n! Graphics functions will not affect the frame buffer while it is captured.\n! The frame buffer is released when {@link graphics_release_frame_buffer} is called.\n! The frame buffer must be released before the end of a layer's `.update_proc`\n! for the layer to be drawn properly.\n!\n! While the frame buffer is captured calling {@link graphics_capture_frame_buffer}\n! will fail and return `NULL`.\n! @note When writing to the frame buffer, you should respect the visible boundaries of a\n! window on the screen. Use layer_get_frame(window_get_root_layer(window)).origin to obtain its\n! position relative to the frame buffer. For example, drawing to (5, 5) in the frame buffer\n! while the window is transitioning to the left with its origin at (-20, 0) would\n! effectively draw that point at (25, 5) relative to the window. For this reason you should\n! consider the window's root layer frame when calculating drawing coordinates.\n! @see GBitmap\n! @see GBitmapFormat\n! @see layer_get_frame\n! @see window_get_root_layer\n! @param ctx The graphics context providing the frame buffer\n! @param format The format in which the framebuffer should be captured. Supported formats\n! are \\ref GBitmapFormat1Bit and \\ref GBitmapFormat8Bit.\n! @return A pointer to the frame buffer. `NULL` if failed."]
     pub fn graphics_capture_frame_buffer_format(
         ctx: *mut GContext,
         format: GBitmapFormat,
     ) -> *mut GBitmap;
 }
 unsafe extern "C" {
-    /**! Releases the frame buffer.
-! Must be called before the end of a layer's `.update_proc` for the layer to be drawn properly.
-!
-! If `buffer` does not point to the address previously returned by
-! {@link graphics_capture_frame_buffer} the frame buffer will not be released.
-! @param ctx The graphics context providing the frame buffer
-! @param buffer The pointer to frame buffer
-! @return True if the frame buffer was released successfully*/
-    pub fn graphics_release_frame_buffer(
-        ctx: *mut GContext,
-        buffer: *mut GBitmap,
-    ) -> bool;
+    #[doc = "! Releases the frame buffer.\n! Must be called before the end of a layer's `.update_proc` for the layer to be drawn properly.\n!\n! If `buffer` does not point to the address previously returned by\n! {@link graphics_capture_frame_buffer} the frame buffer will not be released.\n! @param ctx The graphics context providing the frame buffer\n! @param buffer The pointer to frame buffer\n! @return True if the frame buffer was released successfully"]
+    pub fn graphics_release_frame_buffer(ctx: *mut GContext, buffer: *mut GBitmap) -> bool;
 }
 unsafe extern "C" {
-    /**! Whether or not the frame buffer has been captured by {@link graphics_capture_frame_buffer}.
-! Graphics functions will not affect the frame buffer until it has been released by
-! {@link graphics_release_frame_buffer}.
-! @param ctx The graphics context providing the frame buffer
-! @return True if the frame buffer has been captured*/
+    #[doc = "! Whether or not the frame buffer has been captured by {@link graphics_capture_frame_buffer}.\n! Graphics functions will not affect the frame buffer until it has been released by\n! {@link graphics_release_frame_buffer}.\n! @param ctx The graphics context providing the frame buffer\n! @return True if the frame buffer has been captured"]
     pub fn graphics_frame_buffer_is_captured(ctx: *mut GContext) -> bool;
 }
 unsafe extern "C" {
-    /**! Draws a rotated bitmap with a memory-sensitive 2x anti-aliasing technique
-! (using ray-finding instead of super-sampling), which is thresholded into a b/w bitmap for 1-bit
-! and color blended for 8-bit.
-! @note This API has performance limitations that can degrade user experience. Use sparingly.
-! @param ctx The destination graphics context in which to draw
-! @param src The source bitmap to draw
-! @param src_ic Instance center (single point unaffected by rotation) relative to source bitmap
-! @param rotation Angle of rotation. Rotation is an integer between 0 (no rotation)
-! and TRIG_MAX_ANGLE (360 degree rotation). Use \ref DEG_TO_TRIGANGLE to easily convert degrees
-! to the appropriate value.
-! @param dest_ic Where to draw the instance center of the rotated bitmap in the context.*/
+    #[doc = "! Draws a rotated bitmap with a memory-sensitive 2x anti-aliasing technique\n! (using ray-finding instead of super-sampling), which is thresholded into a b/w bitmap for 1-bit\n! and color blended for 8-bit.\n! @note This API has performance limitations that can degrade user experience. Use sparingly.\n! @param ctx The destination graphics context in which to draw\n! @param src The source bitmap to draw\n! @param src_ic Instance center (single point unaffected by rotation) relative to source bitmap\n! @param rotation Angle of rotation. Rotation is an integer between 0 (no rotation)\n! and TRIG_MAX_ANGLE (360 degree rotation). Use \\ref DEG_TO_TRIGANGLE to easily convert degrees\n! to the appropriate value.\n! @param dest_ic Where to draw the instance center of the rotated bitmap in the context."]
     pub fn graphics_draw_rotated_bitmap(
         ctx: *mut GContext,
         src: *mut GBitmap,
@@ -4926,33 +3165,17 @@ unsafe extern "C" {
     );
 }
 impl GOvalScaleMode {
-    /**! Places a circle at the center of the rectangle, with a diameter that matches
-! the rectangle's shortest side.*/
+    #[doc = "! Places a circle at the center of the rectangle, with a diameter that matches\n! the rectangle's shortest side."]
     pub const GOvalScaleModeFitCircle: GOvalScaleMode = GOvalScaleMode(0);
-    /**! Places a circle at the center of the rectangle, with a diameter that matches
-! the rectangle's longest side.
-! The circle may overflow the bounds of the rectangle.*/
+    #[doc = "! Places a circle at the center of the rectangle, with a diameter that matches\n! the rectangle's longest side.\n! The circle may overflow the bounds of the rectangle."]
     pub const GOvalScaleModeFillCircle: GOvalScaleMode = GOvalScaleMode(1);
 }
 #[repr(transparent)]
-/**! Values to specify how a given rectangle should be used to derive an oval shape.
-! @see \ref graphics_fill_radial_internal
-! @see \ref graphics_draw_arc_internal
-! @see \ref gpoint_from_polar_internal
-! @see \ref grect_centered_from_polar*/
+#[doc = "! Values to specify how a given rectangle should be used to derive an oval shape.\n! @see \\ref graphics_fill_radial_internal\n! @see \\ref graphics_draw_arc_internal\n! @see \\ref gpoint_from_polar_internal\n! @see \\ref grect_centered_from_polar"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GOvalScaleMode(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Draws a line arc clockwise between `angle_start` and `angle_end`, where 0° is
-! the top of the circle. If the difference between `angle_start` and `angle_end` is greater
-! than 360°, a full circle will be drawn.
-! @param ctx The destination graphics context in which to draw using the current
-!        stroke color and antialiasing setting.
-! @param rect The reference rectangle to derive the center point and radius (see scale_mode).
-! @param scale_mode Determines how rect will be used to derive the center point and radius.
-! @param angle_start Radial starting angle. Use \ref DEG_TO_TRIGANGLE to easily convert degrees
-! to the appropriate value.
-! @param angle_end Radial finishing angle. If smaller than `angle_start`, nothing will be drawn.*/
+    #[doc = "! Draws a line arc clockwise between `angle_start` and `angle_end`, where 0° is\n! the top of the circle. If the difference between `angle_start` and `angle_end` is greater\n! than 360°, a full circle will be drawn.\n! @param ctx The destination graphics context in which to draw using the current\n!        stroke color and antialiasing setting.\n! @param rect The reference rectangle to derive the center point and radius (see scale_mode).\n! @param scale_mode Determines how rect will be used to derive the center point and radius.\n! @param angle_start Radial starting angle. Use \\ref DEG_TO_TRIGANGLE to easily convert degrees\n! to the appropriate value.\n! @param angle_end Radial finishing angle. If smaller than `angle_start`, nothing will be drawn."]
     pub fn graphics_draw_arc(
         ctx: *mut GContext,
         rect: GRect,
@@ -4962,22 +3185,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Fills a circle clockwise between `angle_start` and `angle_end`, where 0° is
-! the top of the circle. If the difference between `angle_start` and `angle_end` is greater
-! than 360°, a full circle will be drawn and filled. If `angle_start` is greater than
-! `angle_end` nothing will be drawn.
-! @note A simple example is drawing a 'Pacman' shape, with a starting angle of -225°, and
-! ending angle of 45°. By setting `inset_thickness` to a non-zero value (such as 30) this
-! example will produce the letter C.
-! @param ctx The destination graphics context in which to draw using the current
-! fill color and antialiasing setting.
-! @param rect The reference rectangle to derive the center point and radius (see scale).
-! @param scale_mode Determines how rect will be used to derive the center point and radius.
-! @param inset_thickness Describes how thick in pixels the radial will be drawn towards its
-!        center measured from the outside.
-! @param angle_start Radial starting angle. Use \ref DEG_TO_TRIGANGLE to easily convert degrees
-! to the appropriate value.
-! @param angle_end Radial finishing angle. If smaller than `angle_start`, nothing will be drawn.*/
+    #[doc = "! Fills a circle clockwise between `angle_start` and `angle_end`, where 0° is\n! the top of the circle. If the difference between `angle_start` and `angle_end` is greater\n! than 360°, a full circle will be drawn and filled. If `angle_start` is greater than\n! `angle_end` nothing will be drawn.\n! @note A simple example is drawing a 'Pacman' shape, with a starting angle of -225°, and\n! ending angle of 45°. By setting `inset_thickness` to a non-zero value (such as 30) this\n! example will produce the letter C.\n! @param ctx The destination graphics context in which to draw using the current\n! fill color and antialiasing setting.\n! @param rect The reference rectangle to derive the center point and radius (see scale).\n! @param scale_mode Determines how rect will be used to derive the center point and radius.\n! @param inset_thickness Describes how thick in pixels the radial will be drawn towards its\n!        center measured from the outside.\n! @param angle_start Radial starting angle. Use \\ref DEG_TO_TRIGANGLE to easily convert degrees\n! to the appropriate value.\n! @param angle_end Radial finishing angle. If smaller than `angle_start`, nothing will be drawn."]
     pub fn graphics_fill_radial(
         ctx: *mut GContext,
         rect: GRect,
@@ -4988,32 +3196,11 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Calculates a GPoint located at the angle provided on the perimeter of a circle defined by the
-! provided GRect.
-! @param rect The reference rectangle to derive the center point and radius (see scale_mode).
-! @param scale_mode Determines how rect will be used to derive the center point and radius.
-! @param angle The angle at which the point on the circle's perimeter should be calculated.
-! Use \ref DEG_TO_TRIGANGLE to easily convert degrees to the appropriate value.
-! @return The point on the circle's perimeter.*/
-    pub fn gpoint_from_polar(
-        rect: GRect,
-        scale_mode: GOvalScaleMode,
-        angle: i32,
-    ) -> GPoint;
+    #[doc = "! Calculates a GPoint located at the angle provided on the perimeter of a circle defined by the\n! provided GRect.\n! @param rect The reference rectangle to derive the center point and radius (see scale_mode).\n! @param scale_mode Determines how rect will be used to derive the center point and radius.\n! @param angle The angle at which the point on the circle's perimeter should be calculated.\n! Use \\ref DEG_TO_TRIGANGLE to easily convert degrees to the appropriate value.\n! @return The point on the circle's perimeter."]
+    pub fn gpoint_from_polar(rect: GRect, scale_mode: GOvalScaleMode, angle: i32) -> GPoint;
 }
 unsafe extern "C" {
-    /**! Calculates a rectangle centered on the perimeter of a circle at a given angle.
-! Use this to construct rectangles that follow the perimeter of a circle as an input for
-! \ref graphics_fill_radial_internal or \ref graphics_draw_arc_internal,
-! e.g. to draw circles every 30 degrees on a watchface.
-! @param rect The reference rectangle to derive the circle's center point and radius (see
-!        scale_mode).
-! @param scale_mode Determines how rect will be used to derive the circle's center point and
-!        radius.
-! @param angle The angle at which the point on the circle's perimeter should be calculated.
-! Use \ref DEG_TO_TRIGANGLE to easily convert degrees to the appropriate value.
-! @param size Width and height of the desired rectangle.
-! @return The rectangle centered on the circle's perimeter.*/
+    #[doc = "! Calculates a rectangle centered on the perimeter of a circle at a given angle.\n! Use this to construct rectangles that follow the perimeter of a circle as an input for\n! \\ref graphics_fill_radial_internal or \\ref graphics_draw_arc_internal,\n! e.g. to draw circles every 30 degrees on a watchface.\n! @param rect The reference rectangle to derive the circle's center point and radius (see\n!        scale_mode).\n! @param scale_mode Determines how rect will be used to derive the circle's center point and\n!        radius.\n! @param angle The angle at which the point on the circle's perimeter should be calculated.\n! Use \\ref DEG_TO_TRIGANGLE to easily convert degrees to the appropriate value.\n! @param size Width and height of the desired rectangle.\n! @return The rectangle centered on the circle's perimeter."]
     pub fn grect_centered_from_polar(
         rect: GRect,
         scale_mode: GOvalScaleMode,
@@ -5041,11 +3228,7 @@ pub struct GDrawCommandImage {
 pub struct GDrawCommandList {
     _unused: [u8; 0],
 }
-/**! Callback for iterating over draw command list
-! @param command current \ref GDrawCommand in iteration
-! @param index index of the current command in the list
-! @param context context pointer for the iteration operation
-! @return true if the iteration should continue after this command is processed*/
+#[doc = "! Callback for iterating over draw command list\n! @param command current \\ref GDrawCommand in iteration\n! @param index index of the current command in the list\n! @param context context pointer for the iteration operation\n! @return true if the iteration should continue after this command is processed"]
 pub type GDrawCommandListIteratorCb = ::core::option::Option<
     unsafe extern "C" fn(
         command: *mut GDrawCommand,
@@ -5059,141 +3242,88 @@ pub struct GDrawCommandSequence {
     _unused: [u8; 0],
 }
 impl GDrawCommandType {
-    ///!< Invalid draw command type
+    #[doc = "!< Invalid draw command type"]
     pub const GDrawCommandTypeInvalid: GDrawCommandType = GDrawCommandType(0);
-    ///!< Arbitrary path draw command type
+    #[doc = "!< Arbitrary path draw command type"]
     pub const GDrawCommandTypePath: GDrawCommandType = GDrawCommandType(1);
-    ///!< Circle draw command type
+    #[doc = "!< Circle draw command type"]
     pub const GDrawCommandTypeCircle: GDrawCommandType = GDrawCommandType(2);
-    ///!< Arbitrary path drawn with sub-pixel precision (1/8th precision)
+    #[doc = "!< Arbitrary path drawn with sub-pixel precision (1/8th precision)"]
     pub const GDrawCommandTypePrecisePath: GDrawCommandType = GDrawCommandType(3);
 }
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GDrawCommandType(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Draw a command
-! @param ctx The destination graphics context in which to draw
-! @param command \ref GDrawCommand to draw*/
+    #[doc = "! Draw a command\n! @param ctx The destination graphics context in which to draw\n! @param command \\ref GDrawCommand to draw"]
     pub fn gdraw_command_draw(ctx: *mut GContext, command: *mut GDrawCommand);
 }
 unsafe extern "C" {
-    /**! Get the command type
-! @param command \ref GDrawCommand from which to get the type
-! @return The type of the given \ref GDrawCommand*/
+    #[doc = "! Get the command type\n! @param command \\ref GDrawCommand from which to get the type\n! @return The type of the given \\ref GDrawCommand"]
     pub fn gdraw_command_get_type(command: *mut GDrawCommand) -> GDrawCommandType;
 }
 unsafe extern "C" {
-    /**! Set the fill color of a command
-! @param command ref DrawCommand for which to set the fill color
-! @param fill_color \ref GColor to set for the fill*/
+    #[doc = "! Set the fill color of a command\n! @param command ref DrawCommand for which to set the fill color\n! @param fill_color \\ref GColor to set for the fill"]
     pub fn gdraw_command_set_fill_color(command: *mut GDrawCommand, fill_color: GColor);
 }
 unsafe extern "C" {
-    /**! Get the fill color of a command
-! @param command \ref GDrawCommand from which to get the fill color
-! @return fill color of the given \ref GDrawCommand*/
+    #[doc = "! Get the fill color of a command\n! @param command \\ref GDrawCommand from which to get the fill color\n! @return fill color of the given \\ref GDrawCommand"]
     pub fn gdraw_command_get_fill_color(command: *mut GDrawCommand) -> GColor;
 }
 unsafe extern "C" {
-    /**! Set the stroke color of a command
-! @param command \ref GDrawCommand for which to set the stroke color
-! @param stroke_color \ref GColor to set for the stroke*/
-    pub fn gdraw_command_set_stroke_color(
-        command: *mut GDrawCommand,
-        stroke_color: GColor,
-    );
+    #[doc = "! Set the stroke color of a command\n! @param command \\ref GDrawCommand for which to set the stroke color\n! @param stroke_color \\ref GColor to set for the stroke"]
+    pub fn gdraw_command_set_stroke_color(command: *mut GDrawCommand, stroke_color: GColor);
 }
 unsafe extern "C" {
-    /**! Get the stroke color of a command
-! @param command \ref GDrawCommand from which to get the stroke color
-! @return The stroke color of the given \ref GDrawCommand*/
+    #[doc = "! Get the stroke color of a command\n! @param command \\ref GDrawCommand from which to get the stroke color\n! @return The stroke color of the given \\ref GDrawCommand"]
     pub fn gdraw_command_get_stroke_color(command: *mut GDrawCommand) -> GColor;
 }
 unsafe extern "C" {
-    /**! Set the stroke width of a command
-! @param command \ref GDrawCommand for which to set the stroke width
-! @param stroke_width stroke width to set for the command*/
+    #[doc = "! Set the stroke width of a command\n! @param command \\ref GDrawCommand for which to set the stroke width\n! @param stroke_width stroke width to set for the command"]
     pub fn gdraw_command_set_stroke_width(command: *mut GDrawCommand, stroke_width: u8);
 }
 unsafe extern "C" {
-    /**! Get the stroke width of a command
-! @param command \ref GDrawCommand from which to get the stroke width
-! @return The stroke width of the given \ref GDrawCommand*/
+    #[doc = "! Get the stroke width of a command\n! @param command \\ref GDrawCommand from which to get the stroke width\n! @return The stroke width of the given \\ref GDrawCommand"]
     pub fn gdraw_command_get_stroke_width(command: *mut GDrawCommand) -> u8;
 }
 unsafe extern "C" {
-    ///! Get the number of points in a command
+    #[doc = "! Get the number of points in a command"]
     pub fn gdraw_command_get_num_points(command: *mut GDrawCommand) -> u16;
 }
 unsafe extern "C" {
-    /**! Set the value of the point in a command at the specified index
-! @param command \ref GDrawCommand for which to set the value of a point
-! @param point_idx Index of the point to set the value for
-! @param point new point value to set*/
-    pub fn gdraw_command_set_point(
-        command: *mut GDrawCommand,
-        point_idx: u16,
-        point: GPoint,
-    );
+    #[doc = "! Set the value of the point in a command at the specified index\n! @param command \\ref GDrawCommand for which to set the value of a point\n! @param point_idx Index of the point to set the value for\n! @param point new point value to set"]
+    pub fn gdraw_command_set_point(command: *mut GDrawCommand, point_idx: u16, point: GPoint);
 }
 unsafe extern "C" {
-    /**! Get the value of a point in a command from the specified index
-! @param command \ref GDrawCommand from which to get a point
-! @param point_idx The index to get the point for
-! @return The point in the \ref GDrawCommand specified by point_idx
-! @note The index \b must be less than the number of points*/
+    #[doc = "! Get the value of a point in a command from the specified index\n! @param command \\ref GDrawCommand from which to get a point\n! @param point_idx The index to get the point for\n! @return The point in the \\ref GDrawCommand specified by point_idx\n! @note The index \\b must be less than the number of points"]
     pub fn gdraw_command_get_point(command: *mut GDrawCommand, point_idx: u16) -> GPoint;
 }
 unsafe extern "C" {
-    /**! Set the radius of a circle command
-! @note This only works for commands of type \ref GDrawCommandCircle
-! @param command \ref GDrawCommand from which to set the circle radius
-! @param radius The radius to set for the circle.*/
+    #[doc = "! Set the radius of a circle command\n! @note This only works for commands of type \\ref GDrawCommandCircle\n! @param command \\ref GDrawCommand from which to set the circle radius\n! @param radius The radius to set for the circle."]
     pub fn gdraw_command_set_radius(command: *mut GDrawCommand, radius: u16);
 }
 unsafe extern "C" {
-    /**! Get the radius of a circle command.
-! @note this only works for commands of type\ref GDrawCommandCircle.
-! @param command \ref GDrawCommand from which to get the circle radius
-! @return The radius in pixels if command is of type \ref GDrawCommandCircle*/
+    #[doc = "! Get the radius of a circle command.\n! @note this only works for commands of type\\ref GDrawCommandCircle.\n! @param command \\ref GDrawCommand from which to get the circle radius\n! @return The radius in pixels if command is of type \\ref GDrawCommandCircle"]
     pub fn gdraw_command_get_radius(command: *mut GDrawCommand) -> u16;
 }
 unsafe extern "C" {
-    /**! Set the path of a stroke command to be open
-! @note This only works for commands of type \ref GDrawCommandPath and
-! \ref GDrawCommandPrecisePath
-! @param command \ref GDrawCommand for which to set the path open status
-! @param path_open true if path should be hidden*/
+    #[doc = "! Set the path of a stroke command to be open\n! @note This only works for commands of type \\ref GDrawCommandPath and\n! \\ref GDrawCommandPrecisePath\n! @param command \\ref GDrawCommand for which to set the path open status\n! @param path_open true if path should be hidden"]
     pub fn gdraw_command_set_path_open(command: *mut GDrawCommand, path_open: bool);
 }
 unsafe extern "C" {
-    /**! Return whether a stroke command path is open
-! @note This only works for commands of type \ref GDrawCommandPath and
-! \ref GDrawCommandPrecisePath
-! @param command \ref GDrawCommand from which to get the path open status
-! @return true if the path is open*/
+    #[doc = "! Return whether a stroke command path is open\n! @note This only works for commands of type \\ref GDrawCommandPath and\n! \\ref GDrawCommandPrecisePath\n! @param command \\ref GDrawCommand from which to get the path open status\n! @return true if the path is open"]
     pub fn gdraw_command_get_path_open(command: *mut GDrawCommand) -> bool;
 }
 unsafe extern "C" {
-    /**! Set a command as hidden. This command will not be drawn when \ref gdraw_command_draw is called
-! with this command
-! @param command \ref GDrawCommand for which to set the hidden status
-! @param hidden true if command should be hidden*/
+    #[doc = "! Set a command as hidden. This command will not be drawn when \\ref gdraw_command_draw is called\n! with this command\n! @param command \\ref GDrawCommand for which to set the hidden status\n! @param hidden true if command should be hidden"]
     pub fn gdraw_command_set_hidden(command: *mut GDrawCommand, hidden: bool);
 }
 unsafe extern "C" {
-    /**! Return whether a command is hidden
-! @param command \ref GDrawCommand from which to get the hidden status
-! @return true if command is hidden*/
+    #[doc = "! Return whether a command is hidden\n! @param command \\ref GDrawCommand from which to get the hidden status\n! @return true if command is hidden"]
     pub fn gdraw_command_get_hidden(command: *mut GDrawCommand) -> bool;
 }
 unsafe extern "C" {
-    /**! Draw a frame
-! @param ctx The destination graphics context in which to draw
-! @param sequence The sequence from which the frame comes from (this is required)
-! @param frame Frame to draw
-! @param offset Offset from draw context origin to draw the frame*/
+    #[doc = "! Draw a frame\n! @param ctx The destination graphics context in which to draw\n! @param sequence The sequence from which the frame comes from (this is required)\n! @param frame Frame to draw\n! @param offset Offset from draw context origin to draw the frame"]
     pub fn gdraw_command_frame_draw(
         ctx: *mut GContext,
         sequence: *mut GDrawCommandSequence,
@@ -5202,46 +3332,27 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Set the duration of the frame
-! @param frame \ref GDrawCommandFrame for which to set the duration
-! @param duration duration of the frame in milliseconds*/
-    pub fn gdraw_command_frame_set_duration(
-        frame: *mut GDrawCommandFrame,
-        duration: u32,
-    );
+    #[doc = "! Set the duration of the frame\n! @param frame \\ref GDrawCommandFrame for which to set the duration\n! @param duration duration of the frame in milliseconds"]
+    pub fn gdraw_command_frame_set_duration(frame: *mut GDrawCommandFrame, duration: u32);
 }
 unsafe extern "C" {
-    /**! Get the duration of the frame
-! @param frame \ref GDrawCommandFrame from which to get the duration
-! @return duration of the frame in milliseconds*/
+    #[doc = "! Get the duration of the frame\n! @param frame \\ref GDrawCommandFrame from which to get the duration\n! @return duration of the frame in milliseconds"]
     pub fn gdraw_command_frame_get_duration(frame: *mut GDrawCommandFrame) -> u32;
 }
 unsafe extern "C" {
-    /**! Creates a GDrawCommandImage from the specified resource (PDC file)
-! @param resource_id Resource containing data to load and create GDrawCommandImage from.
-! @return GDrawCommandImage pointer if the resource was loaded, NULL otherwise*/
-    pub fn gdraw_command_image_create_with_resource(
-        resource_id: u32,
-    ) -> *mut GDrawCommandImage;
+    #[doc = "! Creates a GDrawCommandImage from the specified resource (PDC file)\n! @param resource_id Resource containing data to load and create GDrawCommandImage from.\n! @return GDrawCommandImage pointer if the resource was loaded, NULL otherwise"]
+    pub fn gdraw_command_image_create_with_resource(resource_id: u32) -> *mut GDrawCommandImage;
 }
 unsafe extern "C" {
-    /**! Creates a GDrawCommandImage as a copy from a given image
-! @param image Image to copy.
-! @return cloned image or NULL if the operation failed*/
-    pub fn gdraw_command_image_clone(
-        image: *mut GDrawCommandImage,
-    ) -> *mut GDrawCommandImage;
+    #[doc = "! Creates a GDrawCommandImage as a copy from a given image\n! @param image Image to copy.\n! @return cloned image or NULL if the operation failed"]
+    pub fn gdraw_command_image_clone(image: *mut GDrawCommandImage) -> *mut GDrawCommandImage;
 }
 unsafe extern "C" {
-    /**! Deletes the GDrawCommandImage structure and frees associated data
-! @param image Pointer to the image to free (delete)*/
+    #[doc = "! Deletes the GDrawCommandImage structure and frees associated data\n! @param image Pointer to the image to free (delete)"]
     pub fn gdraw_command_image_destroy(image: *mut GDrawCommandImage);
 }
 unsafe extern "C" {
-    /**! Draw an image
-! @param ctx The destination graphics context in which to draw
-! @param image Image to draw
-! @param offset Offset from draw context origin to draw the image*/
+    #[doc = "! Draw an image\n! @param ctx The destination graphics context in which to draw\n! @param image Image to draw\n! @param offset Offset from draw context origin to draw the image"]
     pub fn gdraw_command_image_draw(
         ctx: *mut GContext,
         image: *mut GDrawCommandImage,
@@ -5249,35 +3360,21 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Get size of the bounding box surrounding all draw commands in the image. This bounding
-! box can be used to set the graphics context or layer bounds when drawing the image.
-! @param image \ref GDrawCommandImage from which to get the bounding box size
-! @return bounding box size*/
+    #[doc = "! Get size of the bounding box surrounding all draw commands in the image. This bounding\n! box can be used to set the graphics context or layer bounds when drawing the image.\n! @param image \\ref GDrawCommandImage from which to get the bounding box size\n! @return bounding box size"]
     pub fn gdraw_command_image_get_bounds_size(image: *mut GDrawCommandImage) -> GSize;
 }
 unsafe extern "C" {
-    /**! Set size of the bounding box surrounding all draw commands in the image. This bounding
-! box can be used to set the graphics context or layer bounds when drawing the image.
-! @param image \ref GDrawCommandImage for which to set the bounding box size
-! @param size bounding box size*/
-    pub fn gdraw_command_image_set_bounds_size(
-        image: *mut GDrawCommandImage,
-        size: GSize,
-    );
+    #[doc = "! Set size of the bounding box surrounding all draw commands in the image. This bounding\n! box can be used to set the graphics context or layer bounds when drawing the image.\n! @param image \\ref GDrawCommandImage for which to set the bounding box size\n! @param size bounding box size"]
+    pub fn gdraw_command_image_set_bounds_size(image: *mut GDrawCommandImage, size: GSize);
 }
 unsafe extern "C" {
-    /**! Get the command list of the image
-! @param image \ref GDrawCommandImage from which to get the command list
-! @return command list*/
+    #[doc = "! Get the command list of the image\n! @param image \\ref GDrawCommandImage from which to get the command list\n! @return command list"]
     pub fn gdraw_command_image_get_command_list(
         image: *mut GDrawCommandImage,
     ) -> *mut GDrawCommandList;
 }
 unsafe extern "C" {
-    /**! Iterate over all commands in a command list
-! @param command_list \ref GDrawCommandList over which to iterate
-! @param handle_command iterator callback
-! @param callback_context context pointer to be passed into the iterator callback*/
+    #[doc = "! Iterate over all commands in a command list\n! @param command_list \\ref GDrawCommandList over which to iterate\n! @param handle_command iterator callback\n! @param callback_context context pointer to be passed into the iterator callback"]
     pub fn gdraw_command_list_iterate(
         command_list: *mut GDrawCommandList,
         handle_command: GDrawCommandListIteratorCb,
@@ -5285,148 +3382,90 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Draw all commands in a command list
-! @param ctx The destination graphics context in which to draw
-! @param command_list list of commands to draw*/
-    pub fn gdraw_command_list_draw(
-        ctx: *mut GContext,
-        command_list: *mut GDrawCommandList,
-    );
+    #[doc = "! Draw all commands in a command list\n! @param ctx The destination graphics context in which to draw\n! @param command_list list of commands to draw"]
+    pub fn gdraw_command_list_draw(ctx: *mut GContext, command_list: *mut GDrawCommandList);
 }
 unsafe extern "C" {
-    /**! Get the command at the specified index
-! @note the specified index must be less than the number of commands in the list
-! @param command_list \ref GDrawCommandList from which to get a command
-! @param command_idx index of the command to get
-! @return pointer to \ref GDrawCommand at the specified index*/
+    #[doc = "! Get the command at the specified index\n! @note the specified index must be less than the number of commands in the list\n! @param command_list \\ref GDrawCommandList from which to get a command\n! @param command_idx index of the command to get\n! @return pointer to \\ref GDrawCommand at the specified index"]
     pub fn gdraw_command_list_get_command(
         command_list: *mut GDrawCommandList,
         command_idx: u16,
     ) -> *mut GDrawCommand;
 }
 unsafe extern "C" {
-    /**! Get the number of commands in the list
-! @param command_list \ref GDrawCommandList from which to get the number of commands
-! @return number of commands in command list*/
-    pub fn gdraw_command_list_get_num_commands(
-        command_list: *mut GDrawCommandList,
-    ) -> u32;
+    #[doc = "! Get the number of commands in the list\n! @param command_list \\ref GDrawCommandList from which to get the number of commands\n! @return number of commands in command list"]
+    pub fn gdraw_command_list_get_num_commands(command_list: *mut GDrawCommandList) -> u32;
 }
 unsafe extern "C" {
-    /**! Creates a \ref GDrawCommandSequence from the specified resource (PDC file)
-! @param resource_id Resource containing data to load and create GDrawCommandSequence from.
-! @return GDrawCommandSequence pointer if the resource was loaded, NULL otherwise*/
+    #[doc = "! Creates a \\ref GDrawCommandSequence from the specified resource (PDC file)\n! @param resource_id Resource containing data to load and create GDrawCommandSequence from.\n! @return GDrawCommandSequence pointer if the resource was loaded, NULL otherwise"]
     pub fn gdraw_command_sequence_create_with_resource(
         resource_id: u32,
     ) -> *mut GDrawCommandSequence;
 }
 unsafe extern "C" {
-    /**! Creates a \ref GDrawCommandSequence as a copy from a given sequence
-! @param sequence Sequence to copy
-! @return cloned sequence or NULL if the operation failed*/
+    #[doc = "! Creates a \\ref GDrawCommandSequence as a copy from a given sequence\n! @param sequence Sequence to copy\n! @return cloned sequence or NULL if the operation failed"]
     pub fn gdraw_command_sequence_clone(
         sequence: *mut GDrawCommandSequence,
     ) -> *mut GDrawCommandSequence;
 }
 unsafe extern "C" {
-    /**! Deletes the \ref GDrawCommandSequence structure and frees associated data
-! @param image Pointer to the sequence to destroy*/
+    #[doc = "! Deletes the \\ref GDrawCommandSequence structure and frees associated data\n! @param image Pointer to the sequence to destroy"]
     pub fn gdraw_command_sequence_destroy(sequence: *mut GDrawCommandSequence);
 }
 unsafe extern "C" {
-    /**! Get the frame that should be shown after the specified amount of elapsed time
-! The last frame will be returned if the elapsed time exceeds the total time
-! @param sequence \ref GDrawCommandSequence from which to get the frame
-! @param elapsed_ms elapsed time in milliseconds
-! @return pointer to \ref GDrawCommandFrame that should be displayed at the elapsed time*/
+    #[doc = "! Get the frame that should be shown after the specified amount of elapsed time\n! The last frame will be returned if the elapsed time exceeds the total time\n! @param sequence \\ref GDrawCommandSequence from which to get the frame\n! @param elapsed_ms elapsed time in milliseconds\n! @return pointer to \\ref GDrawCommandFrame that should be displayed at the elapsed time"]
     pub fn gdraw_command_sequence_get_frame_by_elapsed(
         sequence: *mut GDrawCommandSequence,
         elapsed_ms: u32,
     ) -> *mut GDrawCommandFrame;
 }
 unsafe extern "C" {
-    /**! Get the frame at the specified index
-! @param sequence \ref GDrawCommandSequence from which to get the frame
-! @param index Index of frame to get
-! @return pointer to \ref GDrawCommandFrame at the specified index*/
+    #[doc = "! Get the frame at the specified index\n! @param sequence \\ref GDrawCommandSequence from which to get the frame\n! @param index Index of frame to get\n! @return pointer to \\ref GDrawCommandFrame at the specified index"]
     pub fn gdraw_command_sequence_get_frame_by_index(
         sequence: *mut GDrawCommandSequence,
         index: u32,
     ) -> *mut GDrawCommandFrame;
 }
 unsafe extern "C" {
-    /**! Get the size of the bounding box surrounding all draw commands in the sequence. This bounding
-! box can be used to set the graphics context or layer bounds when drawing the frames in the
-! sequence.
-! @param sequence \ref GDrawCommandSequence from which to get the bounds
-! @return bounding box size*/
-    pub fn gdraw_command_sequence_get_bounds_size(
-        sequence: *mut GDrawCommandSequence,
-    ) -> GSize;
+    #[doc = "! Get the size of the bounding box surrounding all draw commands in the sequence. This bounding\n! box can be used to set the graphics context or layer bounds when drawing the frames in the\n! sequence.\n! @param sequence \\ref GDrawCommandSequence from which to get the bounds\n! @return bounding box size"]
+    pub fn gdraw_command_sequence_get_bounds_size(sequence: *mut GDrawCommandSequence) -> GSize;
 }
 unsafe extern "C" {
-    /**! Set size of the bounding box surrounding all draw commands in the sequence. This bounding
-! box can be used to set the graphics context or layer bounds when drawing the frames in the
-! sequence.
-! @param sequence \ref GDrawCommandSequence for which to set the bounds
-! @param size bounding box size*/
-    pub fn gdraw_command_sequence_set_bounds_size(
-        sequence: *mut GDrawCommandSequence,
-        size: GSize,
-    );
+    #[doc = "! Set size of the bounding box surrounding all draw commands in the sequence. This bounding\n! box can be used to set the graphics context or layer bounds when drawing the frames in the\n! sequence.\n! @param sequence \\ref GDrawCommandSequence for which to set the bounds\n! @param size bounding box size"]
+    pub fn gdraw_command_sequence_set_bounds_size(sequence: *mut GDrawCommandSequence, size: GSize);
 }
 unsafe extern "C" {
-    /**! Get the play count of the sequence
-! @param sequence \ref GDrawCommandSequence from which to get the play count
-! @return play count of sequence*/
-    pub fn gdraw_command_sequence_get_play_count(
-        sequence: *mut GDrawCommandSequence,
-    ) -> u32;
+    #[doc = "! Get the play count of the sequence\n! @param sequence \\ref GDrawCommandSequence from which to get the play count\n! @return play count of sequence"]
+    pub fn gdraw_command_sequence_get_play_count(sequence: *mut GDrawCommandSequence) -> u32;
 }
 unsafe extern "C" {
-    /**! Set the play count of the sequence
-! @param sequence \ref GDrawCommandSequence for which to set the play count
-! @param play_count play count*/
+    #[doc = "! Set the play count of the sequence\n! @param sequence \\ref GDrawCommandSequence for which to set the play count\n! @param play_count play count"]
     pub fn gdraw_command_sequence_set_play_count(
         sequence: *mut GDrawCommandSequence,
         play_count: u32,
     );
 }
 unsafe extern "C" {
-    /**! Get the total duration of the sequence.
-! @param sequence \ref GDrawCommandSequence from which to get the total duration
-! @return total duration of the sequence in milliseconds*/
-    pub fn gdraw_command_sequence_get_total_duration(
-        sequence: *mut GDrawCommandSequence,
-    ) -> u32;
+    #[doc = "! Get the total duration of the sequence.\n! @param sequence \\ref GDrawCommandSequence from which to get the total duration\n! @return total duration of the sequence in milliseconds"]
+    pub fn gdraw_command_sequence_get_total_duration(sequence: *mut GDrawCommandSequence) -> u32;
 }
 unsafe extern "C" {
-    /**! Get the number of frames in the sequence
-! @param sequence \ref GDrawCommandSequence from which to get the number of frames
-! @return number of frames in the sequence*/
-    pub fn gdraw_command_sequence_get_num_frames(
-        sequence: *mut GDrawCommandSequence,
-    ) -> u32;
+    #[doc = "! Get the number of frames in the sequence\n! @param sequence \\ref GDrawCommandSequence from which to get the number of frames\n! @return number of frames in the sequence"]
+    pub fn gdraw_command_sequence_get_num_frames(sequence: *mut GDrawCommandSequence) -> u32;
 }
 unsafe extern "C" {
-    /**! Get the command list of the frame
-! @param frame \ref GDrawCommandFrame from which to get the command list
-! @return command list*/
+    #[doc = "! Get the command list of the frame\n! @param frame \\ref GDrawCommandFrame from which to get the command list\n! @return command list"]
     pub fn gdraw_command_frame_get_command_list(
         frame: *mut GDrawCommandFrame,
     ) -> *mut GDrawCommandList;
 }
-/**! Data structure describing a naked path
-! @note Note that this data structure only refers to an array of points;
-! the points are not stored inside this data structure itself.
-! In most cases, one cannot use a stack-allocated array of GPoints. Instead
-! one often needs to provide longer-lived (static or "global") storage for the points.*/
+#[doc = "! Data structure describing a naked path\n! @note Note that this data structure only refers to an array of points;\n! the points are not stored inside this data structure itself.\n! In most cases, one cannot use a stack-allocated array of GPoints. Instead\n! one often needs to provide longer-lived (static or \"global\") storage for the points."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct GPathInfo {
-    ///! The number of points in the `points` array
+    #[doc = "! The number of points in the `points` array"]
     pub num_points: u32,
-    ///! Pointer to an array of points.
+    #[doc = "! Pointer to an array of points."]
     pub points: *mut GPoint,
 }
 impl Default for GPathInfo {
@@ -5438,20 +3477,17 @@ impl Default for GPathInfo {
         }
     }
 }
-/**! Data structure describing a path, plus its rotation and translation.
-! @note See the remark with \ref GPathInfo*/
+#[doc = "! Data structure describing a path, plus its rotation and translation.\n! @note See the remark with \\ref GPathInfo"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct GPath {
-    ///! The number of points in the `points` array
+    #[doc = "! The number of points in the `points` array"]
     pub num_points: u32,
-    ///! Pointer to an array of points.
+    #[doc = "! Pointer to an array of points."]
     pub points: *mut GPoint,
-    /**! The rotation that will be used when drawing the path with
-! \ref gpath_draw_filled() or \ref gpath_draw_outline()*/
+    #[doc = "! The rotation that will be used when drawing the path with\n! \\ref gpath_draw_filled() or \\ref gpath_draw_outline()"]
     pub rotation: i32,
-    /**! The translation that will to be used when drawing the path with
-! \ref gpath_draw_filled() or \ref gpath_draw_outline()*/
+    #[doc = "! The translation that will to be used when drawing the path with\n! \\ref gpath_draw_filled() or \\ref gpath_draw_outline()"]
     pub offset: GPoint,
 }
 impl Default for GPath {
@@ -5464,147 +3500,75 @@ impl Default for GPath {
     }
 }
 unsafe extern "C" {
-    /**! Creates a new GPath on the heap based on a series of points described by a GPathInfo.
-!
-! Values after initialization:
-! * `num_points` and `points` pointer: copied from the GPathInfo.
-! * `rotation`: 0
-! * `offset`: (0, 0)
-! @return A pointer to the GPath. `NULL` if the GPath could not
-! be created*/
+    #[doc = "! Creates a new GPath on the heap based on a series of points described by a GPathInfo.\n!\n! Values after initialization:\n! * `num_points` and `points` pointer: copied from the GPathInfo.\n! * `rotation`: 0\n! * `offset`: (0, 0)\n! @return A pointer to the GPath. `NULL` if the GPath could not\n! be created"]
     pub fn gpath_create(init: *const GPathInfo) -> *mut GPath;
 }
 unsafe extern "C" {
-    ///! Free a dynamically allocated gpath created with \ref gpath_create()
+    #[doc = "! Free a dynamically allocated gpath created with \\ref gpath_create()"]
     pub fn gpath_destroy(gpath: *mut GPath);
 }
 unsafe extern "C" {
-    /**! Draws the fill of a path into a graphics context, using the current fill color,
-! relative to the drawing area as set up by the layering system.
-! @param ctx The graphics context to draw into
-! @param path The path to fill
-! @see \ref graphics_context_set_fill_color()*/
+    #[doc = "! Draws the fill of a path into a graphics context, using the current fill color,\n! relative to the drawing area as set up by the layering system.\n! @param ctx The graphics context to draw into\n! @param path The path to fill\n! @see \\ref graphics_context_set_fill_color()"]
     pub fn gpath_draw_filled(ctx: *mut GContext, path: *mut GPath);
 }
 unsafe extern "C" {
-    /**! Draws the outline of a path into a graphics context, using the current stroke color and
-! width, relative to the drawing area as set up by the layering system. The first and last points
-! in the path do have a line between them.
-! @param ctx The graphics context to draw into
-! @param path The path to draw
-! @see \ref graphics_context_set_stroke_color()
-! @see \ref gpath_draw_outline_open()*/
+    #[doc = "! Draws the outline of a path into a graphics context, using the current stroke color and\n! width, relative to the drawing area as set up by the layering system. The first and last points\n! in the path do have a line between them.\n! @param ctx The graphics context to draw into\n! @param path The path to draw\n! @see \\ref graphics_context_set_stroke_color()\n! @see \\ref gpath_draw_outline_open()"]
     pub fn gpath_draw_outline(ctx: *mut GContext, path: *mut GPath);
 }
 unsafe extern "C" {
-    /**! Sets the absolute rotation of the path.
-! The current rotation will be replaced by the specified angle.
-! @param path The path onto which to set the rotation
-! @param angle The absolute angle of the rotation. The angle is represented in the same way
-! that is used with \ref sin_lookup(). See \ref TRIG_MAX_ANGLE for more information.
-! @note Setting a rotation does not affect the points in the path directly.
-! The rotation is applied on-the-fly during drawing, either using \ref gpath_draw_filled() or
-! \ref gpath_draw_outline().*/
+    #[doc = "! Sets the absolute rotation of the path.\n! The current rotation will be replaced by the specified angle.\n! @param path The path onto which to set the rotation\n! @param angle The absolute angle of the rotation. The angle is represented in the same way\n! that is used with \\ref sin_lookup(). See \\ref TRIG_MAX_ANGLE for more information.\n! @note Setting a rotation does not affect the points in the path directly.\n! The rotation is applied on-the-fly during drawing, either using \\ref gpath_draw_filled() or\n! \\ref gpath_draw_outline()."]
     pub fn gpath_rotate_to(path: *mut GPath, angle: i32);
 }
 unsafe extern "C" {
-    /**! Sets the absolute offset of the path.
-! The current translation will be replaced by the specified offset.
-! @param path The path onto which to set the translation
-! @param point The point which is used as the vector for the translation.
-! @note Setting a translation does not affect the points in the path directly.
-! The translation is applied on-the-fly during drawing, either using \ref gpath_draw_filled() or
-! \ref gpath_draw_outline().*/
+    #[doc = "! Sets the absolute offset of the path.\n! The current translation will be replaced by the specified offset.\n! @param path The path onto which to set the translation\n! @param point The point which is used as the vector for the translation.\n! @note Setting a translation does not affect the points in the path directly.\n! The translation is applied on-the-fly during drawing, either using \\ref gpath_draw_filled() or\n! \\ref gpath_draw_outline()."]
     pub fn gpath_move_to(path: *mut GPath, point: GPoint);
 }
 unsafe extern "C" {
-    /**! Draws an open outline of a path into a graphics context, using the current stroke color and
-! width, relative to the drawing area as set up by the layering system. The first and last points
-! in the path do not have a line between them.
-! @param ctx The graphics context to draw into
-! @param path The path to draw
-! @see \ref graphics_context_set_stroke_color()
-! @see \ref gpath_draw_outline()*/
+    #[doc = "! Draws an open outline of a path into a graphics context, using the current stroke color and\n! width, relative to the drawing area as set up by the layering system. The first and last points\n! in the path do not have a line between them.\n! @param ctx The graphics context to draw into\n! @param path The path to draw\n! @see \\ref graphics_context_set_stroke_color()\n! @see \\ref gpath_draw_outline()"]
     pub fn gpath_draw_outline_open(ctx: *mut GContext, path: *mut GPath);
 }
-/**! @addtogroup Fonts
-! @see \ref TextLayer
-! @see \ref TextDrawing
-! @see \ref text_layer_set_font
-! @see \ref graphics_draw_text
-! @{*/
+#[doc = "! @addtogroup Fonts\n! @see \\ref TextLayer\n! @see \\ref TextDrawing\n! @see \\ref text_layer_set_font\n! @see \\ref graphics_draw_text\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct FontInfo {
     _unused: [u8; 0],
 }
-/**! Pointer to opaque font data structure.
-! @see \ref fonts_load_custom_font()
-! @see \ref text_layer_set_font()
-! @see \ref graphics_draw_text()*/
+#[doc = "! Pointer to opaque font data structure.\n! @see \\ref fonts_load_custom_font()\n! @see \\ref text_layer_set_font()\n! @see \\ref graphics_draw_text()"]
 pub type GFont = *mut FontInfo;
 unsafe extern "C" {
-    /**! Loads a system font corresponding to the specified font key.
-! @param font_key The string key of the font to load. See
-! <a href="https://developer.pebble.com/guides/app-resources/system-fonts/">System
-! Fonts</a> guide for a list of system fonts.
-! @return An opaque pointer to the loaded font, or, a pointer to the default
-! (fallback) font if the specified font cannot be loaded.
-! @note This may load a font from the flash peripheral into RAM.*/
+    #[doc = "! Loads a system font corresponding to the specified font key.\n! @param font_key The string key of the font to load. See\n! <a href=\"https://developer.pebble.com/guides/app-resources/system-fonts/\">System\n! Fonts</a> guide for a list of system fonts.\n! @return An opaque pointer to the loaded font, or, a pointer to the default\n! (fallback) font if the specified font cannot be loaded.\n! @note This may load a font from the flash peripheral into RAM."]
     pub fn fonts_get_system_font(font_key: *const ::core::ffi::c_char) -> GFont;
 }
 unsafe extern "C" {
-    /**! Loads a custom font.
-! @param handle The resource handle of the font to load. See resource_ids.auto.h
-! for a list of resource IDs, and use \ref resource_get_handle() to obtain the resource handle.
-! @return An opaque pointer to the loaded font, or a pointer to the default
-! (fallback) font if the specified font cannot be loaded.
-! @see Read the <a href="http://developer.getpebble.com/guides/pebble-apps/resources/">App
-! Resources</a> guide on how to embed a font into your app.
-! @note this may load a font from the flash peripheral into RAM.*/
+    #[doc = "! Loads a custom font.\n! @param handle The resource handle of the font to load. See resource_ids.auto.h\n! for a list of resource IDs, and use \\ref resource_get_handle() to obtain the resource handle.\n! @return An opaque pointer to the loaded font, or a pointer to the default\n! (fallback) font if the specified font cannot be loaded.\n! @see Read the <a href=\"http://developer.getpebble.com/guides/pebble-apps/resources/\">App\n! Resources</a> guide on how to embed a font into your app.\n! @note this may load a font from the flash peripheral into RAM."]
     pub fn fonts_load_custom_font(handle: ResHandle) -> GFont;
 }
 unsafe extern "C" {
-    /**! Unloads the specified custom font and frees the memory that is occupied by
-! it.
-! @note When an application exits, the system automatically unloads all fonts
-! that have been loaded.
-! @param font The font to unload.*/
+    #[doc = "! Unloads the specified custom font and frees the memory that is occupied by\n! it.\n! @note When an application exits, the system automatically unloads all fonts\n! that have been loaded.\n! @param font The font to unload."]
     pub fn fonts_unload_custom_font(font: GFont);
 }
 impl GTextOverflowMode {
-    /**! On overflow, wrap words to a new line below the current one. Once vertical space is consumed,
-! the last line may be clipped.*/
+    #[doc = "! On overflow, wrap words to a new line below the current one. Once vertical space is consumed,\n! the last line may be clipped."]
     pub const GTextOverflowModeWordWrap: GTextOverflowMode = GTextOverflowMode(0);
-    /**! On overflow, wrap words to a new line below the current one.
-! Once vertical space is consumed, truncate as needed to fit a trailing ellipsis (...).
-! Clipping may occur if the vertical space cannot accomodate the first line of text.*/
-    pub const GTextOverflowModeTrailingEllipsis: GTextOverflowMode = GTextOverflowMode(
-        1,
-    );
-    /**! Acts like \ref GTextOverflowModeTrailingEllipsis, plus trims leading and trailing newlines,
-! while treating all other newlines as spaces.*/
+    #[doc = "! On overflow, wrap words to a new line below the current one.\n! Once vertical space is consumed, truncate as needed to fit a trailing ellipsis (...).\n! Clipping may occur if the vertical space cannot accomodate the first line of text."]
+    pub const GTextOverflowModeTrailingEllipsis: GTextOverflowMode = GTextOverflowMode(1);
+    #[doc = "! Acts like \\ref GTextOverflowModeTrailingEllipsis, plus trims leading and trailing newlines,\n! while treating all other newlines as spaces."]
     pub const GTextOverflowModeFill: GTextOverflowMode = GTextOverflowMode(2);
 }
 #[repr(transparent)]
-/**! Text overflow mode controls the way text overflows when the string that is drawn does not fit
-! inside the area constraint.
-! @see graphics_draw_text
-! @see text_layer_set_overflow_mode*/
+#[doc = "! Text overflow mode controls the way text overflows when the string that is drawn does not fit\n! inside the area constraint.\n! @see graphics_draw_text\n! @see text_layer_set_overflow_mode"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GTextOverflowMode(pub ::core::ffi::c_uchar);
 impl GTextAlignment {
-    ///! Aligns the text to the left of the drawing box
+    #[doc = "! Aligns the text to the left of the drawing box"]
     pub const GTextAlignmentLeft: GTextAlignment = GTextAlignment(0);
-    ///! Aligns the text centered inside the drawing box
+    #[doc = "! Aligns the text centered inside the drawing box"]
     pub const GTextAlignmentCenter: GTextAlignment = GTextAlignment(1);
-    ///! Aligns the text to the right of the drawing box
+    #[doc = "! Aligns the text to the right of the drawing box"]
     pub const GTextAlignmentRight: GTextAlignment = GTextAlignment(2);
 }
 #[repr(transparent)]
-/**! Text aligment controls the way the text is aligned inside the box the text is drawn into.
-! @see graphics_draw_text
-! @see text_layer_set_text_alignment*/
+#[doc = "! Text aligment controls the way the text is aligned inside the box the text is drawn into.\n! @see graphics_draw_text\n! @see text_layer_set_text_alignment"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct GTextAlignment(pub ::core::ffi::c_uchar);
 #[repr(C)]
@@ -5613,57 +3577,32 @@ pub struct GTextAttributes {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Creates an instance of GTextAttributes for advanced control when rendering text.
-! @return New instance of GTextAttributes
-! @see \ref graphics_draw_text*/
+    #[doc = "! Creates an instance of GTextAttributes for advanced control when rendering text.\n! @return New instance of GTextAttributes\n! @see \\ref graphics_draw_text"]
     pub fn graphics_text_attributes_create() -> *mut GTextAttributes;
 }
 unsafe extern "C" {
-    ///! Destroys a previously created instance of GTextAttributes
+    #[doc = "! Destroys a previously created instance of GTextAttributes"]
     pub fn graphics_text_attributes_destroy(text_attributes: *mut GTextAttributes);
 }
 unsafe extern "C" {
-    /**! Restores text flow to the rectangular default.
-! @param text_attributes The attributes for which to disable text flow
-! @see graphics_text_attributes_enable_screen_text_flow
-! @see text_layer_restore_default_text_flow_and_paging*/
+    #[doc = "! Restores text flow to the rectangular default.\n! @param text_attributes The attributes for which to disable text flow\n! @see graphics_text_attributes_enable_screen_text_flow\n! @see text_layer_restore_default_text_flow_and_paging"]
     pub fn graphics_text_attributes_restore_default_text_flow(
         text_attributes: *mut GTextAttributes,
     );
 }
 unsafe extern "C" {
-    /**! Enables text flow that follows the boundaries of the screen.
-! @param text_attributes The attributes for which text flow should be enabled
-! @param inset Additional amount of pixels to inset to the inside of the screen for text flow
-! calculation. Can be zero.
-! @see graphics_text_attributes_restore_default_text_flow
-! @see text_layer_enable_screen_text_flow_and_paging*/
+    #[doc = "! Enables text flow that follows the boundaries of the screen.\n! @param text_attributes The attributes for which text flow should be enabled\n! @param inset Additional amount of pixels to inset to the inside of the screen for text flow\n! calculation. Can be zero.\n! @see graphics_text_attributes_restore_default_text_flow\n! @see text_layer_enable_screen_text_flow_and_paging"]
     pub fn graphics_text_attributes_enable_screen_text_flow(
         text_attributes: *mut GTextAttributes,
         inset: u8,
     );
 }
 unsafe extern "C" {
-    /**! Restores paging and locked content origin to the defaults.
-! @param text_attributes The attributes for which to restore paging and locked content origin
-! @see graphics_text_attributes_enable_paging
-! @see text_layer_restore_default_text_flow_and_paging*/
-    pub fn graphics_text_attributes_restore_default_paging(
-        text_attributes: *mut GTextAttributes,
-    );
+    #[doc = "! Restores paging and locked content origin to the defaults.\n! @param text_attributes The attributes for which to restore paging and locked content origin\n! @see graphics_text_attributes_enable_paging\n! @see text_layer_restore_default_text_flow_and_paging"]
+    pub fn graphics_text_attributes_restore_default_paging(text_attributes: *mut GTextAttributes);
 }
 unsafe extern "C" {
-    /**! Enables paging and locks the text flow calculation to a fixed point on the screen.
-! @param text_attributes Attributes for which to enable paging and locked content origin
-! @param content_origin_on_screen Absolute coordinate on the screen where the text content
-!     starts before an animation or scrolling takes place. Usually the frame's origin of a layer
-!     in screen coordinates.
-! @param paging_on_screen Rectangle in absolute coordinates on the screen that describes where
-!     text content pages. Usually the container's absolute frame in screen coordinates.
-! @see graphics_text_attributes_restore_default_paging
-! @see graphics_text_attributes_enable_screen_text_flow
-! @see text_layer_enable_screen_text_flow_and_paging
-! @see layer_convert_point_to_screen*/
+    #[doc = "! Enables paging and locks the text flow calculation to a fixed point on the screen.\n! @param text_attributes Attributes for which to enable paging and locked content origin\n! @param content_origin_on_screen Absolute coordinate on the screen where the text content\n!     starts before an animation or scrolling takes place. Usually the frame's origin of a layer\n!     in screen coordinates.\n! @param paging_on_screen Rectangle in absolute coordinates on the screen that describes where\n!     text content pages. Usually the container's absolute frame in screen coordinates.\n! @see graphics_text_attributes_restore_default_paging\n! @see graphics_text_attributes_enable_screen_text_flow\n! @see text_layer_enable_screen_text_flow_and_paging\n! @see layer_convert_point_to_screen"]
     pub fn graphics_text_attributes_enable_paging(
         text_attributes: *mut GTextAttributes,
         content_origin_on_screen: GPoint,
@@ -5671,18 +3610,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Draw text into the current graphics context, using the context's current text color.
-! The text will be drawn inside a box with the specified dimensions and
-! configuration, with clipping occuring automatically.
-! @param ctx The destination graphics context in which to draw
-! @param text The zero terminated UTF-8 string to draw
-! @param font The font in which the text should be set
-! @param box The bounding box in which to draw the text. The first line of text will be drawn
-! against the top of the box.
-! @param overflow_mode The overflow behavior, in case the text is larger than what fits inside
-! the box.
-! @param alignment The horizontal alignment of the text
-! @param text_attributes Optional text attributes to describe the characteristics of the text*/
+    #[doc = "! Draw text into the current graphics context, using the context's current text color.\n! The text will be drawn inside a box with the specified dimensions and\n! configuration, with clipping occuring automatically.\n! @param ctx The destination graphics context in which to draw\n! @param text The zero terminated UTF-8 string to draw\n! @param font The font in which the text should be set\n! @param box The bounding box in which to draw the text. The first line of text will be drawn\n! against the top of the box.\n! @param overflow_mode The overflow behavior, in case the text is larger than what fits inside\n! the box.\n! @param alignment The horizontal alignment of the text\n! @param text_attributes Optional text attributes to describe the characteristics of the text"]
     pub fn graphics_draw_text(
         ctx: *mut GContext,
         text: *const ::core::ffi::c_char,
@@ -5694,16 +3622,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Obtain the maximum size that a text with given font, overflow mode and alignment occupies
-! within a given rectangular constraint.
-! @param text The zero terminated UTF-8 string for which to calculate the size
-! @param font The font in which the text should be set while calculating the size
-! @param box The bounding box in which the text should be constrained
-! @param overflow_mode The overflow behavior, in case the text is larger than what fits
-! inside the box.
-! @param alignment The horizontal alignment of the text
-! @return The maximum size occupied by the text
-! @see app_graphics_text_layout_get_content_size_with_attributes*/
+    #[doc = "! Obtain the maximum size that a text with given font, overflow mode and alignment occupies\n! within a given rectangular constraint.\n! @param text The zero terminated UTF-8 string for which to calculate the size\n! @param font The font in which the text should be set while calculating the size\n! @param box The bounding box in which the text should be constrained\n! @param overflow_mode The overflow behavior, in case the text is larger than what fits\n! inside the box.\n! @param alignment The horizontal alignment of the text\n! @return The maximum size occupied by the text\n! @see app_graphics_text_layout_get_content_size_with_attributes"]
     pub fn graphics_text_layout_get_content_size(
         text: *const ::core::ffi::c_char,
         font: GFont,
@@ -5713,17 +3632,7 @@ unsafe extern "C" {
     ) -> GSize;
 }
 unsafe extern "C" {
-    /**! Obtain the maximum size that a text with given font, overflow mode and alignment occupies
-! within a given rectangular constraint.
-! @param text The zero terminated UTF-8 string for which to calculate the size
-! @param font The font in which the text should be set while calculating the size
-! @param box The bounding box in which the text should be constrained
-! @param overflow_mode The overflow behavior, in case the text is larger than what fits
-! inside the box.
-! @param alignment The horizontal alignment of the text
-! @param text_attributes Optional text attributes to describe the characteristics of the text
-! @return The maximum size occupied by the text
-! @see app_graphics_text_layout_get_content_size*/
+    #[doc = "! Obtain the maximum size that a text with given font, overflow mode and alignment occupies\n! within a given rectangular constraint.\n! @param text The zero terminated UTF-8 string for which to calculate the size\n! @param font The font in which the text should be set while calculating the size\n! @param box The bounding box in which the text should be constrained\n! @param overflow_mode The overflow behavior, in case the text is larger than what fits\n! inside the box.\n! @param alignment The horizontal alignment of the text\n! @param text_attributes Optional text attributes to describe the characteristics of the text\n! @return The maximum size occupied by the text\n! @see app_graphics_text_layout_get_content_size"]
     pub fn graphics_text_layout_get_content_size_with_attributes(
         text: *const ::core::ffi::c_char,
         font: GFont,
@@ -5734,50 +3643,39 @@ unsafe extern "C" {
     ) -> GSize;
 }
 impl SmartstrapResult {
-    ///! No error occured.
+    #[doc = "! No error occured."]
     pub const SmartstrapResultOk: SmartstrapResult = SmartstrapResult(0);
-    ///! Invalid function arguments were supplied.
+    #[doc = "! Invalid function arguments were supplied."]
     pub const SmartstrapResultInvalidArgs: SmartstrapResult = SmartstrapResult(1);
-    ///! The smartstrap port is not present on this watch.
+    #[doc = "! The smartstrap port is not present on this watch."]
     pub const SmartstrapResultNotPresent: SmartstrapResult = SmartstrapResult(2);
-    ///! A request is already pending on the specified attribute.
+    #[doc = "! A request is already pending on the specified attribute."]
     pub const SmartstrapResultBusy: SmartstrapResult = SmartstrapResult(3);
-    /**! Either a smartstrap is not connected or the connected smartstrap does not support the
-! specified service.*/
+    #[doc = "! Either a smartstrap is not connected or the connected smartstrap does not support the\n! specified service."]
     pub const SmartstrapResultServiceUnavailable: SmartstrapResult = SmartstrapResult(4);
-    ///! The smartstrap reported that it does not support the requested attribute.
-    pub const SmartstrapResultAttributeUnsupported: SmartstrapResult = SmartstrapResult(
-        5,
-    );
-    ///! A time-out occured during the request.
+    #[doc = "! The smartstrap reported that it does not support the requested attribute."]
+    pub const SmartstrapResultAttributeUnsupported: SmartstrapResult = SmartstrapResult(5);
+    #[doc = "! A time-out occured during the request."]
     pub const SmartstrapResultTimeOut: SmartstrapResult = SmartstrapResult(6);
 }
 #[repr(transparent)]
-///! Error values which may be returned from the smartstrap APIs.
+#[doc = "! Error values which may be returned from the smartstrap APIs."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SmartstrapResult(pub ::core::ffi::c_uchar);
-///! A type representing a smartstrap ServiceId.
+#[doc = "! A type representing a smartstrap ServiceId."]
 pub type SmartstrapServiceId = u16;
-///! A type representing a smartstrap AttributeId.
+#[doc = "! A type representing a smartstrap AttributeId."]
 pub type SmartstrapAttributeId = u16;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SmartstrapAttribute {
     _unused: [u8; 0],
 }
-/**! The type of function which is called after the smartstrap connection status changes.
-! @param service_id The ServiceId for which the availability changed.
-! @param is_available Whether or not this service is now available.*/
+#[doc = "! The type of function which is called after the smartstrap connection status changes.\n! @param service_id The ServiceId for which the availability changed.\n! @param is_available Whether or not this service is now available."]
 pub type SmartstrapServiceAvailabilityHandler = ::core::option::Option<
     unsafe extern "C" fn(service_id: SmartstrapServiceId, is_available: bool),
 >;
-/**! The type of function which can be called when a read request is completed.
-! @note Any write request made to the same attribute within this function will fail with
-! SmartstrapResultBusy.
-! @param attribute The attribute which was read.
-! @param result The result of the read.
-! @param data The data read from the smartstrap or NULL if the read was not successful.
-! @param length The length of the data or 0 if the read was not successful.*/
+#[doc = "! The type of function which can be called when a read request is completed.\n! @note Any write request made to the same attribute within this function will fail with\n! SmartstrapResultBusy.\n! @param attribute The attribute which was read.\n! @param result The result of the read.\n! @param data The data read from the smartstrap or NULL if the read was not successful.\n! @param length The length of the data or 0 if the read was not successful."]
 pub type SmartstrapReadHandler = ::core::option::Option<
     unsafe extern "C" fn(
         attribute: *mut SmartstrapAttribute,
@@ -5786,69 +3684,40 @@ pub type SmartstrapReadHandler = ::core::option::Option<
         length: usize,
     ),
 >;
-/**! The type of function which can be called when a write request is completed.
-! @param attribute The attribute which was written.
-! @param result The result of the write.*/
+#[doc = "! The type of function which can be called when a write request is completed.\n! @param attribute The attribute which was written.\n! @param result The result of the write."]
 pub type SmartstrapWriteHandler = ::core::option::Option<
     unsafe extern "C" fn(attribute: *mut SmartstrapAttribute, result: SmartstrapResult),
 >;
-/**! The type of function which can be called when the smartstrap sends a notification to the watch
-! @param attribute The attribute which the notification came from.*/
-pub type SmartstrapNotifyHandler = ::core::option::Option<
-    unsafe extern "C" fn(attribute: *mut SmartstrapAttribute),
->;
-///! Handlers which are passed to smartstrap_subscribe.
+#[doc = "! The type of function which can be called when the smartstrap sends a notification to the watch\n! @param attribute The attribute which the notification came from."]
+pub type SmartstrapNotifyHandler =
+    ::core::option::Option<unsafe extern "C" fn(attribute: *mut SmartstrapAttribute)>;
+#[doc = "! Handlers which are passed to smartstrap_subscribe."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct SmartstrapHandlers {
-    ///! The connection handler is called after the connection state changes.
+    #[doc = "! The connection handler is called after the connection state changes."]
     pub availability_did_change: SmartstrapServiceAvailabilityHandler,
-    ///! The read handler is called whenever a read is complete or the read times-out.
+    #[doc = "! The read handler is called whenever a read is complete or the read times-out."]
     pub did_read: SmartstrapReadHandler,
-    ///! The did_write handler is called when a write has completed.
+    #[doc = "! The did_write handler is called when a write has completed."]
     pub did_write: SmartstrapWriteHandler,
-    ///! The notified handler is called whenever a notification is received for an attribute.
+    #[doc = "! The notified handler is called whenever a notification is received for an attribute."]
     pub notified: SmartstrapNotifyHandler,
 }
 unsafe extern "C" {
-    /**! Subscribes handlers to be called after certain smartstrap events occur.
-! @note Registering an availability_did_change handler will cause power to be applied to the
-! smartstrap port and connection establishment to begin.
-! @see smartstrap_unsubscribe
-! @returns `SmartstrapResultNotPresent` if the watch does not have a smartstrap port or
-! `SmartstrapResultOk` otherwise.*/
+    #[doc = "! Subscribes handlers to be called after certain smartstrap events occur.\n! @note Registering an availability_did_change handler will cause power to be applied to the\n! smartstrap port and connection establishment to begin.\n! @see smartstrap_unsubscribe\n! @returns `SmartstrapResultNotPresent` if the watch does not have a smartstrap port or\n! `SmartstrapResultOk` otherwise."]
     pub fn smartstrap_subscribe(handlers: SmartstrapHandlers) -> SmartstrapResult;
 }
 unsafe extern "C" {
-    /**! Unsubscribes the handlers. The handlers will no longer be called, but in-flight requests will
-! otherwise be unaffected.
-! @note If power was being applied to the smartstrap port and there are no attributes have been
-! created (or they have all been destroyed), this will cause the smartstrap power to be turned
-! off.*/
+    #[doc = "! Unsubscribes the handlers. The handlers will no longer be called, but in-flight requests will\n! otherwise be unaffected.\n! @note If power was being applied to the smartstrap port and there are no attributes have been\n! created (or they have all been destroyed), this will cause the smartstrap power to be turned\n! off."]
     pub fn smartstrap_unsubscribe();
 }
 unsafe extern "C" {
-    /**! Changes the value of the timeout which is used for smartstrap requests. This timeout is started
-! after the request is completely sent to the smartstrap and will be canceled only if the entire
-! response is received before it triggers. The new timeout value will take affect only for
-! requests made after this API is called.
-! @param timeout_ms The duration of the timeout to set, in milliseconds.
-! @note The maximum allowed timeout is currently 1000ms. If a larger value is passed, it will be
-! internally lowered to the maximum.
-! @see SMARTSTRAP_TIMEOUT_DEFAULT*/
+    #[doc = "! Changes the value of the timeout which is used for smartstrap requests. This timeout is started\n! after the request is completely sent to the smartstrap and will be canceled only if the entire\n! response is received before it triggers. The new timeout value will take affect only for\n! requests made after this API is called.\n! @param timeout_ms The duration of the timeout to set, in milliseconds.\n! @note The maximum allowed timeout is currently 1000ms. If a larger value is passed, it will be\n! internally lowered to the maximum.\n! @see SMARTSTRAP_TIMEOUT_DEFAULT"]
     pub fn smartstrap_set_timeout(timeout_ms: u16);
 }
 unsafe extern "C" {
-    /**! Creates and returns a SmartstrapAttribute for the specified service and attribute. This API
-! will allocate an internal buffer of the requested length on the app's heap.
-! @note Creating an attribute will result in power being applied to the smartstrap port (if it
-! isn't already) and connection establishment to begin.
-! @param service_id The ServiceId to create the attribute for.
-! @param attribute_id The AttributeId to create the attribute for.
-! @param buffer_length The length of the internal buffer which will be used to store the read
-! and write requests for this attribute.
-! @returns The newly created SmartstrapAttribute or NULL if an internal error occured or if the
-! specified length is greater than SMARTSTRAP_ATTRIBUTE_LENGTH_MAXIMUM.*/
+    #[doc = "! Creates and returns a SmartstrapAttribute for the specified service and attribute. This API\n! will allocate an internal buffer of the requested length on the app's heap.\n! @note Creating an attribute will result in power being applied to the smartstrap port (if it\n! isn't already) and connection establishment to begin.\n! @param service_id The ServiceId to create the attribute for.\n! @param attribute_id The AttributeId to create the attribute for.\n! @param buffer_length The length of the internal buffer which will be used to store the read\n! and write requests for this attribute.\n! @returns The newly created SmartstrapAttribute or NULL if an internal error occured or if the\n! specified length is greater than SMARTSTRAP_ATTRIBUTE_LENGTH_MAXIMUM."]
     pub fn smartstrap_attribute_create(
         service_id: SmartstrapServiceId,
         attribute_id: SmartstrapAttributeId,
@@ -5856,56 +3725,31 @@ unsafe extern "C" {
     ) -> *mut SmartstrapAttribute;
 }
 unsafe extern "C" {
-    /**! Destroys a SmartstrapAttribute. No further handlers will be called for this attribute and it
-! may not be used for any future requests.
-! @param[in] attribute The SmartstrapAttribute which should be destroyed.
-! @note If power was being applied to the smartstrap port, no availability_did_change handler is
-! subscribed, and the last attribute is being destroyed, this will cause the smartstrap power to
-! be turned off.*/
+    #[doc = "! Destroys a SmartstrapAttribute. No further handlers will be called for this attribute and it\n! may not be used for any future requests.\n! @param[in] attribute The SmartstrapAttribute which should be destroyed.\n! @note If power was being applied to the smartstrap port, no availability_did_change handler is\n! subscribed, and the last attribute is being destroyed, this will cause the smartstrap power to\n! be turned off."]
     pub fn smartstrap_attribute_destroy(attribute: *mut SmartstrapAttribute);
 }
 unsafe extern "C" {
-    /**! Checks whether or not the specified service is currently supported by a connected smartstrap.
-! @param service_id The SmartstrapServiceId of the service to check for availability.
-! @returns Whether or not the service is available.*/
+    #[doc = "! Checks whether or not the specified service is currently supported by a connected smartstrap.\n! @param service_id The SmartstrapServiceId of the service to check for availability.\n! @returns Whether or not the service is available."]
     pub fn smartstrap_service_is_available(service_id: SmartstrapServiceId) -> bool;
 }
 unsafe extern "C" {
-    /**! Returns the ServiceId which the attribute was created for (see \ref
-! smartstrap_attribute_create).
-! @param attribute The SmartstrapAttribute for which to obtain the service ID.
-! @returns The SmartstrapServiceId which the attribute was created with.*/
+    #[doc = "! Returns the ServiceId which the attribute was created for (see \\ref\n! smartstrap_attribute_create).\n! @param attribute The SmartstrapAttribute for which to obtain the service ID.\n! @returns The SmartstrapServiceId which the attribute was created with."]
     pub fn smartstrap_attribute_get_service_id(
         attribute: *mut SmartstrapAttribute,
     ) -> SmartstrapServiceId;
 }
 unsafe extern "C" {
-    /**! Gets the AttributeId which the attribute was created for (see \ref smartstrap_attribute_create).
-! @param attribute The SmartstrapAttribute for which to obtain the attribute ID.
-! @returns The SmartstrapAttributeId which the attribute was created with.*/
+    #[doc = "! Gets the AttributeId which the attribute was created for (see \\ref smartstrap_attribute_create).\n! @param attribute The SmartstrapAttribute for which to obtain the attribute ID.\n! @returns The SmartstrapAttributeId which the attribute was created with."]
     pub fn smartstrap_attribute_get_attribute_id(
         attribute: *mut SmartstrapAttribute,
     ) -> SmartstrapAttributeId;
 }
 unsafe extern "C" {
-    /**! Performs a read request for the specified attribute. The `did_read` callback will be called when
-! the response is received from the smartstrap or when an error occurs.
-! @param attribute The attribute to be perform the read request on.
-! @returns `SmartstrapResultOk` if the read operation was started. The `did_read` callback will
-! be called once the read request has been completed.*/
-    pub fn smartstrap_attribute_read(
-        attribute: *mut SmartstrapAttribute,
-    ) -> SmartstrapResult;
+    #[doc = "! Performs a read request for the specified attribute. The `did_read` callback will be called when\n! the response is received from the smartstrap or when an error occurs.\n! @param attribute The attribute to be perform the read request on.\n! @returns `SmartstrapResultOk` if the read operation was started. The `did_read` callback will\n! be called once the read request has been completed."]
+    pub fn smartstrap_attribute_read(attribute: *mut SmartstrapAttribute) -> SmartstrapResult;
 }
 unsafe extern "C" {
-    /**! Begins a write request for the specified attribute and returns a buffer into which the app
-! should write the data before calling smartstrap_attribute_end_write.
-! @note The buffer must not be used after smartstrap_attribute_end_write is called.
-! @param[in] attribute The attribute to begin writing for.
-! @param[out] buffer The buffer to write the data into.
-! @param[out] buffer_length The length of the buffer in bytes.
-! @returns `SmartstrapResultOk` if a write operation was started and the `buffer` and
-! `buffer_length` parameters were set, or an error otherwise.*/
+    #[doc = "! Begins a write request for the specified attribute and returns a buffer into which the app\n! should write the data before calling smartstrap_attribute_end_write.\n! @note The buffer must not be used after smartstrap_attribute_end_write is called.\n! @param[in] attribute The attribute to begin writing for.\n! @param[out] buffer The buffer to write the data into.\n! @param[out] buffer_length The length of the buffer in bytes.\n! @returns `SmartstrapResultOk` if a write operation was started and the `buffer` and\n! `buffer_length` parameters were set, or an error otherwise."]
     pub fn smartstrap_attribute_begin_write(
         attribute: *mut SmartstrapAttribute,
         buffer: *mut *mut u8,
@@ -5913,439 +3757,173 @@ unsafe extern "C" {
     ) -> SmartstrapResult;
 }
 unsafe extern "C" {
-    /**! This should be called by the app when it is done writing to the buffer provided by
-! smartstrap_begin_write and the data is ready to be sent to the smartstrap.
-! @param[in] attribute The attribute to begin writing for.
-! @param write_length The length of the data to be written, in bytes.
-! @param request_read Whether or not a read request on this attribute should be
-! automatically triggered following a successful write request.
-! @returns `SmartstrapResultOk` if a write operation was queued to be sent to the smartstrap. The
-! `did_write` handler will be called when the request is written to the smartstrap, and if
-! `request_read` was set to true, the `did_read` handler will be called when the read is complete.*/
+    #[doc = "! This should be called by the app when it is done writing to the buffer provided by\n! smartstrap_begin_write and the data is ready to be sent to the smartstrap.\n! @param[in] attribute The attribute to begin writing for.\n! @param write_length The length of the data to be written, in bytes.\n! @param request_read Whether or not a read request on this attribute should be\n! automatically triggered following a successful write request.\n! @returns `SmartstrapResultOk` if a write operation was queued to be sent to the smartstrap. The\n! `did_write` handler will be called when the request is written to the smartstrap, and if\n! `request_read` was set to true, the `did_read` handler will be called when the read is complete."]
     pub fn smartstrap_attribute_end_write(
         attribute: *mut SmartstrapAttribute,
         write_length: usize,
         request_read: bool,
     ) -> SmartstrapResult;
 }
-/**! Reference to opaque click recognizer
-! When a \ref ClickHandler callback is called, the recognizer that fired the handler is passed in.
-! @see \ref ClickHandler
-! @see \ref click_number_of_clicks_counted()
-! @see \ref click_recognizer_get_button_id()
-! @see \ref click_recognizer_is_repeating()*/
+#[doc = "! Reference to opaque click recognizer\n! When a \\ref ClickHandler callback is called, the recognizer that fired the handler is passed in.\n! @see \\ref ClickHandler\n! @see \\ref click_number_of_clicks_counted()\n! @see \\ref click_recognizer_get_button_id()\n! @see \\ref click_recognizer_is_repeating()"]
 pub type ClickRecognizerRef = *mut ::core::ffi::c_void;
-/**! Function signature of the callback that handles a recognized click pattern
-! @param recognizer The click recognizer that detected a "click" pattern
-! @param context Pointer to application specified data (see \ref window_set_click_config_provider_with_context() and
-! \ref window_set_click_context()). This defaults to the window.
-! @see \ref ClickConfigProvider*/
+#[doc = "! Function signature of the callback that handles a recognized click pattern\n! @param recognizer The click recognizer that detected a \"click\" pattern\n! @param context Pointer to application specified data (see \\ref window_set_click_config_provider_with_context() and\n! \\ref window_set_click_context()). This defaults to the window.\n! @see \\ref ClickConfigProvider"]
 pub type ClickHandler = ::core::option::Option<
-    unsafe extern "C" fn(
-        recognizer: ClickRecognizerRef,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(recognizer: ClickRecognizerRef, context: *mut ::core::ffi::c_void),
 >;
-/**! This callback is called every time the window becomes visible (and when you call \ref window_set_click_config_provider() if
-! the window is already visible).
-!
-! Subscribe to click events using
-!   \ref window_single_click_subscribe()
-!   \ref window_single_repeating_click_subscribe()
-!   \ref window_multi_click_subscribe()
-!   \ref window_long_click_subscribe()
-!   \ref window_raw_click_subscribe()
-! These subscriptions will get used by the click recognizers of each of the 4 buttons.
-! @param context Pointer to application specific data (see \ref window_set_click_config_provider_with_context()).*/
-pub type ClickConfigProvider = ::core::option::Option<
-    unsafe extern "C" fn(context: *mut ::core::ffi::c_void),
->;
+#[doc = "! This callback is called every time the window becomes visible (and when you call \\ref window_set_click_config_provider() if\n! the window is already visible).\n!\n! Subscribe to click events using\n!   \\ref window_single_click_subscribe()\n!   \\ref window_single_repeating_click_subscribe()\n!   \\ref window_multi_click_subscribe()\n!   \\ref window_long_click_subscribe()\n!   \\ref window_raw_click_subscribe()\n! These subscriptions will get used by the click recognizers of each of the 4 buttons.\n! @param context Pointer to application specific data (see \\ref window_set_click_config_provider_with_context())."]
+pub type ClickConfigProvider =
+    ::core::option::Option<unsafe extern "C" fn(context: *mut ::core::ffi::c_void)>;
 unsafe extern "C" {
-    /**! Gets the click count.
-! You can use this inside a click handler implementation to get the click count for multi_click
-! and (repeated) click events.
-! @param recognizer The click recognizer for which to get the click count
-! @return The number of consecutive clicks, and for auto-repeating the number of repetitions.*/
+    #[doc = "! Gets the click count.\n! You can use this inside a click handler implementation to get the click count for multi_click\n! and (repeated) click events.\n! @param recognizer The click recognizer for which to get the click count\n! @return The number of consecutive clicks, and for auto-repeating the number of repetitions."]
     pub fn click_number_of_clicks_counted(recognizer: ClickRecognizerRef) -> u8;
 }
 unsafe extern "C" {
-    /**! Gets the button identifier.
-! You can use this inside a click handler implementation to get the button id for the click event.
-! @param recognizer The click recognizer for which to get the button id that caused the click event
-! @return the ButtonId of the click recognizer*/
+    #[doc = "! Gets the button identifier.\n! You can use this inside a click handler implementation to get the button id for the click event.\n! @param recognizer The click recognizer for which to get the button id that caused the click event\n! @return the ButtonId of the click recognizer"]
     pub fn click_recognizer_get_button_id(recognizer: ClickRecognizerRef) -> ButtonId;
 }
 unsafe extern "C" {
-    /**! Is this a repeating click.
-! You can use this inside a click handler implementation to find out whether this is a repeating click or not.
-! @param recognizer The click recognizer for which to find out whether this is a repeating click.
-! @return true if this is a repeating click.*/
+    #[doc = "! Is this a repeating click.\n! You can use this inside a click handler implementation to find out whether this is a repeating click or not.\n! @param recognizer The click recognizer for which to find out whether this is a repeating click.\n! @return true if this is a repeating click."]
     pub fn click_recognizer_is_repeating(recognizer: ClickRecognizerRef) -> bool;
 }
-/**! @addtogroup Layer Layers
-! \brief User interface layers for displaying graphic components
-!
-! Layers are objects that can be displayed on a Pebble watchapp window, enabling users to see
-! visual objects, like text or images. Each layer stores the information about its state
-! necessary to draw or redraw the object that it represents and uses graphics routines along with
-! this state to draw itself when asked. Layers can be used to display various graphics.
-!
-! Layers are the basic building blocks for your application UI. Layers can be nested inside each other.
-! Every window has a root layer which is always the topmost layer.
-! You provide a function that is called to draw the content of the layer when needed; or
-! you can use standard layers that are provided by the system, such as text layer, image layer,
-! menu layer, action bar layer, and so on.
-!
-! The Pebble layer hierarchy is the list of things that need to be drawn to the screen.
-! Multiple layers can be arranged into a hierarchy. This enables ordering (front to back),
-! layout and hierarchy. Through relative positioning, visual objects that are grouped together by
-! adding them into the same layer can be moved all at once. This means that the child layers
-! will move accordingly. If a parent layer has clipping enabled, all the children will be clipped
-! to the frame of the parent.
-!
-! Pebble OS provides convenience layers with built-in logic for displaying different graphic
-! components, like text and bitmap layers.
-!
-! Refer to the \htmlinclude UiFramework.html (chapter "Layers") for a conceptual overview
-! of Layers and relevant code examples.
-!
-! The Modules listed here contain what can be thought of conceptually as subclasses of Layer. The
-! listed types can be safely type-casted to `Layer` (or `Layer *` in case of a pointer).
-! The `layer_...` functions can then be used with the data structures of these subclasses.
-! <br/>For example, the following is legal:
-! \code{.c}
-! TextLayer *text_layer;
-! ...
-! layer_set_hidden((Layer *)text_layer, true);
-! \endcode
-! @{*/
+#[doc = "! @addtogroup Layer Layers\n! \\brief User interface layers for displaying graphic components\n!\n! Layers are objects that can be displayed on a Pebble watchapp window, enabling users to see\n! visual objects, like text or images. Each layer stores the information about its state\n! necessary to draw or redraw the object that it represents and uses graphics routines along with\n! this state to draw itself when asked. Layers can be used to display various graphics.\n!\n! Layers are the basic building blocks for your application UI. Layers can be nested inside each other.\n! Every window has a root layer which is always the topmost layer.\n! You provide a function that is called to draw the content of the layer when needed; or\n! you can use standard layers that are provided by the system, such as text layer, image layer,\n! menu layer, action bar layer, and so on.\n!\n! The Pebble layer hierarchy is the list of things that need to be drawn to the screen.\n! Multiple layers can be arranged into a hierarchy. This enables ordering (front to back),\n! layout and hierarchy. Through relative positioning, visual objects that are grouped together by\n! adding them into the same layer can be moved all at once. This means that the child layers\n! will move accordingly. If a parent layer has clipping enabled, all the children will be clipped\n! to the frame of the parent.\n!\n! Pebble OS provides convenience layers with built-in logic for displaying different graphic\n! components, like text and bitmap layers.\n!\n! Refer to the \\htmlinclude UiFramework.html (chapter \"Layers\") for a conceptual overview\n! of Layers and relevant code examples.\n!\n! The Modules listed here contain what can be thought of conceptually as subclasses of Layer. The\n! listed types can be safely type-casted to `Layer` (or `Layer *` in case of a pointer).\n! The `layer_...` functions can then be used with the data structures of these subclasses.\n! <br/>For example, the following is legal:\n! \\code{.c}\n! TextLayer *text_layer;\n! ...\n! layer_set_hidden((Layer *)text_layer, true);\n! \\endcode\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Layer {
     _unused: [u8; 0],
 }
-/**! Function signature for a Layer's render callback (the name of the type
-! is derived from the words 'update procedure').
-! The system will call the `.update_proc` callback whenever the Layer needs
-! to be rendered.
-! @param layer The layer that needs to be rendered
-! @param ctx The destination graphics context to draw into
-! @see \ref Graphics
-! @see \ref layer_set_update_proc()*/
-pub type LayerUpdateProc = ::core::option::Option<
-    unsafe extern "C" fn(layer: *mut Layer, ctx: *mut GContext),
->;
+#[doc = "! Function signature for a Layer's render callback (the name of the type\n! is derived from the words 'update procedure').\n! The system will call the `.update_proc` callback whenever the Layer needs\n! to be rendered.\n! @param layer The layer that needs to be rendered\n! @param ctx The destination graphics context to draw into\n! @see \\ref Graphics\n! @see \\ref layer_set_update_proc()"]
+pub type LayerUpdateProc =
+    ::core::option::Option<unsafe extern "C" fn(layer: *mut Layer, ctx: *mut GContext)>;
 unsafe extern "C" {
-    /**! Creates a layer on the heap and sets its frame and bounds.
-! Default values:
-! * `bounds` : origin (0, 0) and a size equal to the frame that is passed in.
-! * `clips` : `true`
-! * `hidden` : `false`
-! * `update_proc` : `NULL` (draws nothing)
-! @param frame The frame at which the layer should be initialized.
-! @see \ref layer_set_frame()
-! @see \ref layer_set_bounds()
-! @return A pointer to the layer. `NULL` if the layer could not
-! be created*/
+    #[doc = "! Creates a layer on the heap and sets its frame and bounds.\n! Default values:\n! * `bounds` : origin (0, 0) and a size equal to the frame that is passed in.\n! * `clips` : `true`\n! * `hidden` : `false`\n! * `update_proc` : `NULL` (draws nothing)\n! @param frame The frame at which the layer should be initialized.\n! @see \\ref layer_set_frame()\n! @see \\ref layer_set_bounds()\n! @return A pointer to the layer. `NULL` if the layer could not\n! be created"]
     pub fn layer_create(frame: GRect) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Creates a layer on the heap with extra space for callback data, and set its frame andbounds.
-! Default values:
-! * `bounds` : origin (0, 0) and a size equal to the frame that is passed in.
-! * `clips` : `true`
-! * `hidden` : `false`
-! * `update_proc` : `NULL` (draws nothing)
-! @param frame The frame at which the layer should be initialized.
-! @param data_size The size (in bytes) of memory to allocate for callback data.
-! @see \ref layer_create()
-! @see \ref layer_set_frame()
-! @see \ref layer_set_bounds()
-! @return A pointer to the layer. `NULL` if the layer could not be created*/
+    #[doc = "! Creates a layer on the heap with extra space for callback data, and set its frame andbounds.\n! Default values:\n! * `bounds` : origin (0, 0) and a size equal to the frame that is passed in.\n! * `clips` : `true`\n! * `hidden` : `false`\n! * `update_proc` : `NULL` (draws nothing)\n! @param frame The frame at which the layer should be initialized.\n! @param data_size The size (in bytes) of memory to allocate for callback data.\n! @see \\ref layer_create()\n! @see \\ref layer_set_frame()\n! @see \\ref layer_set_bounds()\n! @return A pointer to the layer. `NULL` if the layer could not be created"]
     pub fn layer_create_with_data(frame: GRect, data_size: usize) -> *mut Layer;
 }
 unsafe extern "C" {
-    ///! Destroys a layer previously created by layer_create
+    #[doc = "! Destroys a layer previously created by layer_create"]
     pub fn layer_destroy(layer: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Marks the complete layer as "dirty", awaiting to be asked by the system to redraw itself.
-! Typically, this function is called whenever state has changed that affects what the layer
-! is displaying.
-! * The layer's `.update_proc` will not be called before this function returns,
-! but will be called asynchronously, shortly.
-! * Internally, a call to this function will schedule a re-render of the window that the
-! layer belongs to. In effect, all layers in that window's layer hierarchy will be asked to redraw.
-! * If an earlier re-render request is still pending, this function is a no-op.
-! @param layer The layer to mark dirty*/
+    #[doc = "! Marks the complete layer as \"dirty\", awaiting to be asked by the system to redraw itself.\n! Typically, this function is called whenever state has changed that affects what the layer\n! is displaying.\n! * The layer's `.update_proc` will not be called before this function returns,\n! but will be called asynchronously, shortly.\n! * Internally, a call to this function will schedule a re-render of the window that the\n! layer belongs to. In effect, all layers in that window's layer hierarchy will be asked to redraw.\n! * If an earlier re-render request is still pending, this function is a no-op.\n! @param layer The layer to mark dirty"]
     pub fn layer_mark_dirty(layer: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Sets the layer's render function.
-! The system will call the `update_proc` automatically when the layer needs to redraw itself, see
-! also \ref layer_mark_dirty().
-! @param layer Pointer to the layer structure.
-! @param update_proc Pointer to the function that will be called when the layer needs to be rendered.
-! Typically, one performs a series of drawing commands in the implementation of the `update_proc`,
-! see \ref Drawing, \ref PathDrawing and \ref TextDrawing.*/
+    #[doc = "! Sets the layer's render function.\n! The system will call the `update_proc` automatically when the layer needs to redraw itself, see\n! also \\ref layer_mark_dirty().\n! @param layer Pointer to the layer structure.\n! @param update_proc Pointer to the function that will be called when the layer needs to be rendered.\n! Typically, one performs a series of drawing commands in the implementation of the `update_proc`,\n! see \\ref Drawing, \\ref PathDrawing and \\ref TextDrawing."]
     pub fn layer_set_update_proc(layer: *mut Layer, update_proc: LayerUpdateProc);
 }
 unsafe extern "C" {
-    /**! Sets the frame of the layer, which is it's bounding box relative to the coordinate
-! system of its parent layer.
-! The size of the layer's bounds will be extended automatically, so that the bounds
-! cover the new frame.
-! @param layer The layer for which to set the frame
-! @param frame The new frame
-! @see \ref layer_set_bounds()*/
+    #[doc = "! Sets the frame of the layer, which is it's bounding box relative to the coordinate\n! system of its parent layer.\n! The size of the layer's bounds will be extended automatically, so that the bounds\n! cover the new frame.\n! @param layer The layer for which to set the frame\n! @param frame The new frame\n! @see \\ref layer_set_bounds()"]
     pub fn layer_set_frame(layer: *mut Layer, frame: GRect);
 }
 unsafe extern "C" {
-    /**! Gets the frame of the layer, which is it's bounding box relative to the coordinate
-! system of its parent layer.
-! If the frame has changed, \ref layer_mark_dirty() will be called automatically.
-! @param layer The layer for which to get the frame
-! @return The frame of the layer
-! @see layer_set_frame*/
+    #[doc = "! Gets the frame of the layer, which is it's bounding box relative to the coordinate\n! system of its parent layer.\n! If the frame has changed, \\ref layer_mark_dirty() will be called automatically.\n! @param layer The layer for which to get the frame\n! @return The frame of the layer\n! @see layer_set_frame"]
     pub fn layer_get_frame(layer: *const Layer) -> GRect;
 }
 unsafe extern "C" {
-    /**! Sets the bounds of the layer, which is it's bounding box relative to its frame.
-! If the bounds has changed, \ref layer_mark_dirty() will be called automatically.
-! @param layer The layer for which to set the bounds
-! @param bounds The new bounds
-! @see \ref layer_set_frame()*/
+    #[doc = "! Sets the bounds of the layer, which is it's bounding box relative to its frame.\n! If the bounds has changed, \\ref layer_mark_dirty() will be called automatically.\n! @param layer The layer for which to set the bounds\n! @param bounds The new bounds\n! @see \\ref layer_set_frame()"]
     pub fn layer_set_bounds(layer: *mut Layer, bounds: GRect);
 }
 unsafe extern "C" {
-    /**! Gets the bounds of the layer
-! @param layer The layer for which to get the bounds
-! @return The bounds of the layer
-! @see layer_set_bounds*/
+    #[doc = "! Gets the bounds of the layer\n! @param layer The layer for which to get the bounds\n! @return The bounds of the layer\n! @see layer_set_bounds"]
     pub fn layer_get_bounds(layer: *const Layer) -> GRect;
 }
 unsafe extern "C" {
-    /**! Get the largest unobstructed bounds rectangle of a layer.
-! @param layer The layer for which to get the unobstructed bounds.
-! @return The unobstructed bounds of the layer.
-! @see UnobstructedArea*/
+    #[doc = "! Get the largest unobstructed bounds rectangle of a layer.\n! @param layer The layer for which to get the unobstructed bounds.\n! @return The unobstructed bounds of the layer.\n! @see UnobstructedArea"]
     pub fn layer_get_unobstructed_bounds(layer: *const Layer) -> GRect;
 }
 unsafe extern "C" {
-    /**! Converts a point from the layer's local coordinate system to screen coordinates.
-! @note If the layer isn't part of the view hierarchy the result is undefined.
-! @param layer The view whose coordinate system will be used to convert the value to the screen.
-! @param point A point specified in the local coordinate system (bounds) of the layer.
-! @return The point converted to the coordinate system of the screen.*/
+    #[doc = "! Converts a point from the layer's local coordinate system to screen coordinates.\n! @note If the layer isn't part of the view hierarchy the result is undefined.\n! @param layer The view whose coordinate system will be used to convert the value to the screen.\n! @param point A point specified in the local coordinate system (bounds) of the layer.\n! @return The point converted to the coordinate system of the screen."]
     pub fn layer_convert_point_to_screen(layer: *const Layer, point: GPoint) -> GPoint;
 }
 unsafe extern "C" {
-    /**! Converts a rectangle from the layer's local coordinate system to screen coordinates.
-! @note If the layer isn't part of the view hierarchy the result is undefined.
-! @param layer The view whose coordinate system will be used to convert the value to the screen.
-! @param rect A rectangle specified in the local coordinate system (bounds) of the layer.
-! @return The rectangle converted to the coordinate system of the screen.*/
+    #[doc = "! Converts a rectangle from the layer's local coordinate system to screen coordinates.\n! @note If the layer isn't part of the view hierarchy the result is undefined.\n! @param layer The view whose coordinate system will be used to convert the value to the screen.\n! @param rect A rectangle specified in the local coordinate system (bounds) of the layer.\n! @return The rectangle converted to the coordinate system of the screen."]
     pub fn layer_convert_rect_to_screen(layer: *const Layer, rect: GRect) -> GRect;
 }
-/**! @addtogroup Window
-! \brief The basic building block of the user interface
-!
-! Windows are the top-level elements in the UI hierarchy and the basic building blocks for a Pebble
-! UI. A single window is always displayed at a time on Pebble, with the exception of when animating
-! from one window to the other, which, in that case, is managed by the window stack. You can stack
-! windows on top of each other, but only the topmost window will be visible.
-!
-! Users wearing a Pebble typically interact with the content and media displayed in a window, clicking
-! and pressing buttons on the watch, depending on what they see and wish to respond to in a window.
-!
-! Windows serve to display a hierarchy of layers on the screen and handle user input. When a window is
-! visible, its root Layer (and all its child layers) are drawn onto the screen automatically.
-!
-! You need a window, which always fills the entire screen, to display images, text, and graphics in
-! your Pebble app. A layer by itself doesn’t display on Pebble; it must be in the current window’s
-! layer hierarchy to be visible.
-!
-! The Window Stack serves as the global manager of what window is presented and makes sure that input
-! events are forwarded to the topmost window.
-!
-! Refer to the \htmlinclude UiFramework.html (chapter "Window") for a conceptual
-! overview of Window, the Window Stack and relevant code examples.
-! @{*/
+#[doc = "! @addtogroup Window\n! \\brief The basic building block of the user interface\n!\n! Windows are the top-level elements in the UI hierarchy and the basic building blocks for a Pebble\n! UI. A single window is always displayed at a time on Pebble, with the exception of when animating\n! from one window to the other, which, in that case, is managed by the window stack. You can stack\n! windows on top of each other, but only the topmost window will be visible.\n!\n! Users wearing a Pebble typically interact with the content and media displayed in a window, clicking\n! and pressing buttons on the watch, depending on what they see and wish to respond to in a window.\n!\n! Windows serve to display a hierarchy of layers on the screen and handle user input. When a window is\n! visible, its root Layer (and all its child layers) are drawn onto the screen automatically.\n!\n! You need a window, which always fills the entire screen, to display images, text, and graphics in\n! your Pebble app. A layer by itself doesn’t display on Pebble; it must be in the current window’s\n! layer hierarchy to be visible.\n!\n! The Window Stack serves as the global manager of what window is presented and makes sure that input\n! events are forwarded to the topmost window.\n!\n! Refer to the \\htmlinclude UiFramework.html (chapter \"Window\") for a conceptual\n! overview of Window, the Window Stack and relevant code examples.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Window {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Gets the window that the layer is currently attached to.
-! @param layer The layer for which to get the window
-! @return The window that this layer is currently attached to, or `NULL` if it has
-! not been added to a window's layer hierarchy.
-! @see \ref window_get_root_layer()
-! @see \ref layer_add_child()*/
+    #[doc = "! Gets the window that the layer is currently attached to.\n! @param layer The layer for which to get the window\n! @return The window that this layer is currently attached to, or `NULL` if it has\n! not been added to a window's layer hierarchy.\n! @see \\ref window_get_root_layer()\n! @see \\ref layer_add_child()"]
     pub fn layer_get_window(layer: *const Layer) -> *mut Window;
 }
 unsafe extern "C" {
-    /**! Removes the layer from its current parent layer
-! If removed successfully, the child's parent layer will be marked dirty
-! automatically.
-! @param child The layer to remove*/
+    #[doc = "! Removes the layer from its current parent layer\n! If removed successfully, the child's parent layer will be marked dirty\n! automatically.\n! @param child The layer to remove"]
     pub fn layer_remove_from_parent(child: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Removes child layers from given layer
-! If removed successfully, the child's parent layer will be marked dirty
-! automatically.
-! @param parent The layer from which to remove all child layers*/
+    #[doc = "! Removes child layers from given layer\n! If removed successfully, the child's parent layer will be marked dirty\n! automatically.\n! @param parent The layer from which to remove all child layers"]
     pub fn layer_remove_child_layers(parent: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Adds the child layer to a given parent layer, making it appear
-! in front of its parent and in front of any existing child layers
-! of the parent.
-! If the child layer was already part of a layer hierarchy, it will
-! be removed from its old parent first.
-! If added successfully, the parent (and children) will be marked dirty
-! automatically.
-! @param parent The layer to which to add the child layer
-! @param child The layer to add to the parent layer*/
+    #[doc = "! Adds the child layer to a given parent layer, making it appear\n! in front of its parent and in front of any existing child layers\n! of the parent.\n! If the child layer was already part of a layer hierarchy, it will\n! be removed from its old parent first.\n! If added successfully, the parent (and children) will be marked dirty\n! automatically.\n! @param parent The layer to which to add the child layer\n! @param child The layer to add to the parent layer"]
     pub fn layer_add_child(parent: *mut Layer, child: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Inserts the layer as a sibling behind another layer. If the layer to insert was
-! already part of a layer hierarchy, it will be removed from its old parent first.
-! The below_layer has to be a child of a parent layer,
-! otherwise this function will be a noop.
-! If inserted successfully, the parent (and children) will be marked dirty
-! automatically.
-! @param layer_to_insert The layer to insert into the hierarchy
-! @param below_sibling_layer The layer that will be used as the sibling layer
-! above which the insertion will take place*/
-    pub fn layer_insert_below_sibling(
-        layer_to_insert: *mut Layer,
-        below_sibling_layer: *mut Layer,
-    );
+    #[doc = "! Inserts the layer as a sibling behind another layer. If the layer to insert was\n! already part of a layer hierarchy, it will be removed from its old parent first.\n! The below_layer has to be a child of a parent layer,\n! otherwise this function will be a noop.\n! If inserted successfully, the parent (and children) will be marked dirty\n! automatically.\n! @param layer_to_insert The layer to insert into the hierarchy\n! @param below_sibling_layer The layer that will be used as the sibling layer\n! above which the insertion will take place"]
+    pub fn layer_insert_below_sibling(layer_to_insert: *mut Layer, below_sibling_layer: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Inserts the layer as a sibling in front of another layer.
-! The above_layer has to be a child of a parent layer,
-! otherwise this function will be a noop.
-! If inserted successfully, the parent (and children) will be marked dirty
-! automatically.
-! @param layer_to_insert The layer to insert into the hierarchy
-! @param above_sibling_layer The layer that will be used as the sibling layer
-! below which the insertion will take place*/
-    pub fn layer_insert_above_sibling(
-        layer_to_insert: *mut Layer,
-        above_sibling_layer: *mut Layer,
-    );
+    #[doc = "! Inserts the layer as a sibling in front of another layer.\n! The above_layer has to be a child of a parent layer,\n! otherwise this function will be a noop.\n! If inserted successfully, the parent (and children) will be marked dirty\n! automatically.\n! @param layer_to_insert The layer to insert into the hierarchy\n! @param above_sibling_layer The layer that will be used as the sibling layer\n! below which the insertion will take place"]
+    pub fn layer_insert_above_sibling(layer_to_insert: *mut Layer, above_sibling_layer: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Sets the visibility of the layer.
-! If the visibility has changed, \ref layer_mark_dirty() will be called automatically
-! on the parent layer.
-! @param layer The layer for which to set the visibility
-! @param hidden Supply `true` to make the layer hidden, or `false` to make it
-! non-hidden.*/
+    #[doc = "! Sets the visibility of the layer.\n! If the visibility has changed, \\ref layer_mark_dirty() will be called automatically\n! on the parent layer.\n! @param layer The layer for which to set the visibility\n! @param hidden Supply `true` to make the layer hidden, or `false` to make it\n! non-hidden."]
     pub fn layer_set_hidden(layer: *mut Layer, hidden: bool);
 }
 unsafe extern "C" {
-    /**! Gets the visibility of the layer.
-! @param layer The layer for which to get the visibility
-! @return True if the layer is hidden, false if it is not hidden.*/
+    #[doc = "! Gets the visibility of the layer.\n! @param layer The layer for which to get the visibility\n! @return True if the layer is hidden, false if it is not hidden."]
     pub fn layer_get_hidden(layer: *const Layer) -> bool;
 }
 unsafe extern "C" {
-    /**! Sets whether clipping is enabled for the layer. If enabled, whatever the layer _and
-! its children_ will draw using their `.update_proc` callbacks, will be clipped by the
-! this layer's frame.
-! If the clipping has changed, \ref layer_mark_dirty() will be called automatically.
-! @param layer The layer for which to set the clipping property
-! @param clips Supply `true` to make the layer clip to its frame, or `false`
-! to make it non-clipping.*/
+    #[doc = "! Sets whether clipping is enabled for the layer. If enabled, whatever the layer _and\n! its children_ will draw using their `.update_proc` callbacks, will be clipped by the\n! this layer's frame.\n! If the clipping has changed, \\ref layer_mark_dirty() will be called automatically.\n! @param layer The layer for which to set the clipping property\n! @param clips Supply `true` to make the layer clip to its frame, or `false`\n! to make it non-clipping."]
     pub fn layer_set_clips(layer: *mut Layer, clips: bool);
 }
 unsafe extern "C" {
-    /**! Gets whether clipping is enabled for the layer.  If enabled, whatever the layer _and
-! its children_ will draw using their `.update_proc` callbacks, will be clipped by the
-! this layer's frame.
-! @param layer The layer for which to get the clipping property
-! @return True if clipping is enabled for the layer, false if clipping is not enabled for
-! the layer.*/
+    #[doc = "! Gets whether clipping is enabled for the layer.  If enabled, whatever the layer _and\n! its children_ will draw using their `.update_proc` callbacks, will be clipped by the\n! this layer's frame.\n! @param layer The layer for which to get the clipping property\n! @return True if clipping is enabled for the layer, false if clipping is not enabled for\n! the layer."]
     pub fn layer_get_clips(layer: *const Layer) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the data from a layer that has been created with an extra data region.
-! @param layer The layer to get the data region from.
-! @return A void pointer to the data region.*/
+    #[doc = "! Gets the data from a layer that has been created with an extra data region.\n! @param layer The layer to get the data region from.\n! @return A void pointer to the data region."]
     pub fn layer_get_data(layer: *const Layer) -> *mut ::core::ffi::c_void;
 }
-/**! Function signature for a handler that deals with transition events of a window.
-! @see WindowHandlers
-! @see \ref window_set_window_handlers()*/
-pub type WindowHandler = ::core::option::Option<
-    unsafe extern "C" fn(window: *mut Window),
->;
-/**! WindowHandlers
-! These handlers are called by the \ref WindowStack as windows get pushed on / popped.
-! All these handlers use \ref WindowHandler as their function signature.
-! @see \ref window_set_window_handlers()
-! @see \ref WindowStack*/
+#[doc = "! Function signature for a handler that deals with transition events of a window.\n! @see WindowHandlers\n! @see \\ref window_set_window_handlers()"]
+pub type WindowHandler = ::core::option::Option<unsafe extern "C" fn(window: *mut Window)>;
+#[doc = "! WindowHandlers\n! These handlers are called by the \\ref WindowStack as windows get pushed on / popped.\n! All these handlers use \\ref WindowHandler as their function signature.\n! @see \\ref window_set_window_handlers()\n! @see \\ref WindowStack"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct WindowHandlers {
-    /**! Called when the window is pushed to the screen when it's not loaded.
-! This is a good moment to do the layout of the window.*/
+    #[doc = "! Called when the window is pushed to the screen when it's not loaded.\n! This is a good moment to do the layout of the window."]
     pub load: WindowHandler,
-    /**! Called when the window comes on the screen (again). E.g. when
-! second-top-most window gets revealed (again) after popping the top-most
-! window, but also when the window is pushed for the first time. This is a
-! good moment to start timers related to the window, or reset the UI, etc.*/
+    #[doc = "! Called when the window comes on the screen (again). E.g. when\n! second-top-most window gets revealed (again) after popping the top-most\n! window, but also when the window is pushed for the first time. This is a\n! good moment to start timers related to the window, or reset the UI, etc."]
     pub appear: WindowHandler,
-    /**! Called when the window leaves the screen, e.g. when another window
-! is pushed, or this window is popped. Good moment to stop timers related
-! to the window.*/
+    #[doc = "! Called when the window leaves the screen, e.g. when another window\n! is pushed, or this window is popped. Good moment to stop timers related\n! to the window."]
     pub disappear: WindowHandler,
-    /**! Called when the window is deinited, but could be used in the future to
-! free resources bound to windows that are not on screen.*/
+    #[doc = "! Called when the window is deinited, but could be used in the future to\n! free resources bound to windows that are not on screen."]
     pub unload: WindowHandler,
 }
 unsafe extern "C" {
-    /**! Creates a new Window on the heap and initalizes it with the default values.
-!
-! * Background color : `GColorWhite`
-! * Root layer's `update_proc` : function that fills the window's background using `background_color`.
-! * `click_config_provider` : `NULL`
-! * `window_handlers` : all `NULL`
-! @return A pointer to the window. `NULL` if the window could not
-! be created*/
+    #[doc = "! Creates a new Window on the heap and initalizes it with the default values.\n!\n! * Background color : `GColorWhite`\n! * Root layer's `update_proc` : function that fills the window's background using `background_color`.\n! * `click_config_provider` : `NULL`\n! * `window_handlers` : all `NULL`\n! @return A pointer to the window. `NULL` if the window could not\n! be created"]
     pub fn window_create() -> *mut Window;
 }
 unsafe extern "C" {
-    ///! Destroys a Window previously created by window_create.
+    #[doc = "! Destroys a Window previously created by window_create."]
     pub fn window_destroy(window: *mut Window);
 }
 unsafe extern "C" {
-    /**! Sets the click configuration provider callback function on the window.
-! This will automatically setup the input handlers of the window as well to use
-! the click recognizer subsystem.
-! @param window The window for which to set the click config provider
-! @param click_config_provider The callback that will be called to configure the click recognizers with the window
-! @see Clicks
-! @see ClickConfigProvider*/
+    #[doc = "! Sets the click configuration provider callback function on the window.\n! This will automatically setup the input handlers of the window as well to use\n! the click recognizer subsystem.\n! @param window The window for which to set the click config provider\n! @param click_config_provider The callback that will be called to configure the click recognizers with the window\n! @see Clicks\n! @see ClickConfigProvider"]
     pub fn window_set_click_config_provider(
         window: *mut Window,
         click_config_provider: ClickConfigProvider,
     );
 }
 unsafe extern "C" {
-    /**! Same as window_set_click_config_provider(), but will assign a custom context pointer
-! (instead of the window pointer) that will be passed into the ClickHandler click event handlers.
-! @param window The window for which to set the click config provider
-! @param click_config_provider The callback that will be called to configure the click recognizers with the window
-! @param context Pointer to application specific data that will be passed to the click configuration provider callback (defaults to the window).
-! @see Clicks
-! @see window_set_click_config_provider*/
+    #[doc = "! Same as window_set_click_config_provider(), but will assign a custom context pointer\n! (instead of the window pointer) that will be passed into the ClickHandler click event handlers.\n! @param window The window for which to set the click config provider\n! @param click_config_provider The callback that will be called to configure the click recognizers with the window\n! @param context Pointer to application specific data that will be passed to the click configuration provider callback (defaults to the window).\n! @see Clicks\n! @see window_set_click_config_provider"]
     pub fn window_set_click_config_provider_with_context(
         window: *mut Window,
         click_config_provider: ClickConfigProvider,
@@ -6353,92 +3931,43 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Gets the current click configuration provider of the window.
-! @param window The window for which to get the click config provider*/
-    pub fn window_get_click_config_provider(
-        window: *const Window,
-    ) -> ClickConfigProvider;
+    #[doc = "! Gets the current click configuration provider of the window.\n! @param window The window for which to get the click config provider"]
+    pub fn window_get_click_config_provider(window: *const Window) -> ClickConfigProvider;
 }
 unsafe extern "C" {
-    /**! Gets the current click configuration provider context of the window.
-! @param window The window for which to get the click config provider context*/
-    pub fn window_get_click_config_context(
-        window: *mut Window,
-    ) -> *mut ::core::ffi::c_void;
+    #[doc = "! Gets the current click configuration provider context of the window.\n! @param window The window for which to get the click config provider context"]
+    pub fn window_get_click_config_context(window: *mut Window) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Sets the window handlers of the window.
-! These handlers get called e.g. when the user enters or leaves the window.
-! @param window The window for which to set the window handlers
-! @param handlers The handlers for the specified window
-! @see \ref WindowHandlers*/
+    #[doc = "! Sets the window handlers of the window.\n! These handlers get called e.g. when the user enters or leaves the window.\n! @param window The window for which to set the window handlers\n! @param handlers The handlers for the specified window\n! @see \\ref WindowHandlers"]
     pub fn window_set_window_handlers(window: *mut Window, handlers: WindowHandlers);
 }
 unsafe extern "C" {
-    /**! Gets the root Layer of the window.
-! The root layer is the layer at the bottom of the layer hierarchy for this window.
-! It is the window's "canvas" if you will. By default, the root layer only draws
-! a solid fill with the window's background color.
-! @param window The window for which to get the root layer
-! @return The window's root layer*/
+    #[doc = "! Gets the root Layer of the window.\n! The root layer is the layer at the bottom of the layer hierarchy for this window.\n! It is the window's \"canvas\" if you will. By default, the root layer only draws\n! a solid fill with the window's background color.\n! @param window The window for which to get the root layer\n! @return The window's root layer"]
     pub fn window_get_root_layer(window: *const Window) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Sets the background color of the window, which is drawn automatically by the
-! root layer of the window.
-! @param window The window for which to set the background color
-! @param background_color The new background color
-! @see \ref window_get_root_layer()*/
+    #[doc = "! Sets the background color of the window, which is drawn automatically by the\n! root layer of the window.\n! @param window The window for which to set the background color\n! @param background_color The new background color\n! @see \\ref window_get_root_layer()"]
     pub fn window_set_background_color(window: *mut Window, background_color: GColor);
 }
 unsafe extern "C" {
-    /**! Gets whether the window has been loaded.
-! If a window is loaded, its `.load` handler has been called (and the `.unload` handler
-! has not been called since).
-! @return true if the window is currently loaded or false if not.
-! @param window The window to query its loaded status
-! @see \ref WindowHandlers*/
+    #[doc = "! Gets whether the window has been loaded.\n! If a window is loaded, its `.load` handler has been called (and the `.unload` handler\n! has not been called since).\n! @return true if the window is currently loaded or false if not.\n! @param window The window to query its loaded status\n! @see \\ref WindowHandlers"]
     pub fn window_is_loaded(window: *mut Window) -> bool;
 }
 unsafe extern "C" {
-    /**! Sets a pointer to developer-supplied data that the window uses, to
-! provide a means to access the data at later times in one of the window event handlers.
-! @see window_get_user_data
-! @param window The window for which to set the user data
-! @param data A pointer to user data.*/
+    #[doc = "! Sets a pointer to developer-supplied data that the window uses, to\n! provide a means to access the data at later times in one of the window event handlers.\n! @see window_get_user_data\n! @param window The window for which to set the user data\n! @param data A pointer to user data."]
     pub fn window_set_user_data(window: *mut Window, data: *mut ::core::ffi::c_void);
 }
 unsafe extern "C" {
-    /**! Gets the pointer to developer-supplied data that was previously
-! set using window_set_user_data().
-! @see window_set_user_data
-! @param window The window for which to get the user data*/
+    #[doc = "! Gets the pointer to developer-supplied data that was previously\n! set using window_set_user_data().\n! @see window_set_user_data\n! @param window The window for which to get the user data"]
     pub fn window_get_user_data(window: *const Window) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Subscribe to single click events.
-! @note Must be called from the \ref ClickConfigProvider.
-! @note \ref window_single_click_subscribe() and \ref window_single_repeating_click_subscribe() conflict, and cannot both be used on the same button.
-! @note When there is a multi_click and/or long_click setup, there will be a delay before the single click
-! @param button_id The button events to subscribe to.
-! @param handler The \ref ClickHandler to fire on this event.
-! handler will get fired. On the other hand, when there is no multi_click nor long_click setup, the single click handler will fire directly on button down.
-! @see ButtonId
-! @see Clicks
-! @see window_single_repeating_click_subscribe*/
+    #[doc = "! Subscribe to single click events.\n! @note Must be called from the \\ref ClickConfigProvider.\n! @note \\ref window_single_click_subscribe() and \\ref window_single_repeating_click_subscribe() conflict, and cannot both be used on the same button.\n! @note When there is a multi_click and/or long_click setup, there will be a delay before the single click\n! @param button_id The button events to subscribe to.\n! @param handler The \\ref ClickHandler to fire on this event.\n! handler will get fired. On the other hand, when there is no multi_click nor long_click setup, the single click handler will fire directly on button down.\n! @see ButtonId\n! @see Clicks\n! @see window_single_repeating_click_subscribe"]
     pub fn window_single_click_subscribe(button_id: ButtonId, handler: ClickHandler);
 }
 unsafe extern "C" {
-    /**! Subscribe to single click event, with a repeat interval. A single click is detected every time "repeat_interval_ms" has been reached.
-! @note Must be called from the \ref ClickConfigProvider.
-! @note \ref window_single_click_subscribe() and \ref window_single_repeating_click_subscribe() conflict, and cannot both be used on the same button.
-! @note The back button cannot be overridden with a repeating click.
-! @param button_id The button events to subscribe to.
-! @param repeat_interval_ms When holding down, how many milliseconds before the handler is fired again.
-! A value of 0ms means "no repeat timer". The minimum is 30ms, and values below will be disregarded.
-! If there is a long-click handler subscribed on this button, `repeat_interval_ms` will not be used.
-! @param handler The \ref ClickHandler to fire on this event.
-! @see window_single_click_subscribe*/
+    #[doc = "! Subscribe to single click event, with a repeat interval. A single click is detected every time \"repeat_interval_ms\" has been reached.\n! @note Must be called from the \\ref ClickConfigProvider.\n! @note \\ref window_single_click_subscribe() and \\ref window_single_repeating_click_subscribe() conflict, and cannot both be used on the same button.\n! @note The back button cannot be overridden with a repeating click.\n! @param button_id The button events to subscribe to.\n! @param repeat_interval_ms When holding down, how many milliseconds before the handler is fired again.\n! A value of 0ms means \"no repeat timer\". The minimum is 30ms, and values below will be disregarded.\n! If there is a long-click handler subscribed on this button, `repeat_interval_ms` will not be used.\n! @param handler The \\ref ClickHandler to fire on this event.\n! @see window_single_click_subscribe"]
     pub fn window_single_repeating_click_subscribe(
         button_id: ButtonId,
         repeat_interval_ms: u16,
@@ -6446,14 +3975,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Subscribe to multi click events.
-! @note Must be called from the \ref ClickConfigProvider.
-! @param button_id The button events to subscribe to.
-! @param min_clicks Minimum number of clicks before handler is fired. Defaults to 2.
-! @param max_clicks Maximum number of clicks after which the click counter is reset. A value of 0 means use "min" also as "max".
-! @param timeout The delay after which a sequence of clicks is considered finished, and the click counter is reset. A value of 0 means to use the system default 300ms.
-! @param last_click_only Defaults to false. When true, only the handler for the last multi-click is called.
-! @param handler The \ref ClickHandler to fire on this event. Fired for multi-clicks, as "filtered" by the `last_click_only`, `min`, and `max` parameters.*/
+    #[doc = "! Subscribe to multi click events.\n! @note Must be called from the \\ref ClickConfigProvider.\n! @param button_id The button events to subscribe to.\n! @param min_clicks Minimum number of clicks before handler is fired. Defaults to 2.\n! @param max_clicks Maximum number of clicks after which the click counter is reset. A value of 0 means use \"min\" also as \"max\".\n! @param timeout The delay after which a sequence of clicks is considered finished, and the click counter is reset. A value of 0 means to use the system default 300ms.\n! @param last_click_only Defaults to false. When true, only the handler for the last multi-click is called.\n! @param handler The \\ref ClickHandler to fire on this event. Fired for multi-clicks, as \"filtered\" by the `last_click_only`, `min`, and `max` parameters."]
     pub fn window_multi_click_subscribe(
         button_id: ButtonId,
         min_clicks: u8,
@@ -6464,13 +3986,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Subscribe to long click events.
-! @note Must be called from the \ref ClickConfigProvider.
-! @note The back button cannot be overridden with a long click.
-! @param button_id The button events to subscribe to.
-! @param delay_ms Milliseconds after which "handler" is fired. A value of 0 means to use the system default 500ms.
-! @param down_handler The \ref ClickHandler to fire as soon as the button has been held for `delay_ms`. This may be NULL to have no down handler.
-! @param up_handler The \ref ClickHandler to fire on the release of a long click. This may be NULL to have no up handler.*/
+    #[doc = "! Subscribe to long click events.\n! @note Must be called from the \\ref ClickConfigProvider.\n! @note The back button cannot be overridden with a long click.\n! @param button_id The button events to subscribe to.\n! @param delay_ms Milliseconds after which \"handler\" is fired. A value of 0 means to use the system default 500ms.\n! @param down_handler The \\ref ClickHandler to fire as soon as the button has been held for `delay_ms`. This may be NULL to have no down handler.\n! @param up_handler The \\ref ClickHandler to fire on the release of a long click. This may be NULL to have no up handler."]
     pub fn window_long_click_subscribe(
         button_id: ButtonId,
         delay_ms: u16,
@@ -6479,13 +3995,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Subscribe to raw click events.
-! @note Must be called from within the \ref ClickConfigProvider.
-! @note The back button cannot be overridden with a raw click.
-! @param button_id The button events to subscribe to.
-! @param down_handler The \ref ClickHandler to fire as soon as the button has been pressed. This may be NULL to have no down handler.
-! @param up_handler The \ref ClickHandler to fire on the release of the button. This may be NULL to have no up handler.
-! @param context If this context is not NULL, it will override the general context.*/
+    #[doc = "! Subscribe to raw click events.\n! @note Must be called from within the \\ref ClickConfigProvider.\n! @note The back button cannot be overridden with a raw click.\n! @param button_id The button events to subscribe to.\n! @param down_handler The \\ref ClickHandler to fire as soon as the button has been pressed. This may be NULL to have no down handler.\n! @param up_handler The \\ref ClickHandler to fire on the release of the button. This may be NULL to have no up handler.\n! @param context If this context is not NULL, it will override the general context."]
     pub fn window_raw_click_subscribe(
         button_id: ButtonId,
         down_handler: ClickHandler,
@@ -6494,140 +4004,78 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Set the context that will be passed to handlers for the given button's events. By default the context passed to handlers
-! is equal to the \ref ClickConfigProvider context (defaults to the window).
-! @note Must be called from within the \ref ClickConfigProvider.
-! @param button_id The button to set the context for.
-! @param context Set the context that will be passed to handlers for the given button's events.*/
-    pub fn window_set_click_context(
-        button_id: ButtonId,
-        context: *mut ::core::ffi::c_void,
-    );
+    #[doc = "! Set the context that will be passed to handlers for the given button's events. By default the context passed to handlers\n! is equal to the \\ref ClickConfigProvider context (defaults to the window).\n! @note Must be called from within the \\ref ClickConfigProvider.\n! @param button_id The button to set the context for.\n! @param context Set the context that will be passed to handlers for the given button's events."]
+    pub fn window_set_click_context(button_id: ButtonId, context: *mut ::core::ffi::c_void);
 }
 unsafe extern "C" {
-    /**! Pushes the given window on the window navigation stack,
-! on top of the current topmost window of the app.
-! @param window The window to push on top
-! @param animated Pass in `true` to animate the push using a sliding animation,
-! or `false` to skip the animation.*/
+    #[doc = "! Pushes the given window on the window navigation stack,\n! on top of the current topmost window of the app.\n! @param window The window to push on top\n! @param animated Pass in `true` to animate the push using a sliding animation,\n! or `false` to skip the animation."]
     pub fn window_stack_push(window: *mut Window, animated: bool);
 }
 unsafe extern "C" {
-    /**! Pops the topmost window on the navigation stack
-! @param animated See \ref window_stack_remove()
-! @return The window that is popped, or NULL if there are no windows to pop.*/
+    #[doc = "! Pops the topmost window on the navigation stack\n! @param animated See \\ref window_stack_remove()\n! @return The window that is popped, or NULL if there are no windows to pop."]
     pub fn window_stack_pop(animated: bool) -> *mut Window;
 }
 unsafe extern "C" {
-    /**! Pops all windows.
-! See \ref window_stack_remove() for a description of the `animated` parameter and notes.*/
+    #[doc = "! Pops all windows.\n! See \\ref window_stack_remove() for a description of the `animated` parameter and notes."]
     pub fn window_stack_pop_all(animated: bool);
 }
 unsafe extern "C" {
-    /**! Removes a given window from the window stack
-! that belongs to the app task.
-! @note If there are no windows for the app left on the stack, the app
-! will be killed by the system, shortly. To avoid this, make sure
-! to push another window shortly after or before removing the last window.
-! @param window The window to remove. If the window is NULL or if it
-! is not on the stack, this function is a no-op.
-! @param animated Pass in `true` to animate the removal of the window using
-! a side-to-side sliding animation to reveal the next window.
-! This is only used in case the window happens to be on top of the window
-! stack (thus visible).
-! @return True if window was successfully removed, false otherwise.*/
+    #[doc = "! Removes a given window from the window stack\n! that belongs to the app task.\n! @note If there are no windows for the app left on the stack, the app\n! will be killed by the system, shortly. To avoid this, make sure\n! to push another window shortly after or before removing the last window.\n! @param window The window to remove. If the window is NULL or if it\n! is not on the stack, this function is a no-op.\n! @param animated Pass in `true` to animate the removal of the window using\n! a side-to-side sliding animation to reveal the next window.\n! This is only used in case the window happens to be on top of the window\n! stack (thus visible).\n! @return True if window was successfully removed, false otherwise."]
     pub fn window_stack_remove(window: *mut Window, animated: bool) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the topmost window on the stack that belongs to the app.
-! @return The topmost window on the stack that belongs to the app or
-! NULL if no app window could be found.*/
+    #[doc = "! Gets the topmost window on the stack that belongs to the app.\n! @return The topmost window on the stack that belongs to the app or\n! NULL if no app window could be found."]
     pub fn window_stack_get_top_window() -> *mut Window;
 }
 unsafe extern "C" {
-    /**! Checks if the window is on the window stack
-! @param window The window to look for on the window stack
-! @return true if the window is currently on the window stack.*/
+    #[doc = "! Checks if the window is on the window stack\n! @param window The window to look for on the window stack\n! @return true if the window is currently on the window stack."]
     pub fn window_stack_contains_window(window: *mut Window) -> bool;
 }
-/**! @addtogroup Animation
-!   \brief Abstract framework to create arbitrary animations
-!
-! The Animation framework provides your Pebble app with an base layer to create arbitrary
-! animations. The simplest way to work with animations is to use the layer frame
-! \ref PropertyAnimation, which enables you to move a Layer around on the screen.
-! Using animation_set_implementation(), you can implement a custom animation.
-!
-! Refer to the \htmlinclude UiFramework.html (chapter "Animation") for a conceptual overview
-! of the animation framework and on how to write custom animations.
-! @{*/
+#[doc = "! @addtogroup Animation\n!   \\brief Abstract framework to create arbitrary animations\n!\n! The Animation framework provides your Pebble app with an base layer to create arbitrary\n! animations. The simplest way to work with animations is to use the layer frame\n! \\ref PropertyAnimation, which enables you to move a Layer around on the screen.\n! Using animation_set_implementation(), you can implement a custom animation.\n!\n! Refer to the \\htmlinclude UiFramework.html (chapter \"Animation\") for a conceptual overview\n! of the animation framework and on how to write custom animations.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Animation {
     _unused: [u8; 0],
 }
-/**! The type used to represent how far an animation has progressed. This is passed to the
-! animation's update handler*/
+#[doc = "! The type used to represent how far an animation has progressed. This is passed to the\n! animation's update handler"]
 pub type AnimationProgress = i32;
 impl AnimationCurve {
-    ///! Linear curve: the velocity is constant.
+    #[doc = "! Linear curve: the velocity is constant."]
     pub const AnimationCurveLinear: AnimationCurve = AnimationCurve(0);
-    ///! Bicubic ease-in: accelerate from zero velocity
+    #[doc = "! Bicubic ease-in: accelerate from zero velocity"]
     pub const AnimationCurveEaseIn: AnimationCurve = AnimationCurve(1);
-    ///! Bicubic ease-in: decelerate to zero velocity
+    #[doc = "! Bicubic ease-in: decelerate to zero velocity"]
     pub const AnimationCurveEaseOut: AnimationCurve = AnimationCurve(2);
-    ///! Bicubic ease-in-out: accelerate from zero velocity, decelerate to zero velocity
+    #[doc = "! Bicubic ease-in-out: accelerate from zero velocity, decelerate to zero velocity"]
     pub const AnimationCurveEaseInOut: AnimationCurve = AnimationCurve(3);
-    ///! Bicubic ease-in-out: accelerate from zero velocity, decelerate to zero velocity
+    #[doc = "! Bicubic ease-in-out: accelerate from zero velocity, decelerate to zero velocity"]
     pub const AnimationCurveDefault: AnimationCurve = AnimationCurve(3);
-    ///! Custom (user-provided) animation curve
+    #[doc = "! Custom (user-provided) animation curve"]
     pub const AnimationCurveCustomFunction: AnimationCurve = AnimationCurve(4);
-    ///! User-provided interpolation function
-    pub const AnimationCurveCustomInterpolationFunction: AnimationCurve = AnimationCurve(
-        5,
-    );
-    ///! User-provided interpolation function
+    #[doc = "! User-provided interpolation function"]
+    pub const AnimationCurveCustomInterpolationFunction: AnimationCurve = AnimationCurve(5);
+    #[doc = "! User-provided interpolation function"]
     pub const AnimationCurve_Reserved1: AnimationCurve = AnimationCurve(6);
-    ///! User-provided interpolation function
+    #[doc = "! User-provided interpolation function"]
     pub const AnimationCurve_Reserved2: AnimationCurve = AnimationCurve(7);
 }
 #[repr(transparent)]
-/**! Values that are used to indicate the different animation curves,
-! which determine the speed at which the animated value(s) change(s).*/
+#[doc = "! Values that are used to indicate the different animation curves,\n! which determine the speed at which the animated value(s) change(s)."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct AnimationCurve(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Creates a new Animation on the heap and initalizes it with the default values.
-!
-! * Duration: 250ms,
-! * Curve: \ref AnimationCurveEaseInOut (ease-in-out),
-! * Delay: 0ms,
-! * Handlers: `{NULL, NULL}` (none),
-! * Context: `NULL` (none),
-! * Implementation: `NULL` (no implementation),
-! * Scheduled: no
-! @return A pointer to the animation. `NULL` if the animation could not
-! be created*/
+    #[doc = "! Creates a new Animation on the heap and initalizes it with the default values.\n!\n! * Duration: 250ms,\n! * Curve: \\ref AnimationCurveEaseInOut (ease-in-out),\n! * Delay: 0ms,\n! * Handlers: `{NULL, NULL}` (none),\n! * Context: `NULL` (none),\n! * Implementation: `NULL` (no implementation),\n! * Scheduled: no\n! @return A pointer to the animation. `NULL` if the animation could not\n! be created"]
     pub fn animation_create() -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! Destroys an Animation previously created by animation_create.
-! @return true if successful, false on failure*/
+    #[doc = "! Destroys an Animation previously created by animation_create.\n! @return true if successful, false on failure"]
     pub fn animation_destroy(animation: *mut Animation) -> bool;
 }
 unsafe extern "C" {
     pub fn animation_clone(from: *mut Animation) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! Create a new sequence animation from a list of 2 or more other animations. The returned
-! animation owns the animations that were provided as arguments and no further write operations
-! on those handles are allowed. The variable length argument list must be terminated with a NULL
-! ptr
-! @note the maximum number of animations that can be supplied to this method is 20
-! @param animation_a the first required component animation
-! @param animation_b the second required component animation
-! @param animation_c either the third component, or NULL if only adding 2 components
-! @return The newly created sequence animation*/
+    #[doc = "! Create a new sequence animation from a list of 2 or more other animations. The returned\n! animation owns the animations that were provided as arguments and no further write operations\n! on those handles are allowed. The variable length argument list must be terminated with a NULL\n! ptr\n! @note the maximum number of animations that can be supplied to this method is 20\n! @param animation_a the first required component animation\n! @param animation_b the second required component animation\n! @param animation_c either the third component, or NULL if only adding 2 components\n! @return The newly created sequence animation"]
     pub fn animation_sequence_create(
         animation_a: *mut Animation,
         animation_b: *mut Animation,
@@ -6636,26 +4084,14 @@ unsafe extern "C" {
     ) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! An alternate form of animation_sequence_create() that accepts an array of other animations.
-! @note the maximum number of elements allowed in animation_array is 256
-! @param animation_array an array of component animations to include
-! @param array_len the number of elements in the animation_array
-! @return The newly created sequence animation*/
+    #[doc = "! An alternate form of animation_sequence_create() that accepts an array of other animations.\n! @note the maximum number of elements allowed in animation_array is 256\n! @param animation_array an array of component animations to include\n! @param array_len the number of elements in the animation_array\n! @return The newly created sequence animation"]
     pub fn animation_sequence_create_from_array(
         animation_array: *mut *mut Animation,
         array_len: u32,
     ) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! Create a new spawn animation from a list of 2 or more other animations. The returned
-! animation owns the animations that were provided as arguments and no further write operations
-! on those handles are allowed. The variable length argument list must be terminated with a NULL
-! ptr
-! @note the maximum number of animations that can be supplied to this method is 20
-! @param animation_a the first required component animation
-! @param animation_b the second required component animation
-! @param animation_c either the third component, or NULL if only adding 2 components
-! @return The newly created spawn animation or NULL on failure*/
+    #[doc = "! Create a new spawn animation from a list of 2 or more other animations. The returned\n! animation owns the animations that were provided as arguments and no further write operations\n! on those handles are allowed. The variable length argument list must be terminated with a NULL\n! ptr\n! @note the maximum number of animations that can be supplied to this method is 20\n! @param animation_a the first required component animation\n! @param animation_b the second required component animation\n! @param animation_c either the third component, or NULL if only adding 2 components\n! @return The newly created spawn animation or NULL on failure"]
     pub fn animation_spawn_create(
         animation_a: *mut Animation,
         animation_b: *mut Animation,
@@ -6664,88 +4100,42 @@ unsafe extern "C" {
     ) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! An alternate form of animation_spawn_create() that accepts an array of other animations.
-! @note the maximum number of elements allowed in animation_array is 256
-! @param animation_array an array of component animations to include
-! @param array_len the number of elements in the animation_array
-! @return The newly created spawn animation or NULL on failure*/
+    #[doc = "! An alternate form of animation_spawn_create() that accepts an array of other animations.\n! @note the maximum number of elements allowed in animation_array is 256\n! @param animation_array an array of component animations to include\n! @param array_len the number of elements in the animation_array\n! @return The newly created spawn animation or NULL on failure"]
     pub fn animation_spawn_create_from_array(
         animation_array: *mut *mut Animation,
         array_len: u32,
     ) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! Seek to a specific location in the animation. Only forward seeking is allowed. Returns true
-! if successful, false if the passed in seek location is invalid.
-! @param animation the animation for which to set the elapsed.
-! @param elapsed_ms the new elapsed time in milliseconds
-! @return true if successful, false if the requested elapsed is invalid.*/
+    #[doc = "! Seek to a specific location in the animation. Only forward seeking is allowed. Returns true\n! if successful, false if the passed in seek location is invalid.\n! @param animation the animation for which to set the elapsed.\n! @param elapsed_ms the new elapsed time in milliseconds\n! @return true if successful, false if the requested elapsed is invalid."]
     pub fn animation_set_elapsed(animation: *mut Animation, elapsed_ms: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Get the current location in the animation.
-! @note The animation must be scheduled to get the elapsed time. If it is not schedule,
-! this method will return false.
-! @param animation The animation for which to fetch the elapsed.
-! @param[out] elapsed_ms pointer to variable that will contain the elapsed time in milliseconds
-! @return true if successful, false on failure*/
-    pub fn animation_get_elapsed(
-        animation: *mut Animation,
-        elapsed_ms: *mut i32,
-    ) -> bool;
+    #[doc = "! Get the current location in the animation.\n! @note The animation must be scheduled to get the elapsed time. If it is not schedule,\n! this method will return false.\n! @param animation The animation for which to fetch the elapsed.\n! @param[out] elapsed_ms pointer to variable that will contain the elapsed time in milliseconds\n! @return true if successful, false on failure"]
+    pub fn animation_get_elapsed(animation: *mut Animation, elapsed_ms: *mut i32) -> bool;
 }
 unsafe extern "C" {
-    /**! Set an animation to run in reverse (or forward)
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation the animation to operate on
-! @param reverse set to true to run in reverse, false to run forward
-! @return true if successful, false on failure*/
+    #[doc = "! Set an animation to run in reverse (or forward)\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation the animation to operate on\n! @param reverse set to true to run in reverse, false to run forward\n! @return true if successful, false on failure"]
     pub fn animation_set_reverse(animation: *mut Animation, reverse: bool) -> bool;
 }
 unsafe extern "C" {
-    /**! Get the reverse setting of an animation
-! @param animation The animation for which to get the setting
-! @return the reverse setting*/
+    #[doc = "! Get the reverse setting of an animation\n! @param animation The animation for which to get the setting\n! @return the reverse setting"]
     pub fn animation_get_reverse(animation: *mut Animation) -> bool;
 }
 unsafe extern "C" {
-    /**! Set an animation to play N times. The default is 1.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation the animation to set the play count of
-! @param play_count number of times to play this animation. Set to ANIMATION_PLAY_COUNT_INFINITE
-! to make an animation repeat indefinitely.
-! @return true if successful, false on failure*/
+    #[doc = "! Set an animation to play N times. The default is 1.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation the animation to set the play count of\n! @param play_count number of times to play this animation. Set to ANIMATION_PLAY_COUNT_INFINITE\n! to make an animation repeat indefinitely.\n! @return true if successful, false on failure"]
     pub fn animation_set_play_count(animation: *mut Animation, play_count: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Get the play count of an animation
-! @param animation The animation for which to get the setting
-! @return the play count*/
+    #[doc = "! Get the play count of an animation\n! @param animation The animation for which to get the setting\n! @return the play count"]
     pub fn animation_get_play_count(animation: *mut Animation) -> u32;
 }
 unsafe extern "C" {
-    /**! Sets the time in milliseconds that an animation takes from start to finish.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set the duration.
-! @param duration_ms The duration in milliseconds of the animation. This excludes
-! any optional delay as set using \ref animation_set_delay().
-! @return true if successful, false on failure*/
+    #[doc = "! Sets the time in milliseconds that an animation takes from start to finish.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set the duration.\n! @param duration_ms The duration in milliseconds of the animation. This excludes\n! any optional delay as set using \\ref animation_set_delay().\n! @return true if successful, false on failure"]
     pub fn animation_set_duration(animation: *mut Animation, duration_ms: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Get the static duration of an animation from start to end (ignoring how much has already
-! played, if any).
-! @param animation The animation for which to get the duration
-! @param include_delay if true, include the delay time
-! @param include_play_count if true, incorporate the play_count
-! @return the duration, in milliseconds. This includes any optional delay a set using
-! \ref animation_set_delay.*/
+    #[doc = "! Get the static duration of an animation from start to end (ignoring how much has already\n! played, if any).\n! @param animation The animation for which to get the duration\n! @param include_delay if true, include the delay time\n! @param include_play_count if true, incorporate the play_count\n! @return the duration, in milliseconds. This includes any optional delay a set using\n! \\ref animation_set_delay."]
     pub fn animation_get_duration(
         animation: *mut Animation,
         include_delay: bool,
@@ -6753,88 +4143,41 @@ unsafe extern "C" {
     ) -> u32;
 }
 unsafe extern "C" {
-    /**! Sets an optional delay for the animation.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set the delay.
-! @param delay_ms The delay in milliseconds that the animation system should
-! wait from the moment the animation is scheduled to starting the animation.
-! @return true if successful, false on failure*/
+    #[doc = "! Sets an optional delay for the animation.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set the delay.\n! @param delay_ms The delay in milliseconds that the animation system should\n! wait from the moment the animation is scheduled to starting the animation.\n! @return true if successful, false on failure"]
     pub fn animation_set_delay(animation: *mut Animation, delay_ms: u32) -> bool;
 }
 unsafe extern "C" {
-    /**! Get the delay of an animation in milliseconds
-! @param animation The animation for which to get the setting
-! @return the delay in milliseconds*/
+    #[doc = "! Get the delay of an animation in milliseconds\n! @param animation The animation for which to get the setting\n! @return the delay in milliseconds"]
     pub fn animation_get_delay(animation: *mut Animation) -> u32;
 }
 unsafe extern "C" {
-    /**! Sets the animation curve for the animation.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set the curve.
-! @param curve The type of curve.
-! @see AnimationCurve
-! @return true if successful, false on failure*/
+    #[doc = "! Sets the animation curve for the animation.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set the curve.\n! @param curve The type of curve.\n! @see AnimationCurve\n! @return true if successful, false on failure"]
     pub fn animation_set_curve(animation: *mut Animation, curve: AnimationCurve) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the animation curve for the animation.
-! @param animation The animation for which to get the curve.
-! @return The type of curve.*/
+    #[doc = "! Gets the animation curve for the animation.\n! @param animation The animation for which to get the curve.\n! @return The type of curve."]
     pub fn animation_get_curve(animation: *mut Animation) -> AnimationCurve;
 }
-/**! The function pointer type of a custom animation curve.
-! @param linear_distance The linear normalized animation distance to be curved.
-! @see animation_set_custom_curve*/
+#[doc = "! The function pointer type of a custom animation curve.\n! @param linear_distance The linear normalized animation distance to be curved.\n! @see animation_set_custom_curve"]
 pub type AnimationCurveFunction = ::core::option::Option<
     unsafe extern "C" fn(linear_distance: AnimationProgress) -> AnimationProgress,
 >;
 unsafe extern "C" {
-    /**! Sets a custom animation curve function.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set the curve.
-! @param curve_function The custom animation curve function.
-! @see AnimationCurveFunction
-! @return true if successful, false on failure*/
+    #[doc = "! Sets a custom animation curve function.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set the curve.\n! @param curve_function The custom animation curve function.\n! @see AnimationCurveFunction\n! @return true if successful, false on failure"]
     pub fn animation_set_custom_curve(
         animation: *mut Animation,
         curve_function: AnimationCurveFunction,
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the custom animation curve function for the animation.
-! @param animation The animation for which to get the curve.
-! @return The custom animation curve function for the given animation. NULL if not set.*/
-    pub fn animation_get_custom_curve(
-        animation: *mut Animation,
-    ) -> AnimationCurveFunction;
+    #[doc = "! Gets the custom animation curve function for the animation.\n! @param animation The animation for which to get the curve.\n! @return The custom animation curve function for the given animation. NULL if not set."]
+    pub fn animation_get_custom_curve(animation: *mut Animation) -> AnimationCurveFunction;
 }
-/**! The function pointer type of the handler that will be called when an animation is started,
-! just before updating the first frame of the animation.
-! @param animation The animation that was started.
-! @param context The pointer to custom, application specific data, as set using
-! \ref animation_set_handlers()
-! @note This is called after any optional delay as set by \ref animation_set_delay() has expired.
-! @see animation_set_handlers*/
+#[doc = "! The function pointer type of the handler that will be called when an animation is started,\n! just before updating the first frame of the animation.\n! @param animation The animation that was started.\n! @param context The pointer to custom, application specific data, as set using\n! \\ref animation_set_handlers()\n! @note This is called after any optional delay as set by \\ref animation_set_delay() has expired.\n! @see animation_set_handlers"]
 pub type AnimationStartedHandler = ::core::option::Option<
     unsafe extern "C" fn(animation: *mut Animation, context: *mut ::core::ffi::c_void),
 >;
-/**! The function pointer type of the handler that will be called when the animation is stopped.
-! @param animation The animation that was stopped.
-! @param finished True if the animation was stopped because it was finished normally,
-! or False if the animation was stopped prematurely, because it was unscheduled before finishing.
-! @param context The pointer to custom, application specific data, as set using
-! \ref animation_set_handlers()
-! @see animation_set_handlers
-! \note
-! This animation (i.e.: the `animation` parameter) may be destroyed here.
-! It is not recommended to unschedule or destroy a **different** Animation within this
-! Animation's `stopped` handler.*/
+#[doc = "! The function pointer type of the handler that will be called when the animation is stopped.\n! @param animation The animation that was stopped.\n! @param finished True if the animation was stopped because it was finished normally,\n! or False if the animation was stopped prematurely, because it was unscheduled before finishing.\n! @param context The pointer to custom, application specific data, as set using\n! \\ref animation_set_handlers()\n! @see animation_set_handlers\n! \\note\n! This animation (i.e.: the `animation` parameter) may be destroyed here.\n! It is not recommended to unschedule or destroy a **different** Animation within this\n! Animation's `stopped` handler."]
 pub type AnimationStoppedHandler = ::core::option::Option<
     unsafe extern "C" fn(
         animation: *mut Animation,
@@ -6842,30 +4185,17 @@ pub type AnimationStoppedHandler = ::core::option::Option<
         context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! The handlers that will get called when an animation starts and stops.
-! See documentation with the function pointer types for more information.
-! @see animation_set_handlers*/
+#[doc = "! The handlers that will get called when an animation starts and stops.\n! See documentation with the function pointer types for more information.\n! @see animation_set_handlers"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AnimationHandlers {
-    ///! The handler that will be called when an animation is started.
+    #[doc = "! The handler that will be called when an animation is started."]
     pub started: AnimationStartedHandler,
-    ///! The handler that will be called when an animation is stopped.
+    #[doc = "! The handler that will be called when an animation is stopped."]
     pub stopped: AnimationStoppedHandler,
 }
 unsafe extern "C" {
-    /**! Sets the callbacks for the animation.
-! Often an application needs to run code at the start or at the end of an animation.
-! Using this function is possible to register callback functions with an animation,
-! that will get called at the start and end of the animation.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set up the callbacks.
-! @param callbacks The callbacks.
-! @param context A pointer to application specific data, that will be passed as an argument by
-! the animation subsystem when a callback is called.
-! @return true if successful, false on failure*/
+    #[doc = "! Sets the callbacks for the animation.\n! Often an application needs to run code at the start or at the end of an animation.\n! Using this function is possible to register callback functions with an animation,\n! that will get called at the start and end of the animation.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set up the callbacks.\n! @param callbacks The callbacks.\n! @param context A pointer to application specific data, that will be passed as an argument by\n! the animation subsystem when a callback is called.\n! @return true if successful, false on failure"]
     pub fn animation_set_handlers(
         animation: *mut Animation,
         callbacks: AnimationHandlers,
@@ -6873,147 +4203,55 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the application-specific callback context of the animation.
-! This `void` pointer is passed as an argument when the animation system calls AnimationHandlers
-! callbacks. The context pointer can be set to point to any application specific data using
-! \ref animation_set_handlers().
-! @param animation The animation.
-! @see animation_set_handlers*/
+    #[doc = "! Gets the application-specific callback context of the animation.\n! This `void` pointer is passed as an argument when the animation system calls AnimationHandlers\n! callbacks. The context pointer can be set to point to any application specific data using\n! \\ref animation_set_handlers().\n! @param animation The animation.\n! @see animation_set_handlers"]
     pub fn animation_get_context(animation: *mut Animation) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Schedules the animation. Call this once after configuring an animation to get it to
-! start running.
-!
-! If the animation's implementation has a `.setup` callback it will get called before
-! this function returns.
-!
-! @note If the animation was already scheduled,
-! it will first unschedule it and then re-schedule it again.
-! Note that in that case, the animation's `.stopped` handler, the implementation's
-! `.teardown` and `.setup` will get called, due to the unscheduling and scheduling.
-! @param animation The animation to schedule.
-! @see \ref animation_unschedule()
-! @return true if successful, false on failure*/
+    #[doc = "! Schedules the animation. Call this once after configuring an animation to get it to\n! start running.\n!\n! If the animation's implementation has a `.setup` callback it will get called before\n! this function returns.\n!\n! @note If the animation was already scheduled,\n! it will first unschedule it and then re-schedule it again.\n! Note that in that case, the animation's `.stopped` handler, the implementation's\n! `.teardown` and `.setup` will get called, due to the unscheduling and scheduling.\n! @param animation The animation to schedule.\n! @see \\ref animation_unschedule()\n! @return true if successful, false on failure"]
     pub fn animation_schedule(animation: *mut Animation) -> bool;
 }
 unsafe extern "C" {
-    /**! Unschedules the animation, which in effect stops the animation.
-! @param animation The animation to unschedule.
-! @note If the animation was not yet finished, unscheduling it will
-! cause its `.stopped` handler to get called, with the "finished" argument set to false.
-! @note If the animation is not scheduled or NULL, calling this routine is
-! effectively a no-op
-! @see \ref animation_schedule()
-! @return true if successful, false on failure*/
+    #[doc = "! Unschedules the animation, which in effect stops the animation.\n! @param animation The animation to unschedule.\n! @note If the animation was not yet finished, unscheduling it will\n! cause its `.stopped` handler to get called, with the \"finished\" argument set to false.\n! @note If the animation is not scheduled or NULL, calling this routine is\n! effectively a no-op\n! @see \\ref animation_schedule()\n! @return true if successful, false on failure"]
     pub fn animation_unschedule(animation: *mut Animation) -> bool;
 }
 unsafe extern "C" {
-    /**! Unschedules all animations of the application.
-! @see animation_unschedule*/
+    #[doc = "! Unschedules all animations of the application.\n! @see animation_unschedule"]
     pub fn animation_unschedule_all();
 }
 unsafe extern "C" {
-    /**! @return True if the animation was scheduled, or false if it was not.
-! @note An animation will be scheduled when it is running and not finished yet.
-! An animation that has finished is automatically unscheduled.
-! For convenience, passing in a NULL animation argument will simply return false
-! @param animation The animation for which to get its scheduled state.
-! @see animation_schedule
-! @see animation_unschedule*/
+    #[doc = "! @return True if the animation was scheduled, or false if it was not.\n! @note An animation will be scheduled when it is running and not finished yet.\n! An animation that has finished is automatically unscheduled.\n! For convenience, passing in a NULL animation argument will simply return false\n! @param animation The animation for which to get its scheduled state.\n! @see animation_schedule\n! @see animation_unschedule"]
     pub fn animation_is_scheduled(animation: *mut Animation) -> bool;
 }
-/**! Pointer to function that (optionally) prepares the animation for running.
-! This callback is called when the animation is added to the scheduler.
-! @param animation The animation that needs to be set up.
-! @see animation_schedule
-! @see AnimationTeardownImplementation*/
-pub type AnimationSetupImplementation = ::core::option::Option<
-    unsafe extern "C" fn(animation: *mut Animation),
->;
-/**! Pointer to function that updates the animation according to the given normalized progress.
-! This callback will be called repeatedly by the animation scheduler whenever the animation needs
-! to be updated.
-! @param animation The animation that needs to update; gets passed in by the animation framework.
-! @param progress The current normalized progress; gets passed in by the animation
-! framework for each animation frame.
-! The value \ref ANIMATION_NORMALIZED_MIN represents the start and \ref ANIMATION_NORMALIZED_MAX
-! represents the end. Values outside this range (generated by a custom curve function) can be used
-! to implement features like a bounce back effect, where the progress exceeds the desired final
-! value before returning to complete the animation.
-! When using a system provided curve function, each frame during the animation will have a
-! progress value between \ref ANIMATION_NORMALIZED_MIN and \ref ANIMATION_NORMALIZED_MAX based on
-! the animation duration and the \ref AnimationCurve.
-! For example, say an animation was scheduled at t = 1.0s, has a delay of 1.0s, a duration of 2.0s
-! and a curve of AnimationCurveLinear. Then the .update callback will get called on t = 2.0s with
-! distance_normalized = \ref ANIMATION_NORMALIZED_MIN. For each frame thereafter until t = 4.0s,
-! the update callback will get called where distance_normalized is (\ref ANIMATION_NORMALIZED_MIN
-! + (((\ref ANIMATION_NORMALIZED_MAX - \ref ANIMATION_NORMALIZED_MIN) * t) / duration)).
-! Other system animation curve functions will result in a non-linear relation between
-! distance_normalized and time.*/
+#[doc = "! Pointer to function that (optionally) prepares the animation for running.\n! This callback is called when the animation is added to the scheduler.\n! @param animation The animation that needs to be set up.\n! @see animation_schedule\n! @see AnimationTeardownImplementation"]
+pub type AnimationSetupImplementation =
+    ::core::option::Option<unsafe extern "C" fn(animation: *mut Animation)>;
+#[doc = "! Pointer to function that updates the animation according to the given normalized progress.\n! This callback will be called repeatedly by the animation scheduler whenever the animation needs\n! to be updated.\n! @param animation The animation that needs to update; gets passed in by the animation framework.\n! @param progress The current normalized progress; gets passed in by the animation\n! framework for each animation frame.\n! The value \\ref ANIMATION_NORMALIZED_MIN represents the start and \\ref ANIMATION_NORMALIZED_MAX\n! represents the end. Values outside this range (generated by a custom curve function) can be used\n! to implement features like a bounce back effect, where the progress exceeds the desired final\n! value before returning to complete the animation.\n! When using a system provided curve function, each frame during the animation will have a\n! progress value between \\ref ANIMATION_NORMALIZED_MIN and \\ref ANIMATION_NORMALIZED_MAX based on\n! the animation duration and the \\ref AnimationCurve.\n! For example, say an animation was scheduled at t = 1.0s, has a delay of 1.0s, a duration of 2.0s\n! and a curve of AnimationCurveLinear. Then the .update callback will get called on t = 2.0s with\n! distance_normalized = \\ref ANIMATION_NORMALIZED_MIN. For each frame thereafter until t = 4.0s,\n! the update callback will get called where distance_normalized is (\\ref ANIMATION_NORMALIZED_MIN\n! + (((\\ref ANIMATION_NORMALIZED_MAX - \\ref ANIMATION_NORMALIZED_MIN) * t) / duration)).\n! Other system animation curve functions will result in a non-linear relation between\n! distance_normalized and time."]
 pub type AnimationUpdateImplementation = ::core::option::Option<
     unsafe extern "C" fn(animation: *mut Animation, progress: AnimationProgress),
 >;
-/**! Pointer to function that (optionally) cleans up the animation.
-! This callback is called when the animation is removed from the scheduler.
-! In case the `.setup` implementation
-! allocated any memory, this is a good place to release that memory again.
-! @param animation The animation that needs to be teared down.
-! @see animation_unschedule
-! @see AnimationSetupImplementation*/
-pub type AnimationTeardownImplementation = ::core::option::Option<
-    unsafe extern "C" fn(animation: *mut Animation),
->;
-/**! The 3 callbacks that implement a custom animation.
-! Only the `.update` callback is mandatory, `.setup` and `.teardown` are optional.
-! See the documentation with the function pointer typedefs for more information.
-!
-! @note The `.setup` callback is called immediately after scheduling the animation,
-! regardless if there is a delay set for that animation using \ref animation_set_delay().
-!
-! The diagram below illustrates the order in which callbacks can be expected to get called
-! over the life cycle of an animation. It also illustrates where the implementation of
-! different animation callbacks are intended to be “living”.
-! ![](animations.png)
-!
-! @see AnimationSetupImplementation
-! @see AnimationUpdateImplementation
-! @see AnimationTeardownImplementation*/
+#[doc = "! Pointer to function that (optionally) cleans up the animation.\n! This callback is called when the animation is removed from the scheduler.\n! In case the `.setup` implementation\n! allocated any memory, this is a good place to release that memory again.\n! @param animation The animation that needs to be teared down.\n! @see animation_unschedule\n! @see AnimationSetupImplementation"]
+pub type AnimationTeardownImplementation =
+    ::core::option::Option<unsafe extern "C" fn(animation: *mut Animation)>;
+#[doc = "! The 3 callbacks that implement a custom animation.\n! Only the `.update` callback is mandatory, `.setup` and `.teardown` are optional.\n! See the documentation with the function pointer typedefs for more information.\n!\n! @note The `.setup` callback is called immediately after scheduling the animation,\n! regardless if there is a delay set for that animation using \\ref animation_set_delay().\n!\n! The diagram below illustrates the order in which callbacks can be expected to get called\n! over the life cycle of an animation. It also illustrates where the implementation of\n! different animation callbacks are intended to be “living”.\n! ![](animations.png)\n!\n! @see AnimationSetupImplementation\n! @see AnimationUpdateImplementation\n! @see AnimationTeardownImplementation"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct AnimationImplementation {
-    /**! Called by the animation system when an animation is scheduled, to prepare it for running.
-! This callback is optional and can be left `NULL` when not needed.*/
+    #[doc = "! Called by the animation system when an animation is scheduled, to prepare it for running.\n! This callback is optional and can be left `NULL` when not needed."]
     pub setup: AnimationSetupImplementation,
-    /**! Called by the animation system when the animation needs to calculate the next animation frame.
-! This callback is mandatory and should not be left `NULL`.*/
+    #[doc = "! Called by the animation system when the animation needs to calculate the next animation frame.\n! This callback is mandatory and should not be left `NULL`."]
     pub update: AnimationUpdateImplementation,
-    /**! Called by the animation system when an animation is unscheduled, to clean up after it has run.
-! This callback is optional and can be left `NULL` when not needed.*/
+    #[doc = "! Called by the animation system when an animation is unscheduled, to clean up after it has run.\n! This callback is optional and can be left `NULL` when not needed."]
     pub teardown: AnimationTeardownImplementation,
 }
 unsafe extern "C" {
-    /**! Sets the implementation of the custom animation.
-! When implementing custom animations, use this function to specify what functions need to be
-! called to for the setup, frame update and teardown of the animation.
-! @note Trying to set an attribute when an animation is immutable will return false (failure). An
-! animation is immutable once it has been added to a sequence or spawn animation or has been
-! scheduled.
-! @param animation The animation for which to set the implementation.
-! @param implementation The structure with function pointers to the implementation of the setup,
-!  update and teardown functions.
-! @see AnimationImplementation
-! @return true if successful, false on failure*/
+    #[doc = "! Sets the implementation of the custom animation.\n! When implementing custom animations, use this function to specify what functions need to be\n! called to for the setup, frame update and teardown of the animation.\n! @note Trying to set an attribute when an animation is immutable will return false (failure). An\n! animation is immutable once it has been added to a sequence or spawn animation or has been\n! scheduled.\n! @param animation The animation for which to set the implementation.\n! @param implementation The structure with function pointers to the implementation of the setup,\n!  update and teardown functions.\n! @see AnimationImplementation\n! @return true if successful, false on failure"]
     pub fn animation_set_implementation(
         animation: *mut Animation,
         implementation: *const AnimationImplementation,
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Gets the implementation of the custom animation.
-! @param animation The animation for which to get the implementation.
-! @see AnimationImplementation
-! @return NULL if animation implementation has not been setup.*/
+    #[doc = "! Gets the implementation of the custom animation.\n! @param animation The animation for which to get the implementation.\n! @see AnimationImplementation\n! @return NULL if animation implementation has not been setup."]
     pub fn animation_get_implementation(
         animation: *mut Animation,
     ) -> *const AnimationImplementation;
@@ -7024,17 +4262,7 @@ pub struct PropertyAnimation {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Convenience function to create and initialize a property animation that animates the frame of a
-! Layer. It sets up the PropertyAnimation to use \ref layer_set_frame() and \ref layer_get_frame()
-! as accessors and uses the `layer` parameter as the subject for the animation.
-! The same defaults are used as with \ref animation_create().
-! @param layer the layer that will be animated
-! @param from_frame the frame that the layer should animate from
-! @param to_frame the frame that the layer should animate to
-! @note Pass in `NULL` as one of the frame arguments to have it set automatically to the layer's
-! current frame. This will result in a call to \ref layer_get_frame() to get the current frame of
-! the layer.
-! @return A handle to the property animation. `NULL` if animation could not be created*/
+    #[doc = "! Convenience function to create and initialize a property animation that animates the frame of a\n! Layer. It sets up the PropertyAnimation to use \\ref layer_set_frame() and \\ref layer_get_frame()\n! as accessors and uses the `layer` parameter as the subject for the animation.\n! The same defaults are used as with \\ref animation_create().\n! @param layer the layer that will be animated\n! @param from_frame the frame that the layer should animate from\n! @param to_frame the frame that the layer should animate to\n! @note Pass in `NULL` as one of the frame arguments to have it set automatically to the layer's\n! current frame. This will result in a call to \\ref layer_get_frame() to get the current frame of\n! the layer.\n! @return A handle to the property animation. `NULL` if animation could not be created"]
     pub fn property_animation_create_layer_frame(
         layer: *mut Layer,
         from_frame: *mut GRect,
@@ -7042,14 +4270,7 @@ unsafe extern "C" {
     ) -> *mut PropertyAnimation;
 }
 unsafe extern "C" {
-    /**! Convenience function to create and initialize a property animation that animates the bound's
-! origin of a Layer. It sets up the PropertyAnimation to use layer_set_bounds() and
-! layer_get_bounds() as accessors and uses the `layer` parameter as the subject for the animation.
-! The same defaults are used as with \ref animation_create().
-! @param layer the layer that will be animated
-! @param from_origin the origin that the bounds should animate from
-! @param to_origin the origin that the layer should animate to
-! @return A handle to the property animation. `NULL` if animation could not be created*/
+    #[doc = "! Convenience function to create and initialize a property animation that animates the bound's\n! origin of a Layer. It sets up the PropertyAnimation to use layer_set_bounds() and\n! layer_get_bounds() as accessors and uses the `layer` parameter as the subject for the animation.\n! The same defaults are used as with \\ref animation_create().\n! @param layer the layer that will be animated\n! @param from_origin the origin that the bounds should animate from\n! @param to_origin the origin that the layer should animate to\n! @return A handle to the property animation. `NULL` if animation could not be created"]
     pub fn property_animation_create_bounds_origin(
         layer: *mut Layer,
         from: *mut GPoint,
@@ -7057,23 +4278,7 @@ unsafe extern "C" {
     ) -> *mut PropertyAnimation;
 }
 unsafe extern "C" {
-    /**! Creates a new PropertyAnimation on the heap and and initializes it with the specified values.
-! The same defaults are used as with \ref animation_create().
-! If the `from_value` or the `to_value` is `NULL`, the getter accessor will be called to get the
-! current value of the property and be used instead.
-! @param implementation Pointer to the implementation of the animation. In most cases, it makes
-! sense to pass in a `static const` struct pointer.
-! @param subject Pointer to the "subject" being animated. This will be passed in when the getter/
-! setter accessors are called,
-! see \ref PropertyAnimationAccessors, \ref GPointSetter, and friends. The value of this pointer
-! will be copied into the `.subject` field of the PropertyAnimation struct.
-! @param from_value Pointer to the value that the subject should animate from
-! @param to_value Pointer to the value that the subject should animate to
-! @note Pass in `NULL` as one of the value arguments to have it set automatically to the subject's
-! current property value, as returned by the getter function. Also note that passing in `NULL` for
-! both `from_value` and `to_value`, will result in the animation having the same from- and to-
-! values, effectively not doing anything.
-! @return A handle to the property animation. `NULL` if animation could not be created*/
+    #[doc = "! Creates a new PropertyAnimation on the heap and and initializes it with the specified values.\n! The same defaults are used as with \\ref animation_create().\n! If the `from_value` or the `to_value` is `NULL`, the getter accessor will be called to get the\n! current value of the property and be used instead.\n! @param implementation Pointer to the implementation of the animation. In most cases, it makes\n! sense to pass in a `static const` struct pointer.\n! @param subject Pointer to the \"subject\" being animated. This will be passed in when the getter/\n! setter accessors are called,\n! see \\ref PropertyAnimationAccessors, \\ref GPointSetter, and friends. The value of this pointer\n! will be copied into the `.subject` field of the PropertyAnimation struct.\n! @param from_value Pointer to the value that the subject should animate from\n! @param to_value Pointer to the value that the subject should animate to\n! @note Pass in `NULL` as one of the value arguments to have it set automatically to the subject's\n! current property value, as returned by the getter function. Also note that passing in `NULL` for\n! both `from_value` and `to_value`, will result in the animation having the same from- and to-\n! values, effectively not doing anything.\n! @return A handle to the property animation. `NULL` if animation could not be created"]
     pub fn property_animation_create(
         implementation: *const PropertyAnimationImplementation,
         subject: *mut ::core::ffi::c_void,
@@ -7082,238 +4287,99 @@ unsafe extern "C" {
     ) -> *mut PropertyAnimation;
 }
 unsafe extern "C" {
-    /**! Destroy a property animation allocated by property_animation_create() or relatives.
-! @param property_animation the return value from property_animation_create*/
+    #[doc = "! Destroy a property animation allocated by property_animation_create() or relatives.\n! @param property_animation the return value from property_animation_create"]
     pub fn property_animation_destroy(property_animation: *mut PropertyAnimation);
 }
 unsafe extern "C" {
-    /**! Default update callback for a property animations to update a property of type int16_t.
-! Assign this function to the `.base.update` callback field of your
-! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of
-! types \ref Int16Getter and \ref Int16Setter.
-! The implementation of this function will calculate the next value of the animation and call the
-! setter to set the new value upon the subject.
-! @param property_animation The property animation for which the update is requested.
-! @param distance_normalized The current normalized distance. See \ref
-! AnimationUpdateImplementation
-! @note This function is not supposed to be called "manually", but will be called automatically
-! when the animation is being run.*/
+    #[doc = "! Default update callback for a property animations to update a property of type int16_t.\n! Assign this function to the `.base.update` callback field of your\n! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of\n! types \\ref Int16Getter and \\ref Int16Setter.\n! The implementation of this function will calculate the next value of the animation and call the\n! setter to set the new value upon the subject.\n! @param property_animation The property animation for which the update is requested.\n! @param distance_normalized The current normalized distance. See \\ref\n! AnimationUpdateImplementation\n! @note This function is not supposed to be called \"manually\", but will be called automatically\n! when the animation is being run."]
     pub fn property_animation_update_int16(
         property_animation: *mut PropertyAnimation,
         distance_normalized: u32,
     );
 }
 unsafe extern "C" {
-    /**! Default update callback for a property animations to update a property of type uint32_t.
-! Assign this function to the `.base.update` callback field of your
-! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of
-! types \ref UInt32Getter and \ref UInt32Setter.
-! The implementation of this function will calculate the next value of the animation and call the
-! setter to set the new value upon the subject.
-! @param property_animation The property animation for which the update is requested.
-! @param distance_normalized The current normalized distance. See \ref
-! AnimationUpdateImplementation
-! @note This function is not supposed to be called "manually", but will be called automatically
-! when the animation is being run.*/
+    #[doc = "! Default update callback for a property animations to update a property of type uint32_t.\n! Assign this function to the `.base.update` callback field of your\n! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of\n! types \\ref UInt32Getter and \\ref UInt32Setter.\n! The implementation of this function will calculate the next value of the animation and call the\n! setter to set the new value upon the subject.\n! @param property_animation The property animation for which the update is requested.\n! @param distance_normalized The current normalized distance. See \\ref\n! AnimationUpdateImplementation\n! @note This function is not supposed to be called \"manually\", but will be called automatically\n! when the animation is being run."]
     pub fn property_animation_update_uint32(
         property_animation: *mut PropertyAnimation,
         distance_normalized: u32,
     );
 }
 unsafe extern "C" {
-    /**! Default update callback for a property animations to update a property of type GPoint.
-! Assign this function to the `.base.update` callback field of your
-! PropertyAnimationImplementation,
-! in combination with a `.getter` and `.setter` accessors of types \ref GPointGetter and \ref
-! GPointSetter.
-! The implementation of this function will calculate the next point of the animation and call the
-! setter to set the new point upon the subject.
-! @param property_animation The property animation for which the update is requested.
-! @param distance_normalized The current normalized distance. See \ref
-! AnimationUpdateImplementation
-! @note This function is not supposed to be called "manually", but will be called automatically
-! when the animation is being run.*/
+    #[doc = "! Default update callback for a property animations to update a property of type GPoint.\n! Assign this function to the `.base.update` callback field of your\n! PropertyAnimationImplementation,\n! in combination with a `.getter` and `.setter` accessors of types \\ref GPointGetter and \\ref\n! GPointSetter.\n! The implementation of this function will calculate the next point of the animation and call the\n! setter to set the new point upon the subject.\n! @param property_animation The property animation for which the update is requested.\n! @param distance_normalized The current normalized distance. See \\ref\n! AnimationUpdateImplementation\n! @note This function is not supposed to be called \"manually\", but will be called automatically\n! when the animation is being run."]
     pub fn property_animation_update_gpoint(
         property_animation: *mut PropertyAnimation,
         distance_normalized: u32,
     );
 }
 unsafe extern "C" {
-    /**! Default update callback for a property animations to update a property of type GRect.
-! Assign this function to the `.base.update` callback field of your
-! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of
-! types \ref GRectGetter and \ref GRectSetter. The implementation of this function will calculate
-! the next rectangle of the animation and call the setter to set the new rectangle upon the
-! subject.
-! @param property_animation The property animation for which the update is requested.
-! @param distance_normalized The current normalized distance. See \ref
-! AnimationUpdateImplementation
-! @note This function is not supposed to be called "manually", but will be called automatically
-! when the animation is being run.*/
+    #[doc = "! Default update callback for a property animations to update a property of type GRect.\n! Assign this function to the `.base.update` callback field of your\n! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of\n! types \\ref GRectGetter and \\ref GRectSetter. The implementation of this function will calculate\n! the next rectangle of the animation and call the setter to set the new rectangle upon the\n! subject.\n! @param property_animation The property animation for which the update is requested.\n! @param distance_normalized The current normalized distance. See \\ref\n! AnimationUpdateImplementation\n! @note This function is not supposed to be called \"manually\", but will be called automatically\n! when the animation is being run."]
     pub fn property_animation_update_grect(
         property_animation: *mut PropertyAnimation,
         distance_normalized: u32,
     );
 }
 unsafe extern "C" {
-    /**! Default update callback for a property animations to update a property of type GColor8.
-! Assign this function to the `.base.update` callback field of your
-! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of
-! types \ref GColor8Getter and \ref GColor8Setter. The implementation of this function will
-! calculate the next rectangle of the animation and call the setter to set the new value upon
-! the subject.
-! @param property_animation The property animation for which the update is requested.
-! @param distance_normalized The current normalized distance. See \ref
-! AnimationUpdateImplementation
-! @note This function is not supposed to be called "manually", but will be called automatically
-! when the animation is being run.*/
+    #[doc = "! Default update callback for a property animations to update a property of type GColor8.\n! Assign this function to the `.base.update` callback field of your\n! PropertyAnimationImplementation, in combination with a `.getter` and `.setter` accessors of\n! types \\ref GColor8Getter and \\ref GColor8Setter. The implementation of this function will\n! calculate the next rectangle of the animation and call the setter to set the new value upon\n! the subject.\n! @param property_animation The property animation for which the update is requested.\n! @param distance_normalized The current normalized distance. See \\ref\n! AnimationUpdateImplementation\n! @note This function is not supposed to be called \"manually\", but will be called automatically\n! when the animation is being run."]
     pub fn property_animation_update_gcolor8(
         property_animation: *mut PropertyAnimation,
         distance_normalized: u32,
     );
 }
-/**! Work-around for function pointer return type GPoint to avoid
-! tripping the pre-processor to use the equally named GPoint define*/
+#[doc = "! Work-around for function pointer return type GPoint to avoid\n! tripping the pre-processor to use the equally named GPoint define"]
 pub type GPointReturn = GPoint;
-/**! Work-around for function pointer return type GRect to avoid
-! tripping the pre-processor to use the equally named GRect define*/
+#[doc = "! Work-around for function pointer return type GRect to avoid\n! tripping the pre-processor to use the equally named GRect define"]
 pub type GRectReturn = GRect;
-/**! Function signature of a setter function to set a property of type int16_t onto the subject.
-! @see \ref property_animation_update_int16()
-! @see \ref PropertyAnimationAccessors*/
-pub type Int16Setter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, int16: i16),
->;
-/**! Function signature of a getter function to get the current property of type int16_t of the
-! subject.
-! @see \ref property_animation_create()
-! @see \ref PropertyAnimationAccessors*/
-pub type Int16Getter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> i16,
->;
-/**! Function signature of a setter function to set a property of type uint32_t onto the subject.
-! @see \ref property_animation_update_int16()
-! @see \ref PropertyAnimationAccessors*/
-pub type UInt32Setter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, uint32: u32),
->;
-/**! Function signature of a getter function to get the current property of type uint32_t of the
-! subject.
-! @see \ref property_animation_create()
-! @see \ref PropertyAnimationAccessors*/
-pub type UInt32Getter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> u32,
->;
-/**! Function signature of a setter function to set a property of type GPoint onto the subject.
-! @see \ref property_animation_update_gpoint()
-! @see \ref PropertyAnimationAccessors*/
-pub type GPointSetter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, gpoint: GPoint),
->;
-/**! Function signature of a getter function to get the current property of type GPoint of the subject.
-! @see \ref property_animation_create()
-! @see \ref PropertyAnimationAccessors*/
-pub type GPointGetter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GPointReturn,
->;
-/**! Function signature of a setter function to set a property of type GRect onto the subject.
-! @see \ref property_animation_update_grect()
-! @see \ref PropertyAnimationAccessors*/
-pub type GRectSetter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, grect: GRect),
->;
-/**! Function signature of a getter function to get the current property of type GRect of the subject.
-! @see \ref property_animation_create()
-! @see \ref PropertyAnimationAccessors*/
-pub type GRectGetter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GRectReturn,
->;
-/**! Function signature of a setter function to set a property of type GColor8 onto the subject.
-! @see \ref property_animation_update_gcolor8()
-! @see \ref PropertyAnimationAccessors*/
+#[doc = "! Function signature of a setter function to set a property of type int16_t onto the subject.\n! @see \\ref property_animation_update_int16()\n! @see \\ref PropertyAnimationAccessors"]
+pub type Int16Setter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, int16: i16)>;
+#[doc = "! Function signature of a getter function to get the current property of type int16_t of the\n! subject.\n! @see \\ref property_animation_create()\n! @see \\ref PropertyAnimationAccessors"]
+pub type Int16Getter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> i16>;
+#[doc = "! Function signature of a setter function to set a property of type uint32_t onto the subject.\n! @see \\ref property_animation_update_int16()\n! @see \\ref PropertyAnimationAccessors"]
+pub type UInt32Setter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, uint32: u32)>;
+#[doc = "! Function signature of a getter function to get the current property of type uint32_t of the\n! subject.\n! @see \\ref property_animation_create()\n! @see \\ref PropertyAnimationAccessors"]
+pub type UInt32Getter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> u32>;
+#[doc = "! Function signature of a setter function to set a property of type GPoint onto the subject.\n! @see \\ref property_animation_update_gpoint()\n! @see \\ref PropertyAnimationAccessors"]
+pub type GPointSetter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, gpoint: GPoint)>;
+#[doc = "! Function signature of a getter function to get the current property of type GPoint of the subject.\n! @see \\ref property_animation_create()\n! @see \\ref PropertyAnimationAccessors"]
+pub type GPointGetter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GPointReturn>;
+#[doc = "! Function signature of a setter function to set a property of type GRect onto the subject.\n! @see \\ref property_animation_update_grect()\n! @see \\ref PropertyAnimationAccessors"]
+pub type GRectSetter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, grect: GRect)>;
+#[doc = "! Function signature of a getter function to get the current property of type GRect of the subject.\n! @see \\ref property_animation_create()\n! @see \\ref PropertyAnimationAccessors"]
+pub type GRectGetter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GRectReturn>;
+#[doc = "! Function signature of a setter function to set a property of type GColor8 onto the subject.\n! @see \\ref property_animation_update_gcolor8()\n! @see \\ref PropertyAnimationAccessors"]
 pub type GColor8Setter = ::core::option::Option<
     unsafe extern "C" fn(subject: *mut ::core::ffi::c_void, gcolor: GColor8),
 >;
-/**! Function signature of a getter function to get the current property of type GColor8 of the
-! subject.
-! @see \ref property_animation_create()
-! @see \ref PropertyAnimationAccessors*/
-pub type GColor8Getter = ::core::option::Option<
-    unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GColor8,
->;
-/**! @addtogroup PropertyAnimation
-! \brief A ProperyAnimation animates the value of a "property" of a "subject" over time.
-!
-! <h3>Animating a Layer's frame property</h3>
-! Currently there is only one specific type of property animation offered off-the-shelf, namely
-! one to change the frame (property) of a layer (subject), see \ref
-! property_animation_create_layer_frame().
-!
-! <h3>Implementing a custom PropertyAnimation</h3>
-! It is fairly simple to create your own variant of a PropertyAnimation.
-!
-! Please refer to \htmlinclude UiFramework.html (chapter "Property Animations") for a conceptual
-! overview of the animation framework and make sure you understand the underlying \ref Animation,
-! in case you are not familiar with it, before trying to implement a variation on
-! PropertyAnimation.
-!
-! To implement a custom property animation, use \ref property_animation_create() and provide a
-! function pointers to the accessors (getter and setter) and setup, update and teardown callbacks
-! in the implementation argument. Note that the type of property to animate with \ref
-! PropertyAnimation is limited to int16_t, GPoint or GRect.
-!
-! For each of these types, there are implementations provided for the necessary `.update` handler
-! of the animation: see \ref property_animation_update_int16(), \ref
-! property_animation_update_gpoint() and \ref property_animation_update_grect().
-! These update functions expect the `.accessors` to conform to the following interface:
-! Any getter needs to have the following function signature: `__type__ getter(void *subject);`
-! Any setter needs to have to following function signature: `void setter(void *subject,
-! __type__ value);`
-! See \ref Int16Getter, \ref Int16Setter, \ref GPointGetter, \ref GPointSetter,
-! \ref GRectGetter, \ref GRectSetter for the typedefs that accompany the update fuctions.
-!
-! \code{.c}
-! static const PropertyAnimationImplementation my_implementation = {
-!   .base = {
-!     // using the "stock" update callback:
-!     .update = (AnimationUpdateImplementation) property_animation_update_gpoint,
-!   },
-!   .accessors = {
-!     // my accessors that get/set a GPoint from/onto my subject:
-!     .setter = { .gpoint = my_layer_set_corner_point, },
-!     .getter = { .gpoint = (const GPointGetter) my_layer_get_corner_point, },
-!   },
-! };
-! static PropertyAnimation* s_my_animation_ptr = NULL;
-! static GPoint s_to_point = GPointZero;
-! ...
-! // Use NULL as 'from' value, this will make the animation framework call the getter
-! // to get the current value of the property and use that as the 'from' value:
-! s_my_animation_ptr = property_animation_create(&my_implementation, my_layer, NULL, &s_to_point);
-! animation_schedule(property_animation_get_animation(s_my_animation_ptr));
-! \endcode
-! @{*/
+#[doc = "! Function signature of a getter function to get the current property of type GColor8 of the\n! subject.\n! @see \\ref property_animation_create()\n! @see \\ref PropertyAnimationAccessors"]
+pub type GColor8Getter =
+    ::core::option::Option<unsafe extern "C" fn(subject: *mut ::core::ffi::c_void) -> GColor8>;
+#[doc = "! @addtogroup PropertyAnimation\n! \\brief A ProperyAnimation animates the value of a \"property\" of a \"subject\" over time.\n!\n! <h3>Animating a Layer's frame property</h3>\n! Currently there is only one specific type of property animation offered off-the-shelf, namely\n! one to change the frame (property) of a layer (subject), see \\ref\n! property_animation_create_layer_frame().\n!\n! <h3>Implementing a custom PropertyAnimation</h3>\n! It is fairly simple to create your own variant of a PropertyAnimation.\n!\n! Please refer to \\htmlinclude UiFramework.html (chapter \"Property Animations\") for a conceptual\n! overview of the animation framework and make sure you understand the underlying \\ref Animation,\n! in case you are not familiar with it, before trying to implement a variation on\n! PropertyAnimation.\n!\n! To implement a custom property animation, use \\ref property_animation_create() and provide a\n! function pointers to the accessors (getter and setter) and setup, update and teardown callbacks\n! in the implementation argument. Note that the type of property to animate with \\ref\n! PropertyAnimation is limited to int16_t, GPoint or GRect.\n!\n! For each of these types, there are implementations provided for the necessary `.update` handler\n! of the animation: see \\ref property_animation_update_int16(), \\ref\n! property_animation_update_gpoint() and \\ref property_animation_update_grect().\n! These update functions expect the `.accessors` to conform to the following interface:\n! Any getter needs to have the following function signature: `__type__ getter(void *subject);`\n! Any setter needs to have to following function signature: `void setter(void *subject,\n! __type__ value);`\n! See \\ref Int16Getter, \\ref Int16Setter, \\ref GPointGetter, \\ref GPointSetter,\n! \\ref GRectGetter, \\ref GRectSetter for the typedefs that accompany the update fuctions.\n!\n! \\code{.c}\n! static const PropertyAnimationImplementation my_implementation = {\n!   .base = {\n!     // using the \"stock\" update callback:\n!     .update = (AnimationUpdateImplementation) property_animation_update_gpoint,\n!   },\n!   .accessors = {\n!     // my accessors that get/set a GPoint from/onto my subject:\n!     .setter = { .gpoint = my_layer_set_corner_point, },\n!     .getter = { .gpoint = (const GPointGetter) my_layer_get_corner_point, },\n!   },\n! };\n! static PropertyAnimation* s_my_animation_ptr = NULL;\n! static GPoint s_to_point = GPointZero;\n! ...\n! // Use NULL as 'from' value, this will make the animation framework call the getter\n! // to get the current value of the property and use that as the 'from' value:\n! s_my_animation_ptr = property_animation_create(&my_implementation, my_layer, NULL, &s_to_point);\n! animation_schedule(property_animation_get_animation(s_my_animation_ptr));\n! \\endcode\n! @{"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PropertyAnimationAccessors {
     pub setter: PropertyAnimationAccessors__bindgen_ty_1,
     pub getter: PropertyAnimationAccessors__bindgen_ty_2,
 }
-/**! Function pointer to the implementation of the function that __sets__ the updated property
-! value. This function will be called repeatedly for each animation frame.
-! @see PropertyAnimationAccessors*/
+#[doc = "! Function pointer to the implementation of the function that __sets__ the updated property\n! value. This function will be called repeatedly for each animation frame.\n! @see PropertyAnimationAccessors"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union PropertyAnimationAccessors__bindgen_ty_1 {
-    ///! Use if the property to animate is of int16_t type
+    #[doc = "! Use if the property to animate is of int16_t type"]
     pub int16: Int16Setter,
-    ///! Use if the property to animate is of GPoint type
+    #[doc = "! Use if the property to animate is of GPoint type"]
     pub gpoint: GPointSetter,
-    ///! Use if the property to animate is of GRect type
+    #[doc = "! Use if the property to animate is of GRect type"]
     pub grect: GRectSetter,
-    ///! Use if the property to animate is of GColor8 type
+    #[doc = "! Use if the property to animate is of GColor8 type"]
     pub gcolor8: GColor8Setter,
-    ///! Use if the property to animate is of uint32_t type
+    #[doc = "! Use if the property to animate is of uint32_t type"]
     pub uint32: UInt32Setter,
 }
 impl Default for PropertyAnimationAccessors__bindgen_ty_1 {
@@ -7325,22 +4391,19 @@ impl Default for PropertyAnimationAccessors__bindgen_ty_1 {
         }
     }
 }
-/**! Function pointer to the implementation of the function that __gets__ the current property
-! value. This function will be called during \ref property_animation_create(), to get the current
-! property value, in case the `from_value` or `to_value` argument is `NULL`.
-! @see PropertyAnimationAccessors*/
+#[doc = "! Function pointer to the implementation of the function that __gets__ the current property\n! value. This function will be called during \\ref property_animation_create(), to get the current\n! property value, in case the `from_value` or `to_value` argument is `NULL`.\n! @see PropertyAnimationAccessors"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union PropertyAnimationAccessors__bindgen_ty_2 {
-    ///! Use if the property to animate is of int16_t type
+    #[doc = "! Use if the property to animate is of int16_t type"]
     pub int16: Int16Getter,
-    ///! Use if the property to animate is of GPoint type
+    #[doc = "! Use if the property to animate is of GPoint type"]
     pub gpoint: GPointGetter,
-    ///! Use if the property to animate is of GRect type
+    #[doc = "! Use if the property to animate is of GRect type"]
     pub grect: GRectGetter,
-    ///! Use if the property to animate is of GColor8 type
+    #[doc = "! Use if the property to animate is of GColor8 type"]
     pub gcolor8: GColor8Getter,
-    ///! Use if the property to animate is of uint32_t type
+    #[doc = "! Use if the property to animate is of uint32_t type"]
     pub uint32: UInt32Getter,
 }
 impl Default for PropertyAnimationAccessors__bindgen_ty_2 {
@@ -7361,15 +4424,13 @@ impl Default for PropertyAnimationAccessors {
         }
     }
 }
-/**! Data structure containing a collection of function pointers that form the implementation of the
-! property animation.
-! See the code example at the top (\ref PropertyAnimation).*/
+#[doc = "! Data structure containing a collection of function pointers that form the implementation of the\n! property animation.\n! See the code example at the top (\\ref PropertyAnimation)."]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PropertyAnimationImplementation {
-    ///! The "inherited" fields from the Animation "base class".
+    #[doc = "! The \"inherited\" fields from the Animation \"base class\"."]
     pub base: AnimationImplementation,
-    ///! The accessors to set/get the property to be animated.
+    #[doc = "! The accessors to set/get the property to be animated."]
     pub accessors: PropertyAnimationAccessors,
 }
 impl Default for PropertyAnimationImplementation {
@@ -7382,19 +4443,13 @@ impl Default for PropertyAnimationImplementation {
     }
 }
 unsafe extern "C" {
-    /**! Convenience function to retrieve an animation instance from a property animation instance
-! @param property_animation The property animation
-! @return The \ref Animation within this PropertyAnimation*/
+    #[doc = "! Convenience function to retrieve an animation instance from a property animation instance\n! @param property_animation The property animation\n! @return The \\ref Animation within this PropertyAnimation"]
     pub fn property_animation_get_animation(
         property_animation: *mut PropertyAnimation,
     ) -> *mut Animation;
 }
 unsafe extern "C" {
-    /**! Helper function used by the property_animation_get|set_subject macros
-! @param property_animation Handle to the property animation
-! @param subject The subject to get or set.
-! @param set true to set new subject, false to retrieve existing value
-! @return true if successful, false on failure (usually a bad animation_h)*/
+    #[doc = "! Helper function used by the property_animation_get|set_subject macros\n! @param property_animation Handle to the property animation\n! @param subject The subject to get or set.\n! @param set true to set new subject, false to retrieve existing value\n! @return true if successful, false on failure (usually a bad animation_h)"]
     pub fn property_animation_subject(
         property_animation: *mut PropertyAnimation,
         subject: *mut *mut ::core::ffi::c_void,
@@ -7402,12 +4457,7 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Helper function used by the property_animation_get|set_from_.* macros
-! @param property_animation Handle to the property animation
-! @param from Pointer to the value
-! @param size Size of the from value
-! @param set true to set new value, false to retrieve existing one
-! @return true if successful, false on failure (usually a bad animation_h)*/
+    #[doc = "! Helper function used by the property_animation_get|set_from_.* macros\n! @param property_animation Handle to the property animation\n! @param from Pointer to the value\n! @param size Size of the from value\n! @param set true to set new value, false to retrieve existing one\n! @return true if successful, false on failure (usually a bad animation_h)"]
     pub fn property_animation_from(
         property_animation: *mut PropertyAnimation,
         from: *mut ::core::ffi::c_void,
@@ -7416,12 +4466,7 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Helper function used by the property_animation_get|set_to_.* macros
-! @param property_animation handle to the property animation
-! @param to Pointer to the value
-! @param size Size of the to value
-! @param set true to set new value, false to retrieve existing one
-! @return true if successful, false on failure (usually a bad animation_h)*/
+    #[doc = "! Helper function used by the property_animation_get|set_to_.* macros\n! @param property_animation handle to the property animation\n! @param to Pointer to the value\n! @param size Size of the to value\n! @param set true to set new value, false to retrieve existing one\n! @return true if successful, false on failure (usually a bad animation_h)"]
     pub fn property_animation_to(
         property_animation: *mut PropertyAnimation,
         to: *mut ::core::ffi::c_void,
@@ -7429,361 +4474,161 @@ unsafe extern "C" {
         set: bool,
     ) -> bool;
 }
-/**! Handler that will be called just before the unobstructed area will begin changing
-! @param final_unobstructed_screen_area The final unobstructed screen area after
-! the unobstructed area has finished changing.
-! @param context A user-provided context.*/
+#[doc = "! Handler that will be called just before the unobstructed area will begin changing\n! @param final_unobstructed_screen_area The final unobstructed screen area after\n! the unobstructed area has finished changing.\n! @param context A user-provided context."]
 pub type UnobstructedAreaWillChangeHandler = ::core::option::Option<
-    unsafe extern "C" fn(
-        final_unobstructed_screen_area: GRect,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(final_unobstructed_screen_area: GRect, context: *mut ::core::ffi::c_void),
 >;
-/**! Handler that will be called every time the unobstructed area changes
-! @param progress The progress of the animation changing the unobstructed area.
-! @param context A user-provided context.*/
+#[doc = "! Handler that will be called every time the unobstructed area changes\n! @param progress The progress of the animation changing the unobstructed area.\n! @param context A user-provided context."]
 pub type UnobstructedAreaChangeHandler = ::core::option::Option<
     unsafe extern "C" fn(progress: AnimationProgress, context: *mut ::core::ffi::c_void),
 >;
-/**! Handler that will be called after the unobstructed area has finished changing
-! @param context A user-provided context.*/
-pub type UnobstructedAreaDidChangeHandler = ::core::option::Option<
-    unsafe extern "C" fn(context: *mut ::core::ffi::c_void),
->;
+#[doc = "! Handler that will be called after the unobstructed area has finished changing\n! @param context A user-provided context."]
+pub type UnobstructedAreaDidChangeHandler =
+    ::core::option::Option<unsafe extern "C" fn(context: *mut ::core::ffi::c_void)>;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct UnobstructedAreaHandlers {
-    ///! Handler that will be called just before the unobstructed area will begin changing.
+    #[doc = "! Handler that will be called just before the unobstructed area will begin changing."]
     pub will_change: UnobstructedAreaWillChangeHandler,
-    ///! Handler that will be called every time the unobstructed area changes.
+    #[doc = "! Handler that will be called every time the unobstructed area changes."]
     pub change: UnobstructedAreaChangeHandler,
-    ///! Handler that will be called after the unobstructed area has finished changing.
+    #[doc = "! Handler that will be called after the unobstructed area has finished changing."]
     pub did_change: UnobstructedAreaDidChangeHandler,
 }
 unsafe extern "C" {
-    /**! Subscribe to be notified when the app's unobstructed area changes. When an unobstructed area
-! begins changing, the `will_change` handler will be called, and every `will_change` call is
-! always paired with a `did_change` call that occurs when it is done changing given that
-! the `will_change` and `did_change` handlers are set. When subscribing while the unobstructed
-! area is changing, the `will_change` handler will be called after subscription in the next event
-! loop.
-! @param handlers The handlers that should be called when the unobstructed area changes.
-! @param context A user-provided context that will be passed to the callback handlers.
-! @see layer_get_unobstructed_bounds*/
+    #[doc = "! Subscribe to be notified when the app's unobstructed area changes. When an unobstructed area\n! begins changing, the `will_change` handler will be called, and every `will_change` call is\n! always paired with a `did_change` call that occurs when it is done changing given that\n! the `will_change` and `did_change` handlers are set. When subscribing while the unobstructed\n! area is changing, the `will_change` handler will be called after subscription in the next event\n! loop.\n! @param handlers The handlers that should be called when the unobstructed area changes.\n! @param context A user-provided context that will be passed to the callback handlers.\n! @see layer_get_unobstructed_bounds"]
     pub fn unobstructed_area_service_subscribe(
         handlers: UnobstructedAreaHandlers,
         context: *mut ::core::ffi::c_void,
     );
 }
 unsafe extern "C" {
-    ///! Unsubscribe from notifications about changes to the app's unobstructed area.
+    #[doc = "! Unsubscribe from notifications about changes to the app's unobstructed area."]
     pub fn unobstructed_area_service_unsubscribe();
 }
-/**! @addtogroup TextLayer
-! \brief Layer that displays and formats a text string.
-!
-! ![](text_layer.png)
-! The geometric information (bounds, frame) of the Layer
-! is used as the "box" in which the text is drawn. The \ref TextLayer also has a number of
-! other properties that influence how the text is drawn. Most important of these properties are:
-! a pointer to the string to draw itself, the font, the text color, the background color of the
-! layer, the overflow mode and alignment of the text inside the layer.
-! @see Layer
-! @see TextDrawing
-! @see Fonts
-! @{*/
+#[doc = "! @addtogroup TextLayer\n! \\brief Layer that displays and formats a text string.\n!\n! ![](text_layer.png)\n! The geometric information (bounds, frame) of the Layer\n! is used as the \"box\" in which the text is drawn. The \\ref TextLayer also has a number of\n! other properties that influence how the text is drawn. Most important of these properties are:\n! a pointer to the string to draw itself, the font, the text color, the background color of the\n! layer, the overflow mode and alignment of the text inside the layer.\n! @see Layer\n! @see TextDrawing\n! @see Fonts\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct TextLayer {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Creates a new TextLayer on the heap and initializes it with the default values.
-!
-! * Font: Raster Gothic 14-point Boldface (system font)
-! * Text Alignment: \ref GTextAlignmentLeft
-! * Text color: \ref GColorBlack
-! * Background color: \ref GColorWhite
-! * Clips: `true`
-! * Hidden: `false`
-! * Caching: `false`
-!
-! The text layer is automatically marked dirty after this operation.
-! @param frame The frame with which to initialze the TextLayer
-! @return A pointer to the TextLayer. `NULL` if the TextLayer could not
-! be created*/
+    #[doc = "! Creates a new TextLayer on the heap and initializes it with the default values.\n!\n! * Font: Raster Gothic 14-point Boldface (system font)\n! * Text Alignment: \\ref GTextAlignmentLeft\n! * Text color: \\ref GColorBlack\n! * Background color: \\ref GColorWhite\n! * Clips: `true`\n! * Hidden: `false`\n! * Caching: `false`\n!\n! The text layer is automatically marked dirty after this operation.\n! @param frame The frame with which to initialze the TextLayer\n! @return A pointer to the TextLayer. `NULL` if the TextLayer could not\n! be created"]
     pub fn text_layer_create(frame: GRect) -> *mut TextLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a TextLayer previously created by text_layer_create.
+    #[doc = "! Destroys a TextLayer previously created by text_layer_create."]
     pub fn text_layer_destroy(text_layer: *mut TextLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the text layer, which is the parent for the sub-
-! layers used for its implementation.
-! @param text_layer Pointer to the TextLayer for which to get the "root" Layer
-! @return The "root" Layer of the text layer.*/
+    #[doc = "! Gets the \"root\" Layer of the text layer, which is the parent for the sub-\n! layers used for its implementation.\n! @param text_layer Pointer to the TextLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the text layer."]
     pub fn text_layer_get_layer(text_layer: *mut TextLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Sets the pointer to the string where the TextLayer is supposed to find the text
-! at a later point in time, when it needs to draw itself.
-! @param text_layer The TextLayer of which to set the text
-! @param text The new text to set onto the TextLayer. This must be a null-terminated and valid UTF-8 string!
-! @note The string is not copied, so its buffer most likely cannot be stack allocated,
-! but is recommended to be a buffer that is long-lived, at least as long as the TextLayer
-! is part of a visible Layer hierarchy.
-! @see text_layer_get_text*/
-    pub fn text_layer_set_text(
-        text_layer: *mut TextLayer,
-        text: *const ::core::ffi::c_char,
-    );
+    #[doc = "! Sets the pointer to the string where the TextLayer is supposed to find the text\n! at a later point in time, when it needs to draw itself.\n! @param text_layer The TextLayer of which to set the text\n! @param text The new text to set onto the TextLayer. This must be a null-terminated and valid UTF-8 string!\n! @note The string is not copied, so its buffer most likely cannot be stack allocated,\n! but is recommended to be a buffer that is long-lived, at least as long as the TextLayer\n! is part of a visible Layer hierarchy.\n! @see text_layer_get_text"]
+    pub fn text_layer_set_text(text_layer: *mut TextLayer, text: *const ::core::ffi::c_char);
 }
 unsafe extern "C" {
-    /**! Gets the pointer to the string that the TextLayer is using.
-! @param text_layer The TextLayer for which to get the text
-! @see text_layer_set_text*/
+    #[doc = "! Gets the pointer to the string that the TextLayer is using.\n! @param text_layer The TextLayer for which to get the text\n! @see text_layer_set_text"]
     pub fn text_layer_get_text(text_layer: *mut TextLayer) -> *const ::core::ffi::c_char;
 }
 unsafe extern "C" {
-    /**! Sets the background color of the bounding box that will be drawn behind the text
-! @param text_layer The TextLayer of which to set the background color
-! @param color The new \ref GColor to set the background to
-! @see text_layer_set_text_color*/
+    #[doc = "! Sets the background color of the bounding box that will be drawn behind the text\n! @param text_layer The TextLayer of which to set the background color\n! @param color The new \\ref GColor to set the background to\n! @see text_layer_set_text_color"]
     pub fn text_layer_set_background_color(text_layer: *mut TextLayer, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the color of text that will be drawn
-! @param text_layer The TextLayer of which to set the text color
-! @param color The new \ref GColor to set the text color to
-! @see text_layer_set_background_color*/
+    #[doc = "! Sets the color of text that will be drawn\n! @param text_layer The TextLayer of which to set the text color\n! @param color The new \\ref GColor to set the text color to\n! @see text_layer_set_background_color"]
     pub fn text_layer_set_text_color(text_layer: *mut TextLayer, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the line break mode of the TextLayer
-! @param text_layer The TextLayer of which to set the overflow mode
-! @param line_mode The new \ref GTextOverflowMode to set*/
-    pub fn text_layer_set_overflow_mode(
-        text_layer: *mut TextLayer,
-        line_mode: GTextOverflowMode,
-    );
+    #[doc = "! Sets the line break mode of the TextLayer\n! @param text_layer The TextLayer of which to set the overflow mode\n! @param line_mode The new \\ref GTextOverflowMode to set"]
+    pub fn text_layer_set_overflow_mode(text_layer: *mut TextLayer, line_mode: GTextOverflowMode);
 }
 unsafe extern "C" {
-    /**! Sets the font of the TextLayer
-! @param text_layer The TextLayer of which to set the font
-! @param font The new \ref GFont for the TextLayer
-! @see fonts_get_system_font
-! @see fonts_load_custom_font*/
+    #[doc = "! Sets the font of the TextLayer\n! @param text_layer The TextLayer of which to set the font\n! @param font The new \\ref GFont for the TextLayer\n! @see fonts_get_system_font\n! @see fonts_load_custom_font"]
     pub fn text_layer_set_font(text_layer: *mut TextLayer, font: GFont);
 }
 unsafe extern "C" {
-    /**! Sets the alignment of the TextLayer
-! @param text_layer The TextLayer of which to set the alignment
-! @param text_alignment The new text alignment for the TextLayer
-! @see GTextAlignment*/
+    #[doc = "! Sets the alignment of the TextLayer\n! @param text_layer The TextLayer of which to set the alignment\n! @param text_alignment The new text alignment for the TextLayer\n! @see GTextAlignment"]
     pub fn text_layer_set_text_alignment(
         text_layer: *mut TextLayer,
         text_alignment: GTextAlignment,
     );
 }
 unsafe extern "C" {
-    /**! Enables text flow following the boundaries of the screen and pagination that introduces
-! extra line spacing at page breaks to avoid partially clipped lines for the TextLayer.
-! If the TextLayer is part of a \ref ScrollLayer the ScrollLayer's frame will be used to
-! configure paging.
-! @note Make sure the TextLayer is part of the view hierarchy before calling this function.
-!   Otherwise it has no effect.
-! @param text_layer The TextLayer for which to enable text flow and paging
-! @param inset Additional amount of pixels to inset to the inside of the screen for text flow
-! @see text_layer_restore_default_text_flow_and_paging
-! @see graphics_text_attributes_enable_screen_text_flow
-! @see graphics_text_attributes_enable_paging*/
-    pub fn text_layer_enable_screen_text_flow_and_paging(
-        text_layer: *mut TextLayer,
-        inset: u8,
-    );
+    #[doc = "! Enables text flow following the boundaries of the screen and pagination that introduces\n! extra line spacing at page breaks to avoid partially clipped lines for the TextLayer.\n! If the TextLayer is part of a \\ref ScrollLayer the ScrollLayer's frame will be used to\n! configure paging.\n! @note Make sure the TextLayer is part of the view hierarchy before calling this function.\n!   Otherwise it has no effect.\n! @param text_layer The TextLayer for which to enable text flow and paging\n! @param inset Additional amount of pixels to inset to the inside of the screen for text flow\n! @see text_layer_restore_default_text_flow_and_paging\n! @see graphics_text_attributes_enable_screen_text_flow\n! @see graphics_text_attributes_enable_paging"]
+    pub fn text_layer_enable_screen_text_flow_and_paging(text_layer: *mut TextLayer, inset: u8);
 }
 unsafe extern "C" {
-    /**! Restores text flow and paging for the TextLayer to the rectangular defaults.
-! @param text_layer The TextLayer for which to restore text flow and paging
-! @see text_layer_enable_screen_text_flow_and_paging
-! @see graphics_text_attributes_restore_default_text_flow
-! @see graphics_text_attributes_restore_default_paging*/
+    #[doc = "! Restores text flow and paging for the TextLayer to the rectangular defaults.\n! @param text_layer The TextLayer for which to restore text flow and paging\n! @see text_layer_enable_screen_text_flow_and_paging\n! @see graphics_text_attributes_restore_default_text_flow\n! @see graphics_text_attributes_restore_default_paging"]
     pub fn text_layer_restore_default_text_flow_and_paging(text_layer: *mut TextLayer);
 }
 unsafe extern "C" {
-    /**! Calculates the size occupied by the current text of the TextLayer
-! @param text_layer the TextLayer for which to calculate the text's size
-! @return The size occupied by the current text of the TextLayer*/
+    #[doc = "! Calculates the size occupied by the current text of the TextLayer\n! @param text_layer the TextLayer for which to calculate the text's size\n! @return The size occupied by the current text of the TextLayer"]
     pub fn text_layer_get_content_size(text_layer: *mut TextLayer) -> GSize;
 }
 unsafe extern "C" {
-    /**! Update the size of the text layer
-! This is a convenience function to update the frame of the TextLayer.
-! @param text_layer The TextLayer of which to set the size
-! @param max_size The new size for the TextLayer*/
+    #[doc = "! Update the size of the text layer\n! This is a convenience function to update the frame of the TextLayer.\n! @param text_layer The TextLayer of which to set the size\n! @param max_size The new size for the TextLayer"]
     pub fn text_layer_set_size(text_layer: *mut TextLayer, max_size: GSize);
 }
-/**! @addtogroup ScrollLayer
-! \brief Layer that scrolls its contents, animated.
-!
-! ![](scroll_layer.png)
-! <h3>Key Points</h3>
-! * Facilitates vertical scrolling of a layer sub-hierarchy zero or more
-! arbitrary layers. The example image shows a scroll layer containing one
-! large TextLayer.
-! * Shadows to indicate that there is more content are automatically drawn
-! on top of the content. When the end of the scroll layer is reached, the
-! shadow will automatically be retracted.
-! * Scrolling from one offset to another is animated implicitly by default.
-! * The scroll layer contains a "content" sub-layer, which is the layer that
-! is actually moved up an down. Any layer that is a child of this "content"
-! sub-layer, will be moved as well. Effectively, an entire layout of layers
-! can be scrolled this way. Use the convenience function
-! \ref scroll_layer_add_child() to add child layers to the "content" sub-layer.
-! * The scroll layer needs to be informed of the total size of the contents,
-! in order to calculate from and to what point it should be able to scroll.
-! Use \ref scroll_layer_set_content_size() to set the size of the contents.
-! * The button behavior is set up, using the convenience function
-! \ref scroll_layer_set_click_config_onto_window(). This will associate the
-! UP and DOWN buttons with scrolling up and down.
-! * The SELECT button can be configured by installing a click configuration
-! provider using \ref scroll_layer_set_callbacks().
-! * To scroll programatically to a certain offset, use
-! \ref scroll_layer_set_content_offset().
-! * It is possible to get called back for each scrolling increment, by
-! installing the `.content_offset_changed_handler` callback using
-! \ref scroll_layer_set_callbacks().
-! * Only vertical scrolling is supported at the moment.
-! @{*/
+#[doc = "! @addtogroup ScrollLayer\n! \\brief Layer that scrolls its contents, animated.\n!\n! ![](scroll_layer.png)\n! <h3>Key Points</h3>\n! * Facilitates vertical scrolling of a layer sub-hierarchy zero or more\n! arbitrary layers. The example image shows a scroll layer containing one\n! large TextLayer.\n! * Shadows to indicate that there is more content are automatically drawn\n! on top of the content. When the end of the scroll layer is reached, the\n! shadow will automatically be retracted.\n! * Scrolling from one offset to another is animated implicitly by default.\n! * The scroll layer contains a \"content\" sub-layer, which is the layer that\n! is actually moved up an down. Any layer that is a child of this \"content\"\n! sub-layer, will be moved as well. Effectively, an entire layout of layers\n! can be scrolled this way. Use the convenience function\n! \\ref scroll_layer_add_child() to add child layers to the \"content\" sub-layer.\n! * The scroll layer needs to be informed of the total size of the contents,\n! in order to calculate from and to what point it should be able to scroll.\n! Use \\ref scroll_layer_set_content_size() to set the size of the contents.\n! * The button behavior is set up, using the convenience function\n! \\ref scroll_layer_set_click_config_onto_window(). This will associate the\n! UP and DOWN buttons with scrolling up and down.\n! * The SELECT button can be configured by installing a click configuration\n! provider using \\ref scroll_layer_set_callbacks().\n! * To scroll programatically to a certain offset, use\n! \\ref scroll_layer_set_content_offset().\n! * It is possible to get called back for each scrolling increment, by\n! installing the `.content_offset_changed_handler` callback using\n! \\ref scroll_layer_set_callbacks().\n! * Only vertical scrolling is supported at the moment.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ScrollLayer {
     _unused: [u8; 0],
 }
-///! Function signature for the `.content_offset_changed_handler` callback.
+#[doc = "! Function signature for the `.content_offset_changed_handler` callback."]
 pub type ScrollLayerCallback = ::core::option::Option<
-    unsafe extern "C" fn(
-        scroll_layer: *mut ScrollLayer,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(scroll_layer: *mut ScrollLayer, context: *mut ::core::ffi::c_void),
 >;
-/**! All the callbacks that the ScrollLayer exposes for use by applications.
-! @note The context parameter can be set using scroll_layer_set_context() and
-! gets passed in as context with all of these callbacks.*/
+#[doc = "! All the callbacks that the ScrollLayer exposes for use by applications.\n! @note The context parameter can be set using scroll_layer_set_context() and\n! gets passed in as context with all of these callbacks."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ScrollLayerCallbacks {
-    /**! Provider function to set up the SELECT button handlers. This will be
-! called after the scroll layer has configured the click configurations for
-! the up/down buttons, so it can also be used to modify the default up/down
-! scrolling behavior.*/
+    #[doc = "! Provider function to set up the SELECT button handlers. This will be\n! called after the scroll layer has configured the click configurations for\n! the up/down buttons, so it can also be used to modify the default up/down\n! scrolling behavior."]
     pub click_config_provider: ClickConfigProvider,
-    /**! Called every time the the content offset changes. During a scrolling
-! animation, it will be called for each intermediary offset as well*/
+    #[doc = "! Called every time the the content offset changes. During a scrolling\n! animation, it will be called for each intermediary offset as well"]
     pub content_offset_changed_handler: ScrollLayerCallback,
 }
 unsafe extern "C" {
-    /**! Creates a new ScrollLayer on the heap and initalizes it with the default values:
-! * Clips: `true`
-! * Hidden: `false`
-! * Content size: `frame.size`
-! * Content offset: \ref GPointZero
-! * Callbacks: None (`NULL` for each one)
-! * Callback context: `NULL`
-! @return A pointer to the ScrollLayer. `NULL` if the ScrollLayer could not
-! be created*/
+    #[doc = "! Creates a new ScrollLayer on the heap and initalizes it with the default values:\n! * Clips: `true`\n! * Hidden: `false`\n! * Content size: `frame.size`\n! * Content offset: \\ref GPointZero\n! * Callbacks: None (`NULL` for each one)\n! * Callback context: `NULL`\n! @return A pointer to the ScrollLayer. `NULL` if the ScrollLayer could not\n! be created"]
     pub fn scroll_layer_create(frame: GRect) -> *mut ScrollLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a ScrollLayer previously created by scroll_layer_create.
+    #[doc = "! Destroys a ScrollLayer previously created by scroll_layer_create."]
     pub fn scroll_layer_destroy(scroll_layer: *mut ScrollLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the scroll layer, which is the parent for the sub-
-! layers used for its implementation.
-! @param scroll_layer Pointer to the ScrollLayer for which to get the "root" Layer
-! @return The "root" Layer of the scroll layer.*/
+    #[doc = "! Gets the \"root\" Layer of the scroll layer, which is the parent for the sub-\n! layers used for its implementation.\n! @param scroll_layer Pointer to the ScrollLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the scroll layer."]
     pub fn scroll_layer_get_layer(scroll_layer: *const ScrollLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Adds the child layer to the content sub-layer of the ScrollLayer.
-! This will make the child layer part of the scrollable contents.
-! The content sub-layer of the ScrollLayer will become the parent of the
-! child layer.
-! @param scroll_layer The ScrollLayer to which to add the child layer.
-! @param child The Layer to add to the content sub-layer of the ScrollLayer.
-! @note You may need to update the size of the scrollable contents using
-! \ref scroll_layer_set_content_size().*/
+    #[doc = "! Adds the child layer to the content sub-layer of the ScrollLayer.\n! This will make the child layer part of the scrollable contents.\n! The content sub-layer of the ScrollLayer will become the parent of the\n! child layer.\n! @param scroll_layer The ScrollLayer to which to add the child layer.\n! @param child The Layer to add to the content sub-layer of the ScrollLayer.\n! @note You may need to update the size of the scrollable contents using\n! \\ref scroll_layer_set_content_size()."]
     pub fn scroll_layer_add_child(scroll_layer: *mut ScrollLayer, child: *mut Layer);
 }
 unsafe extern "C" {
-    /**! Convenience function to set the \ref ClickConfigProvider callback on the
-! given window to scroll layer's internal click config provider. This internal
-! click configuration provider, will set up the default UP & DOWN
-! scrolling behavior.
-! This function calls \ref window_set_click_config_provider_with_context to
-! accomplish this.
-!
-! If you application has set a `.click_config_provider`
-! callback using \ref scroll_layer_set_callbacks(), this will be called
-! by the internal click config provider, after configuring the UP & DOWN
-! buttons. This allows your application to configure the SELECT button
-! behavior and optionally override the UP & DOWN
-! button behavior. The callback context for the SELECT click recognizer is
-! automatically set to the scroll layer's context (see
-! \ref scroll_layer_set_context() ). This context is passed into
-! \ref ClickHandler callbacks. For the UP and DOWN buttons, the scroll layer
-! itself is passed in by default as the callback context in order to deal with
-! those buttons presses to scroll up and down automatically.
-! @param scroll_layer The ScrollLayer that needs to receive click events.
-! @param window The window for which to set the click configuration.
-! @see \ref Clicks
-! @see window_set_click_config_provider_with_context*/
+    #[doc = "! Convenience function to set the \\ref ClickConfigProvider callback on the\n! given window to scroll layer's internal click config provider. This internal\n! click configuration provider, will set up the default UP & DOWN\n! scrolling behavior.\n! This function calls \\ref window_set_click_config_provider_with_context to\n! accomplish this.\n!\n! If you application has set a `.click_config_provider`\n! callback using \\ref scroll_layer_set_callbacks(), this will be called\n! by the internal click config provider, after configuring the UP & DOWN\n! buttons. This allows your application to configure the SELECT button\n! behavior and optionally override the UP & DOWN\n! button behavior. The callback context for the SELECT click recognizer is\n! automatically set to the scroll layer's context (see\n! \\ref scroll_layer_set_context() ). This context is passed into\n! \\ref ClickHandler callbacks. For the UP and DOWN buttons, the scroll layer\n! itself is passed in by default as the callback context in order to deal with\n! those buttons presses to scroll up and down automatically.\n! @param scroll_layer The ScrollLayer that needs to receive click events.\n! @param window The window for which to set the click configuration.\n! @see \\ref Clicks\n! @see window_set_click_config_provider_with_context"]
     pub fn scroll_layer_set_click_config_onto_window(
         scroll_layer: *mut ScrollLayer,
         window: *mut Window,
     );
 }
 unsafe extern "C" {
-    /**! Sets the callbacks that the scroll layer exposes.
-! The `context` as set by \ref scroll_layer_set_context() is passed into each
-! of the callbacks. See \ref ScrollLayerCallbacks for the different callbacks.
-! @note If the `context` is NULL, a pointer to scroll_layer is used
-! as context parameter instead when calling callbacks.
-! @param scroll_layer The ScrollLayer for which to assign new callbacks.
-! @param callbacks The new callbacks.*/
+    #[doc = "! Sets the callbacks that the scroll layer exposes.\n! The `context` as set by \\ref scroll_layer_set_context() is passed into each\n! of the callbacks. See \\ref ScrollLayerCallbacks for the different callbacks.\n! @note If the `context` is NULL, a pointer to scroll_layer is used\n! as context parameter instead when calling callbacks.\n! @param scroll_layer The ScrollLayer for which to assign new callbacks.\n! @param callbacks The new callbacks."]
     pub fn scroll_layer_set_callbacks(
         scroll_layer: *mut ScrollLayer,
         callbacks: ScrollLayerCallbacks,
     );
 }
 unsafe extern "C" {
-    /**! Sets a new callback context. This context is passed into the scroll layer's
-! callbacks and also the \ref ClickHandler for the SELECT button.
-! If `NULL` or not set, the context defaults to a pointer to the ScrollLayer
-! itself.
-! @param scroll_layer The ScrollLayer for which to assign the new callback
-! context.
-! @param context The new callback context.
-! @see scroll_layer_set_click_config_onto_window
-! @see scroll_layer_set_callbacks*/
+    #[doc = "! Sets a new callback context. This context is passed into the scroll layer's\n! callbacks and also the \\ref ClickHandler for the SELECT button.\n! If `NULL` or not set, the context defaults to a pointer to the ScrollLayer\n! itself.\n! @param scroll_layer The ScrollLayer for which to assign the new callback\n! context.\n! @param context The new callback context.\n! @see scroll_layer_set_click_config_onto_window\n! @see scroll_layer_set_callbacks"]
     pub fn scroll_layer_set_context(
         scroll_layer: *mut ScrollLayer,
         context: *mut ::core::ffi::c_void,
     );
 }
 unsafe extern "C" {
-    /**! Scrolls to the given offset, optionally animated.
-! @note When scrolling down, the offset's `.y` decrements. When scrolling up,
-! the offset's `.y` increments. If scrolled completely to the top, the offset
-! is \ref GPointZero.
-! @note The `.x` field must be `0`. Horizontal scrolling is not supported.
-! @param scroll_layer The ScrollLayer for which to set the content offset
-! @param offset The final content offset
-! @param animated Pass in `true` to animate to the new content offset, or
-! `false` to set the new content offset without animating.
-! @see scroll_layer_get_content_offset*/
+    #[doc = "! Scrolls to the given offset, optionally animated.\n! @note When scrolling down, the offset's `.y` decrements. When scrolling up,\n! the offset's `.y` increments. If scrolled completely to the top, the offset\n! is \\ref GPointZero.\n! @note The `.x` field must be `0`. Horizontal scrolling is not supported.\n! @param scroll_layer The ScrollLayer for which to set the content offset\n! @param offset The final content offset\n! @param animated Pass in `true` to animate to the new content offset, or\n! `false` to set the new content offset without animating.\n! @see scroll_layer_get_content_offset"]
     pub fn scroll_layer_set_content_offset(
         scroll_layer: *mut ScrollLayer,
         offset: GPoint,
@@ -7791,83 +4636,49 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Gets the point by which the contents are offset.
-! @param scroll_layer The ScrollLayer for which to get the content offset
-! @see scroll_layer_set_content_offset*/
+    #[doc = "! Gets the point by which the contents are offset.\n! @param scroll_layer The ScrollLayer for which to get the content offset\n! @see scroll_layer_set_content_offset"]
     pub fn scroll_layer_get_content_offset(scroll_layer: *mut ScrollLayer) -> GPoint;
 }
 unsafe extern "C" {
-    /**! Sets the size of the contents layer. This determines the area that is
-! scrollable. At the moment, this needs to be set "manually" and is not
-! derived from the geometry of the contents layers.
-! @param scroll_layer The ScrollLayer for which to set the content size.
-! @param size The new content size.
-! @see scroll_layer_get_content_size*/
+    #[doc = "! Sets the size of the contents layer. This determines the area that is\n! scrollable. At the moment, this needs to be set \"manually\" and is not\n! derived from the geometry of the contents layers.\n! @param scroll_layer The ScrollLayer for which to set the content size.\n! @param size The new content size.\n! @see scroll_layer_get_content_size"]
     pub fn scroll_layer_set_content_size(scroll_layer: *mut ScrollLayer, size: GSize);
 }
 unsafe extern "C" {
-    /**! Gets the size of the contents layer.
-! @param scroll_layer The ScrollLayer for which to get the content size
-! @see scroll_layer_set_content_size*/
+    #[doc = "! Gets the size of the contents layer.\n! @param scroll_layer The ScrollLayer for which to get the content size\n! @see scroll_layer_set_content_size"]
     pub fn scroll_layer_get_content_size(scroll_layer: *const ScrollLayer) -> GSize;
 }
 unsafe extern "C" {
-    /**! Set the frame of the scroll layer and adjusts the internal layers' geometry
-! accordingly. The scroll layer is marked dirty automatically.
-! @param scroll_layer The ScrollLayer for which to set the frame
-! @param frame The new frame*/
+    #[doc = "! Set the frame of the scroll layer and adjusts the internal layers' geometry\n! accordingly. The scroll layer is marked dirty automatically.\n! @param scroll_layer The ScrollLayer for which to set the frame\n! @param frame The new frame"]
     pub fn scroll_layer_set_frame(scroll_layer: *mut ScrollLayer, frame: GRect);
 }
 unsafe extern "C" {
-    /**! The click handlers for the UP button that the scroll layer will install as
-! part of \ref scroll_layer_set_click_config_onto_window().
-! @note This handler is exposed, in case one wants to implement an alternative
-! handler for the UP button, as a way to invoke the default behavior.
-! @param recognizer The click recognizer for which the handler is called
-! @param context A void pointer to the ScrollLayer that is the context of the click event*/
+    #[doc = "! The click handlers for the UP button that the scroll layer will install as\n! part of \\ref scroll_layer_set_click_config_onto_window().\n! @note This handler is exposed, in case one wants to implement an alternative\n! handler for the UP button, as a way to invoke the default behavior.\n! @param recognizer The click recognizer for which the handler is called\n! @param context A void pointer to the ScrollLayer that is the context of the click event"]
     pub fn scroll_layer_scroll_up_click_handler(
         recognizer: ClickRecognizerRef,
         context: *mut ::core::ffi::c_void,
     );
 }
 unsafe extern "C" {
-    /**! The click handlers for the DOWN button that the scroll layer will install as
-! part of \ref scroll_layer_set_click_config_onto_window().
-! @note This handler is exposed, in case one wants to implement an alternative
-! handler for the DOWN button, as a way to invoke the default behavior.
-! @param recognizer The click recognizer for which the handler is called
-! @param context A void pointer to the ScrollLayer that is the context of the click event*/
+    #[doc = "! The click handlers for the DOWN button that the scroll layer will install as\n! part of \\ref scroll_layer_set_click_config_onto_window().\n! @note This handler is exposed, in case one wants to implement an alternative\n! handler for the DOWN button, as a way to invoke the default behavior.\n! @param recognizer The click recognizer for which the handler is called\n! @param context A void pointer to the ScrollLayer that is the context of the click event"]
     pub fn scroll_layer_scroll_down_click_handler(
         recognizer: ClickRecognizerRef,
         context: *mut ::core::ffi::c_void,
     );
 }
 unsafe extern "C" {
-    /**! Sets the visibility of the scroll layer shadow.
-! If the visibility has changed, \ref layer_mark_dirty() will be called automatically
-! on the scroll layer.
-! @param scroll_layer The scroll layer for which to set the shadow visibility
-! @param hidden Supply `true` to make the shadow hidden, or `false` to make it
-! non-hidden.*/
+    #[doc = "! Sets the visibility of the scroll layer shadow.\n! If the visibility has changed, \\ref layer_mark_dirty() will be called automatically\n! on the scroll layer.\n! @param scroll_layer The scroll layer for which to set the shadow visibility\n! @param hidden Supply `true` to make the shadow hidden, or `false` to make it\n! non-hidden."]
     pub fn scroll_layer_set_shadow_hidden(scroll_layer: *mut ScrollLayer, hidden: bool);
 }
 unsafe extern "C" {
-    /**! Gets the visibility of the scroll layer shadow.
-! @param scroll_layer The scroll layer for which to get the visibility
-! @return True if the shadow is hidden, false if it is not hidden.*/
+    #[doc = "! Gets the visibility of the scroll layer shadow.\n! @param scroll_layer The scroll layer for which to get the visibility\n! @return True if the shadow is hidden, false if it is not hidden."]
     pub fn scroll_layer_get_shadow_hidden(scroll_layer: *const ScrollLayer) -> bool;
 }
 unsafe extern "C" {
-    /**! Enables or disables paging of the ScrollLayer (default: disabled). When enabled, every button
-! press will change the scroll offset by the frame's height.
-! @param scroll_layer The scroll layer for which to enable or disable paging
-! @param paging_enabled True, if paging should be enabled. False to enable.*/
+    #[doc = "! Enables or disables paging of the ScrollLayer (default: disabled). When enabled, every button\n! press will change the scroll offset by the frame's height.\n! @param scroll_layer The scroll layer for which to enable or disable paging\n! @param paging_enabled True, if paging should be enabled. False to enable."]
     pub fn scroll_layer_set_paging(scroll_layer: *mut ScrollLayer, paging_enabled: bool);
 }
 unsafe extern "C" {
-    /**! Check whether or not the ScrollLayer uses paging when pressing buttons.
-! @param scroll_layer The scroll layer for which to get the paging behavior.
-! @return True, if paging is enabled; false otherwise.*/
+    #[doc = "! Check whether or not the ScrollLayer uses paging when pressing buttons.\n! @param scroll_layer The scroll layer for which to get the paging behavior.\n! @return True, if paging is enabled; false otherwise."]
     pub fn scroll_layer_get_paging(scroll_layer: *mut ScrollLayer) -> bool;
 }
 #[repr(C)]
@@ -7876,52 +4687,43 @@ pub struct ContentIndicator {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Gets the ContentIndicator for a ScrollLayer.
-! @param scroll_layer The ScrollLayer for which to get the ContentIndicator
-! @return A pointer to the ContentIndicator, or `NULL` upon failure.*/
+    #[doc = "! Gets the ContentIndicator for a ScrollLayer.\n! @param scroll_layer The ScrollLayer for which to get the ContentIndicator\n! @return A pointer to the ContentIndicator, or `NULL` upon failure."]
     pub fn scroll_layer_get_content_indicator(
         scroll_layer: *mut ScrollLayer,
     ) -> *mut ContentIndicator;
 }
 impl ContentIndicatorDirection {
-    ///!< The up direction.
-    pub const ContentIndicatorDirectionUp: ContentIndicatorDirection = ContentIndicatorDirection(
-        0,
-    );
-    ///!< The down direction.
-    pub const ContentIndicatorDirectionDown: ContentIndicatorDirection = ContentIndicatorDirection(
-        1,
-    );
-    ///!< The number of supported directions.
-    pub const NumContentIndicatorDirections: ContentIndicatorDirection = ContentIndicatorDirection(
-        2,
-    );
+    #[doc = "!< The up direction."]
+    pub const ContentIndicatorDirectionUp: ContentIndicatorDirection = ContentIndicatorDirection(0);
+    #[doc = "!< The down direction."]
+    pub const ContentIndicatorDirectionDown: ContentIndicatorDirection =
+        ContentIndicatorDirection(1);
+    #[doc = "!< The number of supported directions."]
+    pub const NumContentIndicatorDirections: ContentIndicatorDirection =
+        ContentIndicatorDirection(2);
 }
 #[repr(transparent)]
-/**! Value to describe directions for \ref ContentIndicator.
-! @see \ref content_indicator_configure_direction
-! @see \ref content_indicator_set_content_available*/
+#[doc = "! Value to describe directions for \\ref ContentIndicator.\n! @see \\ref content_indicator_configure_direction\n! @see \\ref content_indicator_set_content_available"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ContentIndicatorDirection(pub ::core::ffi::c_uchar);
-/**! Struct used to configure directions for \ref ContentIndicator.
-! @see \ref content_indicator_configure_direction*/
+#[doc = "! Struct used to configure directions for \\ref ContentIndicator.\n! @see \\ref content_indicator_configure_direction"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ContentIndicatorConfig {
-    ///!< The layer where the arrow indicator will be rendered when content is available.
+    #[doc = "!< The layer where the arrow indicator will be rendered when content is available."]
     pub layer: *mut Layer,
-    ///!< Whether the display of the arrow indicator should timeout.
+    #[doc = "!< Whether the display of the arrow indicator should timeout."]
     pub times_out: bool,
-    ///!< The alignment of the arrow within the provided layer.
+    #[doc = "!< The alignment of the arrow within the provided layer."]
     pub alignment: GAlign,
     pub colors: ContentIndicatorConfig__bindgen_ty_1,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ContentIndicatorConfig__bindgen_ty_1 {
-    ///!< The color of the arrow.
+    #[doc = "!< The color of the arrow."]
     pub foreground: GColor,
-    ///!< The color of the layer behind the arrow.
+    #[doc = "!< The color of the layer behind the arrow."]
     pub background: GColor,
 }
 impl Default for ContentIndicatorConfig__bindgen_ty_1 {
@@ -7943,23 +4745,15 @@ impl Default for ContentIndicatorConfig {
     }
 }
 unsafe extern "C" {
-    /**! Creates a ContentIndicator on the heap.
-! @return A pointer to the ContentIndicator. `NULL` if the ContentIndicator could not be created.*/
+    #[doc = "! Creates a ContentIndicator on the heap.\n! @return A pointer to the ContentIndicator. `NULL` if the ContentIndicator could not be created."]
     pub fn content_indicator_create() -> *mut ContentIndicator;
 }
 unsafe extern "C" {
-    /**! Destroys a ContentIndicator previously created using \ref content_indicator_create().
-! @param content_indicator The ContentIndicator to destroy.*/
+    #[doc = "! Destroys a ContentIndicator previously created using \\ref content_indicator_create().\n! @param content_indicator The ContentIndicator to destroy."]
     pub fn content_indicator_destroy(content_indicator: *mut ContentIndicator);
 }
 unsafe extern "C" {
-    /**! Configures a ContentIndicator for the given direction.
-! @param content_indicator The ContentIndicator to configure.
-! @param direction The direction for which to configure the ContentIndicator.
-! @param config The configuration to use to configure the ContentIndicator. If NULL, the data
-! for the specified direction will be reset.
-! @return True if the ContentIndicator was successfully configured for the given direction,
-! false otherwise.*/
+    #[doc = "! Configures a ContentIndicator for the given direction.\n! @param content_indicator The ContentIndicator to configure.\n! @param direction The direction for which to configure the ContentIndicator.\n! @param config The configuration to use to configure the ContentIndicator. If NULL, the data\n! for the specified direction will be reset.\n! @return True if the ContentIndicator was successfully configured for the given direction,\n! false otherwise."]
     pub fn content_indicator_configure_direction(
         content_indicator: *mut ContentIndicator,
         direction: ContentIndicatorDirection,
@@ -7967,22 +4761,14 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Retrieves the availability status of content in the given direction.
-! @param content_indicator The ContentIndicator for which to get the content availability.
-! @param direction The direction for which to get the content availability.
-! @return True if content is available in the given direction, false otherwise.*/
+    #[doc = "! Retrieves the availability status of content in the given direction.\n! @param content_indicator The ContentIndicator for which to get the content availability.\n! @param direction The direction for which to get the content availability.\n! @return True if content is available in the given direction, false otherwise."]
     pub fn content_indicator_get_content_available(
         content_indicator: *mut ContentIndicator,
         direction: ContentIndicatorDirection,
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Sets the availability status of content in the given direction.
-! @param content_indicator The ContentIndicator for which to set the content availability.
-! @param direction The direction for which to set the content availability.
-! @param available Whether or not content is available.
-! @note If times_out is enabled, calling this function resets any previously scheduled timeout
-! timer for the ContentIndicator.*/
+    #[doc = "! Sets the availability status of content in the given direction.\n! @param content_indicator The ContentIndicator for which to set the content availability.\n! @param direction The direction for which to set the content availability.\n! @param available Whether or not content is available.\n! @note If times_out is enabled, calling this function resets any previously scheduled timeout\n! timer for the ContentIndicator."]
     pub fn content_indicator_set_content_available(
         content_indicator: *mut ContentIndicator,
         direction: ContentIndicatorDirection,
@@ -7990,20 +4776,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Section drawing function to draw a basic section cell with the title, subtitle, and icon of the
-! section. Call this function inside the `.draw_row` callback implementation, see \ref
-! MenuLayerCallbacks. Note that if the size of `cell_layer` is too small to fit all of the cell
-! items specified, not all of them may be drawn.
-! @param ctx The destination graphics context
-! @param cell_layer The layer of the cell to draw
-! @param title If non-null, draws a title in larger text (24 points, bold
-! Raster Gothic system font).
-! @param subtitle If non-null, draws a subtitle in smaller text (18 points,
-! Raster Gothic system font). If `NULL`, the title will be centered vertically
-! inside the menu cell.
-! @param icon If non-null, draws an icon to the left of the text. If `NULL`,
-! the icon will be omitted and the leftover space is used for the title and
-! subtitle.*/
+    #[doc = "! Section drawing function to draw a basic section cell with the title, subtitle, and icon of the\n! section. Call this function inside the `.draw_row` callback implementation, see \\ref\n! MenuLayerCallbacks. Note that if the size of `cell_layer` is too small to fit all of the cell\n! items specified, not all of them may be drawn.\n! @param ctx The destination graphics context\n! @param cell_layer The layer of the cell to draw\n! @param title If non-null, draws a title in larger text (24 points, bold\n! Raster Gothic system font).\n! @param subtitle If non-null, draws a subtitle in smaller text (18 points,\n! Raster Gothic system font). If `NULL`, the title will be centered vertically\n! inside the menu cell.\n! @param icon If non-null, draws an icon to the left of the text. If `NULL`,\n! the icon will be omitted and the leftover space is used for the title and\n! subtitle."]
     pub fn menu_cell_basic_draw(
         ctx: *mut GContext,
         cell_layer: *const Layer,
@@ -8013,14 +4786,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Cell drawing function to draw a basic menu cell layout with title, subtitle
-! Cell drawing function to draw a menu cell layout with only one big title.
-! Call this function inside the `.draw_row` callback implementation, see
-! \ref MenuLayerCallbacks.
-! @param ctx The destination graphics context
-! @param cell_layer The layer of the cell to draw
-! @param title If non-null, draws a title in larger text (28 points, bold
-! Raster Gothic system font).*/
+    #[doc = "! Cell drawing function to draw a basic menu cell layout with title, subtitle\n! Cell drawing function to draw a menu cell layout with only one big title.\n! Call this function inside the `.draw_row` callback implementation, see\n! \\ref MenuLayerCallbacks.\n! @param ctx The destination graphics context\n! @param cell_layer The layer of the cell to draw\n! @param title If non-null, draws a title in larger text (28 points, bold\n! Raster Gothic system font)."]
     pub fn menu_cell_title_draw(
         ctx: *mut GContext,
         cell_layer: *const Layer,
@@ -8028,36 +4794,24 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Section header drawing function to draw a basic section header cell layout
-! with the title of the section.
-! Call this function inside the `.draw_header` callback implementation, see
-! \ref MenuLayerCallbacks.
-! @param ctx The destination graphics context
-! @param cell_layer The layer of the cell to draw
-! @param title If non-null, draws the title in small text (14 points, bold
-! Raster Gothic system font).*/
+    #[doc = "! Section header drawing function to draw a basic section header cell layout\n! with the title of the section.\n! Call this function inside the `.draw_header` callback implementation, see\n! \\ref MenuLayerCallbacks.\n! @param ctx The destination graphics context\n! @param cell_layer The layer of the cell to draw\n! @param title If non-null, draws the title in small text (14 points, bold\n! Raster Gothic system font)."]
     pub fn menu_cell_basic_header_draw(
         ctx: *mut GContext,
         cell_layer: *const Layer,
         title: *const ::core::ffi::c_char,
     );
 }
-/**! Data structure to represent an menu item's position in a menu, by specifying
-! the section index and the row index within that section.*/
+#[doc = "! Data structure to represent an menu item's position in a menu, by specifying\n! the section index and the row index within that section."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct MenuIndex {
-    ///! The index of the section
+    #[doc = "! The index of the section"]
     pub section: u16,
-    ///! The index of the row within the section with index `.section`
+    #[doc = "! The index of the row within the section with index `.section`"]
     pub row: u16,
 }
 unsafe extern "C" {
-    /**! Comparator function to determine the order of two MenuIndex values.
-! @param a Pointer to the menu index of the first item
-! @param b Pointer to the menu index of the second item
-! @return 0 if A and B are equal, 1 if A has a higher section & row
-! combination than B or else -1*/
+    #[doc = "! Comparator function to determine the order of two MenuIndex values.\n! @param a Pointer to the menu index of the first item\n! @param b Pointer to the menu index of the second item\n! @return 0 if A and B are equal, 1 if A has a higher section & row\n! combination than B or else -1"]
     pub fn menu_index_compare(a: *const MenuIndex, b: *const MenuIndex) -> i16;
 }
 #[repr(C)]
@@ -8073,27 +4827,14 @@ pub struct MenuCellSpan {
 pub struct MenuLayer {
     _unused: [u8; 0],
 }
-/**! Function signature for the callback to get the number of sections in a menu.
-! @param menu_layer The \ref MenuLayer for which the data is requested
-! @param callback_context The callback context
-! @return The number of sections in the menu
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to get the number of sections in a menu.\n! @param menu_layer The \\ref MenuLayer for which the data is requested\n! @param callback_context The callback context\n! @return The number of sections in the menu\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerGetNumberOfSectionsCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
         callback_context: *mut ::core::ffi::c_void,
     ) -> u16,
 >;
-/**! Function signature for the callback to get the number of rows in a
-! given section in a menu.
-! @param menu_layer The \ref MenuLayer for which the data is requested
-! @param section_index The index of the section of the menu for which the
-! number of items it contains is requested
-! @param callback_context The callback context
-! @return The number of rows in the given section in the menu
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to get the number of rows in a\n! given section in a menu.\n! @param menu_layer The \\ref MenuLayer for which the data is requested\n! @param section_index The index of the section of the menu for which the\n! number of items it contains is requested\n! @param callback_context The callback context\n! @return The number of rows in the given section in the menu\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerGetNumberOfRowsInSectionsCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8101,14 +4842,7 @@ pub type MenuLayerGetNumberOfRowsInSectionsCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ) -> u16,
 >;
-/**! Function signature for the callback to get the height of the menu cell
-! at a given index.
-! @param menu_layer The \ref MenuLayer for which the data is requested
-! @param cell_index The MenuIndex for which the cell height is requested
-! @param callback_context The callback context
-! @return The height of the cell at the given MenuIndex
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to get the height of the menu cell\n! at a given index.\n! @param menu_layer The \\ref MenuLayer for which the data is requested\n! @param cell_index The MenuIndex for which the cell height is requested\n! @param callback_context The callback context\n! @return The height of the cell at the given MenuIndex\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerGetCellHeightCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8116,15 +4850,7 @@ pub type MenuLayerGetCellHeightCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ) -> i16,
 >;
-/**! Function signature for the callback to get the height of the section header
-! at a given section index.
-! @param menu_layer The \ref MenuLayer for which the data is requested
-! @param section_index The index of the section for which the header height is
-! requested
-! @param callback_context The callback context
-! @return The height of the section header at the given section index
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to get the height of the section header\n! at a given section index.\n! @param menu_layer The \\ref MenuLayer for which the data is requested\n! @param section_index The index of the section for which the header height is\n! requested\n! @param callback_context The callback context\n! @return The height of the section header at the given section index\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerGetHeaderHeightCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8132,14 +4858,7 @@ pub type MenuLayerGetHeaderHeightCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ) -> i16,
 >;
-/**! Function signature for the callback to get the height of the separator
-! at a given index.
-! @param menu_layer The \ref MenuLayer for which the data is requested
-! @param cell_index The MenuIndex for which the cell height is requested
-! @param callback_context The callback context
-! @return The height of the separator at the given MenuIndex
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to get the height of the separator\n! at a given index.\n! @param menu_layer The \\ref MenuLayer for which the data is requested\n! @param cell_index The MenuIndex for which the cell height is requested\n! @param callback_context The callback context\n! @return The height of the separator at the given MenuIndex\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerGetSeparatorHeightCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8147,18 +4866,7 @@ pub type MenuLayerGetSeparatorHeightCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ) -> i16,
 >;
-/**! Function signature for the callback to render the menu cell at a given
-! MenuIndex.
-! @param ctx The destination graphics context to draw into
-! @param cell_layer The cell's layer, containing the geometry of the cell
-! @param cell_index The MenuIndex of the cell that needs to be drawn
-! @param callback_context The callback context
-! @note The `cell_layer` argument is provided to make it easy to re-use an
-! `.update_proc` implementation in this callback. Only the bounds and frame
-! of the `cell_layer` are actually valid and other properties should be
-! ignored.
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to render the menu cell at a given\n! MenuIndex.\n! @param ctx The destination graphics context to draw into\n! @param cell_layer The cell's layer, containing the geometry of the cell\n! @param cell_index The MenuIndex of the cell that needs to be drawn\n! @param callback_context The callback context\n! @note The `cell_layer` argument is provided to make it easy to re-use an\n! `.update_proc` implementation in this callback. Only the bounds and frame\n! of the `cell_layer` are actually valid and other properties should be\n! ignored.\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerDrawRowCallback = ::core::option::Option<
     unsafe extern "C" fn(
         ctx: *mut GContext,
@@ -8167,20 +4875,7 @@ pub type MenuLayerDrawRowCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback to render the section header at a given
-! section index.
-! @param ctx The destination graphics context to draw into
-! @param cell_layer The header cell's layer, containing the geometry of the
-! header cell
-! @param section_index The section index of the section header that needs to
-! be drawn
-! @param callback_context The callback context
-! @note The `cell_layer` argument is provided to make it easy to re-use an
-! `.update_proc` implementation in this callback. Only the bounds and frame
-! of the `cell_layer` are actually valid and other properties should be
-! ignored.
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to render the section header at a given\n! section index.\n! @param ctx The destination graphics context to draw into\n! @param cell_layer The header cell's layer, containing the geometry of the\n! header cell\n! @param section_index The section index of the section header that needs to\n! be drawn\n! @param callback_context The callback context\n! @note The `cell_layer` argument is provided to make it easy to re-use an\n! `.update_proc` implementation in this callback. Only the bounds and frame\n! of the `cell_layer` are actually valid and other properties should be\n! ignored.\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerDrawHeaderCallback = ::core::option::Option<
     unsafe extern "C" fn(
         ctx: *mut GContext,
@@ -8189,18 +4884,7 @@ pub type MenuLayerDrawHeaderCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback to render the separator at a given
-! MenuIndex.
-! @param ctx The destination graphics context to draw into
-! @param cell_layer The cell's layer, containing the geometry of the cell
-! @param cell_index The MenuIndex of the separator that needs to be drawn
-! @param callback_context The callback context
-! @note The `cell_layer` argument is provided to make it easy to re-use an
-! `.update_proc` implementation in this callback. Only the bounds and frame
-! of the `cell_layer` are actually valid and other properties should be
-! ignored.
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to render the separator at a given\n! MenuIndex.\n! @param ctx The destination graphics context to draw into\n! @param cell_layer The cell's layer, containing the geometry of the cell\n! @param cell_index The MenuIndex of the separator that needs to be drawn\n! @param callback_context The callback context\n! @note The `cell_layer` argument is provided to make it easy to re-use an\n! `.update_proc` implementation in this callback. Only the bounds and frame\n! of the `cell_layer` are actually valid and other properties should be\n! ignored.\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerDrawSeparatorCallback = ::core::option::Option<
     unsafe extern "C" fn(
         ctx: *mut GContext,
@@ -8209,13 +4893,7 @@ pub type MenuLayerDrawSeparatorCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback to handle the event that a user hits
-! the SELECT button.
-! @param menu_layer The \ref MenuLayer for which the selection event occured
-! @param cell_index The MenuIndex of the cell that is selected
-! @param callback_context The callback context
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to handle the event that a user hits\n! the SELECT button.\n! @param menu_layer The \\ref MenuLayer for which the selection event occured\n! @param cell_index The MenuIndex of the cell that is selected\n! @param callback_context The callback context\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerSelectCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8223,14 +4901,7 @@ pub type MenuLayerSelectCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback to handle a change in the current
-! selected item in the menu.
-! @param menu_layer The \ref MenuLayer for which the selection event occured
-! @param new_index The MenuIndex of the new item that is selected now
-! @param old_index The MenuIndex of the old item that was selected before
-! @param callback_context The callback context
-! @see \ref menu_layer_set_callbacks()
-! @see \ref MenuLayerCallbacks*/
+#[doc = "! Function signature for the callback to handle a change in the current\n! selected item in the menu.\n! @param menu_layer The \\ref MenuLayer for which the selection event occured\n! @param new_index The MenuIndex of the new item that is selected now\n! @param old_index The MenuIndex of the old item that was selected before\n! @param callback_context The callback context\n! @see \\ref menu_layer_set_callbacks()\n! @see \\ref MenuLayerCallbacks"]
 pub type MenuLayerSelectionChangedCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8239,15 +4910,7 @@ pub type MenuLayerSelectionChangedCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback which allows or changes selection behavior of the menu.
-! In order to change the cell that should be selected, modify the passed in new_index.
-! Preventing the selection from changing, new_index can be assigned the value of old_index.
-! @param menu_layer The \ref MenuLayer for which the selection event that occured
-! @param new_index Pointer to the index that the MenuLayer is going to change selection to.
-! @param old_index The index that is being unselected.
-! @param callback_context The callback context
-! @note \ref menu_layer_set_selected_index will not trigger this callback when
-! the selection changes, but \ref menu_layer_set_selected_next will.*/
+#[doc = "! Function signature for the callback which allows or changes selection behavior of the menu.\n! In order to change the cell that should be selected, modify the passed in new_index.\n! Preventing the selection from changing, new_index can be assigned the value of old_index.\n! @param menu_layer The \\ref MenuLayer for which the selection event that occured\n! @param new_index Pointer to the index that the MenuLayer is going to change selection to.\n! @param old_index The index that is being unselected.\n! @param callback_context The callback context\n! @note \\ref menu_layer_set_selected_index will not trigger this callback when\n! the selection changes, but \\ref menu_layer_set_selected_next will."]
 pub type MenuLayerSelectionWillChangeCallback = ::core::option::Option<
     unsafe extern "C" fn(
         menu_layer: *mut MenuLayer,
@@ -8256,13 +4919,7 @@ pub type MenuLayerSelectionWillChangeCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Function signature for the callback which draws the menu's background.
-! The background is underneath the cells of the menu, and is visible in the
-! padding below the bottom cell, or if a cell's background color is set to \ref GColorClear.
-! @param ctx The destination graphics context to draw into.
-! @param bg_layer The background's layer, containing the geometry of the background.
-! @param highlight Whether this should be rendered as highlighted or not. Highlight style
-! should match the highlight style of cells, since this color can be used for animating selection.*/
+#[doc = "! Function signature for the callback which draws the menu's background.\n! The background is underneath the cells of the menu, and is visible in the\n! padding below the bottom cell, or if a cell's background color is set to \\ref GColorClear.\n! @param ctx The destination graphics context to draw into.\n! @param bg_layer The background's layer, containing the geometry of the background.\n! @param highlight Whether this should be rendered as highlighted or not. Highlight style\n! should match the highlight style of cells, since this color can be used for animating selection."]
 pub type MenuLayerDrawBackgroundCallback = ::core::option::Option<
     unsafe extern "C" fn(
         ctx: *mut GContext,
@@ -8271,117 +4928,55 @@ pub type MenuLayerDrawBackgroundCallback = ::core::option::Option<
         callback_context: *mut ::core::ffi::c_void,
     ),
 >;
-///! Data structure containing all the callbacks of a \ref MenuLayer.
+#[doc = "! Data structure containing all the callbacks of a \\ref MenuLayer."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct MenuLayerCallbacks {
-    /**! Callback that gets called to get the number of sections in the menu.
-! This can get called at various moments throughout the life of a menu.
-! @note When `NULL`, the number of sections defaults to 1.*/
+    #[doc = "! Callback that gets called to get the number of sections in the menu.\n! This can get called at various moments throughout the life of a menu.\n! @note When `NULL`, the number of sections defaults to 1."]
     pub get_num_sections: MenuLayerGetNumberOfSectionsCallback,
-    /**! Callback that gets called to get the number of rows in a section. This
-! can get called at various moments throughout the life of a menu.
-! @note Must be set to a valid callback; `NULL` causes undefined behavior.*/
+    #[doc = "! Callback that gets called to get the number of rows in a section. This\n! can get called at various moments throughout the life of a menu.\n! @note Must be set to a valid callback; `NULL` causes undefined behavior."]
     pub get_num_rows: MenuLayerGetNumberOfRowsInSectionsCallback,
-    /**! Callback that gets called to get the height of a cell.
-! This can get called at various moments throughout the life of a menu.
-! @note When `NULL`, the default height of \ref MENU_CELL_BASIC_CELL_HEIGHT pixels is used.
-! Developers may wish to use \ref MENU_CELL_ROUND_FOCUSED_SHORT_CELL_HEIGHT
-! and \ref MENU_CELL_ROUND_UNFOCUSED_SHORT_CELL_HEIGHT on a round display
-! to respect the system aesthetic.*/
+    #[doc = "! Callback that gets called to get the height of a cell.\n! This can get called at various moments throughout the life of a menu.\n! @note When `NULL`, the default height of \\ref MENU_CELL_BASIC_CELL_HEIGHT pixels is used.\n! Developers may wish to use \\ref MENU_CELL_ROUND_FOCUSED_SHORT_CELL_HEIGHT\n! and \\ref MENU_CELL_ROUND_UNFOCUSED_SHORT_CELL_HEIGHT on a round display\n! to respect the system aesthetic."]
     pub get_cell_height: MenuLayerGetCellHeightCallback,
-    /**! Callback that gets called to get the height of a section header.
-! This can get called at various moments throughout the life of a menu.
-! @note When `NULL`, the default height of 0 pixels is used. This disables
-! section headers.*/
+    #[doc = "! Callback that gets called to get the height of a section header.\n! This can get called at various moments throughout the life of a menu.\n! @note When `NULL`, the default height of 0 pixels is used. This disables\n! section headers."]
     pub get_header_height: MenuLayerGetHeaderHeightCallback,
-    /**! Callback that gets called to render a menu item.
-! This gets called for each menu item, every time it needs to be
-! re-rendered.
-! @note Must be set to a valid callback; `NULL` causes undefined behavior.*/
+    #[doc = "! Callback that gets called to render a menu item.\n! This gets called for each menu item, every time it needs to be\n! re-rendered.\n! @note Must be set to a valid callback; `NULL` causes undefined behavior."]
     pub draw_row: MenuLayerDrawRowCallback,
-    /**! Callback that gets called to render a section header.
-! This gets called for each section header, every time it needs to be
-! re-rendered.
-! @note Must be set to a valid callback, unless `.get_header_height` is
-! `NULL`. Causes undefined behavior otherwise.*/
+    #[doc = "! Callback that gets called to render a section header.\n! This gets called for each section header, every time it needs to be\n! re-rendered.\n! @note Must be set to a valid callback, unless `.get_header_height` is\n! `NULL`. Causes undefined behavior otherwise."]
     pub draw_header: MenuLayerDrawHeaderCallback,
-    /**! Callback that gets called when the user triggers a click with the SELECT
-! button.
-! @note When `NULL`, click events for the SELECT button are ignored.*/
+    #[doc = "! Callback that gets called when the user triggers a click with the SELECT\n! button.\n! @note When `NULL`, click events for the SELECT button are ignored."]
     pub select_click: MenuLayerSelectCallback,
-    /**! Callback that gets called when the user triggers a long click with the
-! SELECT button.
-! @note When `NULL`, long click events for the SELECT button are ignored.*/
+    #[doc = "! Callback that gets called when the user triggers a long click with the\n! SELECT button.\n! @note When `NULL`, long click events for the SELECT button are ignored."]
     pub select_long_click: MenuLayerSelectCallback,
-    /**! Callback that gets called whenever the selection changes.
-! @note When `NULL`, selection change events are ignored.*/
+    #[doc = "! Callback that gets called whenever the selection changes.\n! @note When `NULL`, selection change events are ignored."]
     pub selection_changed: MenuLayerSelectionChangedCallback,
-    /**! Callback that gets called to get the height of a separator
-! This can get called at various moments throughout the life of a menu.
-! @note When `NULL`, the default height of 0 is used.*/
+    #[doc = "! Callback that gets called to get the height of a separator\n! This can get called at various moments throughout the life of a menu.\n! @note When `NULL`, the default height of 0 is used."]
     pub get_separator_height: MenuLayerGetSeparatorHeightCallback,
-    /**! Callback that gets called to render a separator.
-! This gets called for each separator, every time it needs to be
-! re-rendered.
-! @note Must be set to a valid callback, unless `.get_separator_height` is
-! `NULL`. Causes undefined behavior otherwise.*/
+    #[doc = "! Callback that gets called to render a separator.\n! This gets called for each separator, every time it needs to be\n! re-rendered.\n! @note Must be set to a valid callback, unless `.get_separator_height` is\n! `NULL`. Causes undefined behavior otherwise."]
     pub draw_separator: MenuLayerDrawSeparatorCallback,
-    /**! Callback that gets called before the selected cell changes.
-! This gets called before the selected item in the MenuLayer is changed,
-! and will allow for the selected cell to be overridden.
-! This allows for skipping cells in the menu, locking selection onto a given item,*/
+    #[doc = "! Callback that gets called before the selected cell changes.\n! This gets called before the selected item in the MenuLayer is changed,\n! and will allow for the selected cell to be overridden.\n! This allows for skipping cells in the menu, locking selection onto a given item,"]
     pub selection_will_change: MenuLayerSelectionWillChangeCallback,
-    /**! Callback that gets called before any cells are drawn.
-! This supports two states, either highlighted or not highlighted.
-! If highlighted is specified, it is expected to be colored in the same
-! style as the menu's cells are.
-! If this callback is not specified, it will default to the colors set with
-! \ref menu_layer_set_normal_colors and \ref menu_layer_set_highlight_colors.*/
+    #[doc = "! Callback that gets called before any cells are drawn.\n! This supports two states, either highlighted or not highlighted.\n! If highlighted is specified, it is expected to be colored in the same\n! style as the menu's cells are.\n! If this callback is not specified, it will default to the colors set with\n! \\ref menu_layer_set_normal_colors and \\ref menu_layer_set_highlight_colors."]
     pub draw_background: MenuLayerDrawBackgroundCallback,
 }
 unsafe extern "C" {
-    /**! Creates a new \ref MenuLayer on the heap and initalizes it with the default values.
-!
-! * Clips: `true`
-! * Hidden: `false`
-! * Content size: `frame.size`
-! * Content offset: \ref GPointZero
-! * Callbacks: None (`NULL` for each one)
-! * Callback context: `NULL`
-! * After the relevant callbacks are called to populate the menu, the item at MenuIndex(0, 0)
-!   will be selected initially.
-! @return A pointer to the \ref MenuLayer. `NULL` if the \ref MenuLayer could not
-! be created*/
+    #[doc = "! Creates a new \\ref MenuLayer on the heap and initalizes it with the default values.\n!\n! * Clips: `true`\n! * Hidden: `false`\n! * Content size: `frame.size`\n! * Content offset: \\ref GPointZero\n! * Callbacks: None (`NULL` for each one)\n! * Callback context: `NULL`\n! * After the relevant callbacks are called to populate the menu, the item at MenuIndex(0, 0)\n!   will be selected initially.\n! @return A pointer to the \\ref MenuLayer. `NULL` if the \\ref MenuLayer could not\n! be created"]
     pub fn menu_layer_create(frame: GRect) -> *mut MenuLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a \ref MenuLayer previously created by menu_layer_create.
+    #[doc = "! Destroys a \\ref MenuLayer previously created by menu_layer_create."]
     pub fn menu_layer_destroy(menu_layer: *mut MenuLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the \ref MenuLayer, which is the parent for the sub-
-! layers used for its implementation.
-! @param menu_layer Pointer to the MenuLayer for which to get the "root" Layer
-! @return The "root" Layer of the \ref MenuLayer.*/
+    #[doc = "! Gets the \"root\" Layer of the \\ref MenuLayer, which is the parent for the sub-\n! layers used for its implementation.\n! @param menu_layer Pointer to the MenuLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the \\ref MenuLayer."]
     pub fn menu_layer_get_layer(menu_layer: *const MenuLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Gets the ScrollLayer of the \ref MenuLayer, which is the layer responsible for
-! the scrolling of the \ref MenuLayer.
-! @param menu_layer Pointer to the \ref MenuLayer for which to get the ScrollLayer
-! @return The ScrollLayer of the \ref MenuLayer.*/
+    #[doc = "! Gets the ScrollLayer of the \\ref MenuLayer, which is the layer responsible for\n! the scrolling of the \\ref MenuLayer.\n! @param menu_layer Pointer to the \\ref MenuLayer for which to get the ScrollLayer\n! @return The ScrollLayer of the \\ref MenuLayer."]
     pub fn menu_layer_get_scroll_layer(menu_layer: *const MenuLayer) -> *mut ScrollLayer;
 }
 unsafe extern "C" {
-    /**! Sets the callbacks for the MenuLayer.
-! @param menu_layer Pointer to the \ref MenuLayer for which to set the callbacks
-! and callback context.
-! @param callback_context The new callback context. This is passed into each
-! of the callbacks and can be set to point to application provided data.
-! @param callbacks The new callbacks for the \ref MenuLayer. The storage for this
-! data structure must be long lived. Therefore, it cannot be stack-allocated.
-! @see MenuLayerCallbacks*/
+    #[doc = "! Sets the callbacks for the MenuLayer.\n! @param menu_layer Pointer to the \\ref MenuLayer for which to set the callbacks\n! and callback context.\n! @param callback_context The new callback context. This is passed into each\n! of the callbacks and can be set to point to application provided data.\n! @param callbacks The new callbacks for the \\ref MenuLayer. The storage for this\n! data structure must be long lived. Therefore, it cannot be stack-allocated.\n! @see MenuLayerCallbacks"]
     pub fn menu_layer_set_callbacks(
         menu_layer: *mut MenuLayer,
         callback_context: *mut ::core::ffi::c_void,
@@ -8389,53 +4984,25 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Convenience function to set the \ref ClickConfigProvider callback on the
-! given window to the \ref MenuLayer internal click config provider. This internal
-! click configuration provider, will set up the default UP & DOWN
-! scrolling / menu item selection behavior.
-! This function calls \ref scroll_layer_set_click_config_onto_window to
-! accomplish this.
-!
-! Click and long click events for the SELECT button can be handled by
-! installing the appropriate callbacks using \ref menu_layer_set_callbacks().
-! This is a deviation from the usual click configuration provider pattern.
-! @param menu_layer The \ref MenuLayer that needs to receive click events.
-! @param window The window for which to set the click configuration.
-! @see \ref Clicks
-! @see \ref window_set_click_config_provider_with_context()
-! @see \ref scroll_layer_set_click_config_onto_window()*/
-    pub fn menu_layer_set_click_config_onto_window(
-        menu_layer: *mut MenuLayer,
-        window: *mut Window,
-    );
+    #[doc = "! Convenience function to set the \\ref ClickConfigProvider callback on the\n! given window to the \\ref MenuLayer internal click config provider. This internal\n! click configuration provider, will set up the default UP & DOWN\n! scrolling / menu item selection behavior.\n! This function calls \\ref scroll_layer_set_click_config_onto_window to\n! accomplish this.\n!\n! Click and long click events for the SELECT button can be handled by\n! installing the appropriate callbacks using \\ref menu_layer_set_callbacks().\n! This is a deviation from the usual click configuration provider pattern.\n! @param menu_layer The \\ref MenuLayer that needs to receive click events.\n! @param window The window for which to set the click configuration.\n! @see \\ref Clicks\n! @see \\ref window_set_click_config_provider_with_context()\n! @see \\ref scroll_layer_set_click_config_onto_window()"]
+    pub fn menu_layer_set_click_config_onto_window(menu_layer: *mut MenuLayer, window: *mut Window);
 }
 impl MenuRowAlign {
-    ///! Don't align or update the scroll offset of the \ref MenuLayer.
+    #[doc = "! Don't align or update the scroll offset of the \\ref MenuLayer."]
     pub const MenuRowAlignNone: MenuRowAlign = MenuRowAlign(0);
-    /**! Scroll the contents of the \ref MenuLayer in such way that the selected row
-! is centered relative to the visible area.*/
+    #[doc = "! Scroll the contents of the \\ref MenuLayer in such way that the selected row\n! is centered relative to the visible area."]
     pub const MenuRowAlignCenter: MenuRowAlign = MenuRowAlign(1);
-    /**! Scroll the contents of the \ref MenuLayer in such way that the selected row
-! is at the top of the visible area.*/
+    #[doc = "! Scroll the contents of the \\ref MenuLayer in such way that the selected row\n! is at the top of the visible area."]
     pub const MenuRowAlignTop: MenuRowAlign = MenuRowAlign(2);
-    /**! Scroll the contents of the \ref MenuLayer in such way that the selected row
-! is at the bottom of the visible area.*/
+    #[doc = "! Scroll the contents of the \\ref MenuLayer in such way that the selected row\n! is at the bottom of the visible area."]
     pub const MenuRowAlignBottom: MenuRowAlign = MenuRowAlign(3);
 }
 #[repr(transparent)]
-/**! Values to specify how a (selected) row should be aligned relative to the
-! visible area of the \ref MenuLayer.*/
+#[doc = "! Values to specify how a (selected) row should be aligned relative to the\n! visible area of the \\ref MenuLayer."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct MenuRowAlign(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Selects the next or previous item, relative to the current selection.
-! @param menu_layer The \ref MenuLayer for which to select the next item
-! @param up Supply `false` to select the next item in the list (downwards),
-! or `true` to select the previous item in the list (upwards).
-! @param scroll_align The alignment of the new selection
-! @param animated Supply `true` to animate changing the selection, or `false`
-! to change the selection instantly.
-! @note If there is no next/previous item, this function is a no-op.*/
+    #[doc = "! Selects the next or previous item, relative to the current selection.\n! @param menu_layer The \\ref MenuLayer for which to select the next item\n! @param up Supply `false` to select the next item in the list (downwards),\n! or `true` to select the previous item in the list (upwards).\n! @param scroll_align The alignment of the new selection\n! @param animated Supply `true` to animate changing the selection, or `false`\n! to change the selection instantly.\n! @note If there is no next/previous item, this function is a no-op."]
     pub fn menu_layer_set_selected_next(
         menu_layer: *mut MenuLayer,
         up: bool,
@@ -8444,15 +5011,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Selects the item with given \ref MenuIndex.
-! @param menu_layer The \ref MenuLayer for which to change the selection
-! @param index The index of the item to select
-! @param scroll_align The alignment of the new selection
-! @param animated Supply `true` to animate changing the selection, or `false`
-! to change the selection instantly.
-! @note If the section and/or row index exceeds the avaible number of sections
-! or resp. rows, the exceeding index/indices will be capped, effectively
-! selecting the last section and/or row, resp.*/
+    #[doc = "! Selects the item with given \\ref MenuIndex.\n! @param menu_layer The \\ref MenuLayer for which to change the selection\n! @param index The index of the item to select\n! @param scroll_align The alignment of the new selection\n! @param animated Supply `true` to animate changing the selection, or `false`\n! to change the selection instantly.\n! @note If the section and/or row index exceeds the avaible number of sections\n! or resp. rows, the exceeding index/indices will be capped, effectively\n! selecting the last section and/or row, resp."]
     pub fn menu_layer_set_selected_index(
         menu_layer: *mut MenuLayer,
         index: MenuIndex,
@@ -8461,43 +5020,19 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Gets the MenuIndex of the currently selected menu item.
-! @param menu_layer The \ref MenuLayer for which to get the current selected index.
-! @see menu_cell_layer_is_highlighted
-! @note This function should not be used to determine whether a cell should be
-! highlighted or not. See \ref menu_cell_layer_is_highlighted for more
-! information.*/
+    #[doc = "! Gets the MenuIndex of the currently selected menu item.\n! @param menu_layer The \\ref MenuLayer for which to get the current selected index.\n! @see menu_cell_layer_is_highlighted\n! @note This function should not be used to determine whether a cell should be\n! highlighted or not. See \\ref menu_cell_layer_is_highlighted for more\n! information."]
     pub fn menu_layer_get_selected_index(menu_layer: *const MenuLayer) -> MenuIndex;
 }
 unsafe extern "C" {
-    /**! Reloads the data of the menu. This causes the menu to re-request the menu
-! item data, by calling the relevant callbacks.
-! The current selection and scroll position will not be changed. See the
-! note with \ref menu_layer_set_selected_index() for the behavior if the
-! old selection is no longer valid.
-! @param menu_layer The \ref MenuLayer for which to reload the data.*/
+    #[doc = "! Reloads the data of the menu. This causes the menu to re-request the menu\n! item data, by calling the relevant callbacks.\n! The current selection and scroll position will not be changed. See the\n! note with \\ref menu_layer_set_selected_index() for the behavior if the\n! old selection is no longer valid.\n! @param menu_layer The \\ref MenuLayer for which to reload the data."]
     pub fn menu_layer_reload_data(menu_layer: *mut MenuLayer);
 }
 unsafe extern "C" {
-    /**! Returns whether or not the given cell layer is highlighted.
-! Using this for determining highlight behaviour is preferable to using
-! \ref menu_layer_get_selected_index. Row drawing callbacks may be invoked multiple
-! times with a different highlight status on the same cell in order to handle partially
-! highlighted cells during animation.
-! @param cell_layer The \ref Layer for the cell to check highlight status.
-! @return true if the given cell layer is highlighted in the menu.*/
+    #[doc = "! Returns whether or not the given cell layer is highlighted.\n! Using this for determining highlight behaviour is preferable to using\n! \\ref menu_layer_get_selected_index. Row drawing callbacks may be invoked multiple\n! times with a different highlight status on the same cell in order to handle partially\n! highlighted cells during animation.\n! @param cell_layer The \\ref Layer for the cell to check highlight status.\n! @return true if the given cell layer is highlighted in the menu."]
     pub fn menu_cell_layer_is_highlighted(cell_layer: *const Layer) -> bool;
 }
 unsafe extern "C" {
-    /**! Set the default colors to be used for cells when it is in a normal state (not highlighted).
-! The GContext's text and fill colors will be set appropriately prior to calling the `.draw_row`
-! callback.
-! If this function is not explicitly called on a \ref MenuLayer, it will default to white
-! background with black foreground.
-! @param menu_layer The \ref MenuLayer for which to set the colors.
-! @param background The color to be used for the background of the cell.
-! @param foreground The color to be used for the foreground and text of the cell.
-! @see \ref menu_layer_set_highlight_colors*/
+    #[doc = "! Set the default colors to be used for cells when it is in a normal state (not highlighted).\n! The GContext's text and fill colors will be set appropriately prior to calling the `.draw_row`\n! callback.\n! If this function is not explicitly called on a \\ref MenuLayer, it will default to white\n! background with black foreground.\n! @param menu_layer The \\ref MenuLayer for which to set the colors.\n! @param background The color to be used for the background of the cell.\n! @param foreground The color to be used for the foreground and text of the cell.\n! @see \\ref menu_layer_set_highlight_colors"]
     pub fn menu_layer_set_normal_colors(
         menu_layer: *mut MenuLayer,
         background: GColor,
@@ -8505,15 +5040,7 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Set the default colors to be used for cells when it is in a highlighted state.
-! The GContext's text and fill colors will be set appropriately prior to calling the `.draw_row`
-! callback.
-! If this function is not explicitly called on a \ref MenuLayer, it will default to black
-! background with white foreground.
-! @param menu_layer The \ref MenuLayer for which to set the colors.
-! @param background The color to be used for the background of the cell.
-! @param foreground The color to be used for the foreground and text of the cell.
-! @see \ref menu_layer_set_normal_colors*/
+    #[doc = "! Set the default colors to be used for cells when it is in a highlighted state.\n! The GContext's text and fill colors will be set appropriately prior to calling the `.draw_row`\n! callback.\n! If this function is not explicitly called on a \\ref MenuLayer, it will default to black\n! background with white foreground.\n! @param menu_layer The \\ref MenuLayer for which to set the colors.\n! @param background The color to be used for the background of the cell.\n! @param foreground The color to be used for the foreground and text of the cell.\n! @see \\ref menu_layer_set_normal_colors"]
     pub fn menu_layer_set_highlight_colors(
         menu_layer: *mut MenuLayer,
         background: GColor,
@@ -8521,75 +5048,45 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! This enables or disables padding at the bottom of the \ref MenuLayer.
-! Padding at the bottom of the layer keeps the bottom item from being at the very bottom of the
-! screen.
-! Padding is turned on by default for all MenuLayers.
-! The color of the padded area will be the background color set using
-! \ref menu_layer_set_normal_colors(). To color the padding a different color, use
-! \ref MenuLayerDrawBackgroundCallback.
-! @param menu_layer The menu layer for which to enable or disable the padding.
-! @param enable True = enable padding, False = disable padding.*/
+    #[doc = "! This enables or disables padding at the bottom of the \\ref MenuLayer.\n! Padding at the bottom of the layer keeps the bottom item from being at the very bottom of the\n! screen.\n! Padding is turned on by default for all MenuLayers.\n! The color of the padded area will be the background color set using\n! \\ref menu_layer_set_normal_colors(). To color the padding a different color, use\n! \\ref MenuLayerDrawBackgroundCallback.\n! @param menu_layer The menu layer for which to enable or disable the padding.\n! @param enable True = enable padding, False = disable padding."]
     pub fn menu_layer_pad_bottom_enable(menu_layer: *mut MenuLayer, enable: bool);
 }
 unsafe extern "C" {
-    /**! True, if the \ref MenuLayer generally scrolls such that the selected row is in the center.
-! @see \ref menu_layer_set_center_focused*/
+    #[doc = "! True, if the \\ref MenuLayer generally scrolls such that the selected row is in the center.\n! @see \\ref menu_layer_set_center_focused"]
     pub fn menu_layer_get_center_focused(menu_layer: *mut MenuLayer) -> bool;
 }
 unsafe extern "C" {
-    /**! Controls if the \ref MenuLayer generally scrolls such that the selected row is in the center.
-! For platforms with a round display (PBL_ROUND) the default is true,
-! otherwise false is the default
-! @param menu_layer The menu layer for which to enable or disable the behavior.
-! @param center_focused true = enable the mode, false = disable it.
-! @see \ref menu_layer_get_center_focused*/
-    pub fn menu_layer_set_center_focused(
-        menu_layer: *mut MenuLayer,
-        center_focused: bool,
-    );
+    #[doc = "! Controls if the \\ref MenuLayer generally scrolls such that the selected row is in the center.\n! For platforms with a round display (PBL_ROUND) the default is true,\n! otherwise false is the default\n! @param menu_layer The menu layer for which to enable or disable the behavior.\n! @param center_focused true = enable the mode, false = disable it.\n! @see \\ref menu_layer_get_center_focused"]
+    pub fn menu_layer_set_center_focused(menu_layer: *mut MenuLayer, center_focused: bool);
 }
 unsafe extern "C" {
-    /**! Returns whether or not the specified cell index is currently selected.
-! @param menu_layer The \ref MenuLayer to use when determining if the index is selected.
-! @param index The \ref MenuIndex of the cell to check for selection.
-! @note This function should not be used to determine whether a cell is highlighted or not.
-! See \ref menu_cell_layer_is_highlighted for more information.*/
+    #[doc = "! Returns whether or not the specified cell index is currently selected.\n! @param menu_layer The \\ref MenuLayer to use when determining if the index is selected.\n! @param index The \\ref MenuIndex of the cell to check for selection.\n! @note This function should not be used to determine whether a cell is highlighted or not.\n! See \\ref menu_cell_layer_is_highlighted for more information."]
     pub fn menu_layer_is_index_selected(
         menu_layer: *const MenuLayer,
         index: *mut MenuIndex,
     ) -> bool;
 }
-/**! @addtogroup SimpleMenuLayer
-! \brief Wrapper around \ref MenuLayer, that uses static data to display a
-! list menu.
-!
-! ![](simple_menu_layer.png)
-! @{*/
+#[doc = "! @addtogroup SimpleMenuLayer\n! \\brief Wrapper around \\ref MenuLayer, that uses static data to display a\n! list menu.\n!\n! ![](simple_menu_layer.png)\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SimpleMenuLayer {
     _unused: [u8; 0],
 }
-/**! Function signature for the callback to handle the event that a user hits
-! the SELECT button.
-! @param index The row index of the item
-! @param context The callback context*/
+#[doc = "! Function signature for the callback to handle the event that a user hits\n! the SELECT button.\n! @param index The row index of the item\n! @param context The callback context"]
 pub type SimpleMenuLayerSelectCallback = ::core::option::Option<
     unsafe extern "C" fn(index: ::core::ffi::c_int, context: *mut ::core::ffi::c_void),
 >;
-///! Data structure containing the information of a menu item.
+#[doc = "! Data structure containing the information of a menu item."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SimpleMenuItem {
-    ///! The title of the menu item. Required.
+    #[doc = "! The title of the menu item. Required."]
     pub title: *const ::core::ffi::c_char,
-    ///! The subtitle of the menu item. Optional, leave `NULL` if unused.
+    #[doc = "! The subtitle of the menu item. Optional, leave `NULL` if unused."]
     pub subtitle: *const ::core::ffi::c_char,
-    ///! The icon of the menu item. Optional, leave `NULL` if unused.
+    #[doc = "! The icon of the menu item. Optional, leave `NULL` if unused."]
     pub icon: *mut GBitmap,
-    /**! The callback that needs to be called upon a click on the SELECT button.
-! Optional, leave `NULL` if unused.*/
+    #[doc = "! The callback that needs to be called upon a click on the SELECT button.\n! Optional, leave `NULL` if unused."]
     pub callback: SimpleMenuLayerSelectCallback,
 }
 impl Default for SimpleMenuItem {
@@ -8601,15 +5098,15 @@ impl Default for SimpleMenuItem {
         }
     }
 }
-///! Data structure containing the information of a menu section.
+#[doc = "! Data structure containing the information of a menu section."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SimpleMenuSection {
-    ///! Title of the section. Optional, leave `NULL` if unused.
+    #[doc = "! Title of the section. Optional, leave `NULL` if unused."]
     pub title: *const ::core::ffi::c_char,
-    ///! Array of items in the section.
+    #[doc = "! Array of items in the section."]
     pub items: *const SimpleMenuItem,
-    ///! Number of items in the `.items` array.
+    #[doc = "! Number of items in the `.items` array."]
     pub num_items: u32,
 }
 impl Default for SimpleMenuSection {
@@ -8622,19 +5119,7 @@ impl Default for SimpleMenuSection {
     }
 }
 unsafe extern "C" {
-    /**! Creates a new SimpleMenuLayer on the heap and initializes it.
-! It also sets the internal click configuration provider onto given window.
-! @param frame The frame at which to initialize the menu
-! @param window The window onto which to set the click configuration provider
-! @param sections Array with sections that need to be displayed in the menu
-! @param num_sections The number of sections in the `sections` array.
-! @param callback_context Pointer to application specific data, that is passed
-! into the callbacks.
-! @note The `sections` array is not deep-copied and can therefore not be stack
-! allocated, but needs to be backed by long-lived storage.
-! @note This function does not add the menu's layer to the window.
-! @return A pointer to the SimpleMenuLayer. `NULL` if the SimpleMenuLayer could not
-! be created*/
+    #[doc = "! Creates a new SimpleMenuLayer on the heap and initializes it.\n! It also sets the internal click configuration provider onto given window.\n! @param frame The frame at which to initialize the menu\n! @param window The window onto which to set the click configuration provider\n! @param sections Array with sections that need to be displayed in the menu\n! @param num_sections The number of sections in the `sections` array.\n! @param callback_context Pointer to application specific data, that is passed\n! into the callbacks.\n! @note The `sections` array is not deep-copied and can therefore not be stack\n! allocated, but needs to be backed by long-lived storage.\n! @note This function does not add the menu's layer to the window.\n! @return A pointer to the SimpleMenuLayer. `NULL` if the SimpleMenuLayer could not\n! be created"]
     pub fn simple_menu_layer_create(
         frame: GRect,
         window: *mut Window,
@@ -8644,33 +5129,21 @@ unsafe extern "C" {
     ) -> *mut SimpleMenuLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a SimpleMenuLayer previously created by simple_menu_layer_create.
+    #[doc = "! Destroys a SimpleMenuLayer previously created by simple_menu_layer_create."]
     pub fn simple_menu_layer_destroy(menu_layer: *mut SimpleMenuLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the simple menu layer, which is the parent for the
-! sub-layers used for its implementation.
-! @param simple_menu Pointer to the SimpleMenuLayer for which to get the
-! "root" Layer
-! @return The "root" Layer of the menu layer.*/
-    pub fn simple_menu_layer_get_layer(
-        simple_menu: *const SimpleMenuLayer,
-    ) -> *mut Layer;
+    #[doc = "! Gets the \"root\" Layer of the simple menu layer, which is the parent for the\n! sub-layers used for its implementation.\n! @param simple_menu Pointer to the SimpleMenuLayer for which to get the\n! \"root\" Layer\n! @return The \"root\" Layer of the menu layer."]
+    pub fn simple_menu_layer_get_layer(simple_menu: *const SimpleMenuLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Gets the row index of the currently selection menu item.
-! @param simple_menu The SimpleMenuLayer for which to get the current
-! selected row index.*/
+    #[doc = "! Gets the row index of the currently selection menu item.\n! @param simple_menu The SimpleMenuLayer for which to get the current\n! selected row index."]
     pub fn simple_menu_layer_get_selected_index(
         simple_menu: *const SimpleMenuLayer,
     ) -> ::core::ffi::c_int;
 }
 unsafe extern "C" {
-    /**! Selects the item in the first section at given row index.
-! @param simple_menu The SimpleMenuLayer for which to change the selection
-! @param index The row index of the item to select
-! @param animated Supply `true` to animate changing the selection, or `false`
-! to change the selection instantly.*/
+    #[doc = "! Selects the item in the first section at given row index.\n! @param simple_menu The SimpleMenuLayer for which to change the selection\n! @param index The row index of the item to select\n! @param animated Supply `true` to animate changing the selection, or `false`\n! to change the selection instantly."]
     pub fn simple_menu_layer_set_selected_index(
         simple_menu: *mut SimpleMenuLayer,
         index: i32,
@@ -8678,28 +5151,20 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! @param simple_menu The \ref SimpleMenuLayer to get the \ref MenuLayer from.
-! @return The \ref MenuLayer.*/
-    pub fn simple_menu_layer_get_menu_layer(
-        simple_menu: *mut SimpleMenuLayer,
-    ) -> *mut MenuLayer;
+    #[doc = "! @param simple_menu The \\ref SimpleMenuLayer to get the \\ref MenuLayer from.\n! @return The \\ref MenuLayer."]
+    pub fn simple_menu_layer_get_menu_layer(simple_menu: *mut SimpleMenuLayer) -> *mut MenuLayer;
 }
 impl ActionBarLayerIconPressAnimation {
-    pub const ActionBarLayerIconPressAnimationNone: ActionBarLayerIconPressAnimation = ActionBarLayerIconPressAnimation(
-        0,
-    );
-    pub const ActionBarLayerIconPressAnimationMoveLeft: ActionBarLayerIconPressAnimation = ActionBarLayerIconPressAnimation(
-        1,
-    );
-    pub const ActionBarLayerIconPressAnimationMoveUp: ActionBarLayerIconPressAnimation = ActionBarLayerIconPressAnimation(
-        2,
-    );
-    pub const ActionBarLayerIconPressAnimationMoveRight: ActionBarLayerIconPressAnimation = ActionBarLayerIconPressAnimation(
-        3,
-    );
-    pub const ActionBarLayerIconPressAnimationMoveDown: ActionBarLayerIconPressAnimation = ActionBarLayerIconPressAnimation(
-        4,
-    );
+    pub const ActionBarLayerIconPressAnimationNone: ActionBarLayerIconPressAnimation =
+        ActionBarLayerIconPressAnimation(0);
+    pub const ActionBarLayerIconPressAnimationMoveLeft: ActionBarLayerIconPressAnimation =
+        ActionBarLayerIconPressAnimation(1);
+    pub const ActionBarLayerIconPressAnimationMoveUp: ActionBarLayerIconPressAnimation =
+        ActionBarLayerIconPressAnimation(2);
+    pub const ActionBarLayerIconPressAnimationMoveRight: ActionBarLayerIconPressAnimation =
+        ActionBarLayerIconPressAnimation(3);
+    pub const ActionBarLayerIconPressAnimationMoveDown: ActionBarLayerIconPressAnimation =
+        ActionBarLayerIconPressAnimation(4);
 }
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -8710,74 +5175,33 @@ pub struct ActionBarLayer {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Creates a new ActionBarLayer on the heap and initalizes it with the default values.
-! * Background color: \ref GColorBlack
-! * No click configuration provider (`NULL`)
-! * No icons
-! * Not added to / associated with any window, thus not catching any button input yet.
-! @return A pointer to the ActionBarLayer. `NULL` if the ActionBarLayer could not
-! be created*/
+    #[doc = "! Creates a new ActionBarLayer on the heap and initalizes it with the default values.\n! * Background color: \\ref GColorBlack\n! * No click configuration provider (`NULL`)\n! * No icons\n! * Not added to / associated with any window, thus not catching any button input yet.\n! @return A pointer to the ActionBarLayer. `NULL` if the ActionBarLayer could not\n! be created"]
     pub fn action_bar_layer_create() -> *mut ActionBarLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a ActionBarLayer previously created by action_bar_layer_create
+    #[doc = "! Destroys a ActionBarLayer previously created by action_bar_layer_create"]
     pub fn action_bar_layer_destroy(action_bar_layer: *mut ActionBarLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the action bar layer, which is the parent for the sub-
-! layers used for its implementation.
-! @param action_bar_layer Pointer to the ActionBarLayer for which to get the "root" Layer
-! @return The "root" Layer of the action bar layer.*/
-    pub fn action_bar_layer_get_layer(
-        action_bar_layer: *mut ActionBarLayer,
-    ) -> *mut Layer;
+    #[doc = "! Gets the \"root\" Layer of the action bar layer, which is the parent for the sub-\n! layers used for its implementation.\n! @param action_bar_layer Pointer to the ActionBarLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the action bar layer."]
+    pub fn action_bar_layer_get_layer(action_bar_layer: *mut ActionBarLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Sets the context parameter, which will be passed in to \ref ClickHandler
-! callbacks and the \ref ClickConfigProvider callback of the action bar.
-! @note By default, a pointer to the action bar itself is passed in, if the
-! context has not been set or if it has been set to `NULL`.
-! @param action_bar The action bar for which to assign the new context
-! @param context The new context
-! @see action_bar_layer_set_click_config_provider()
-! @see \ref Clicks*/
+    #[doc = "! Sets the context parameter, which will be passed in to \\ref ClickHandler\n! callbacks and the \\ref ClickConfigProvider callback of the action bar.\n! @note By default, a pointer to the action bar itself is passed in, if the\n! context has not been set or if it has been set to `NULL`.\n! @param action_bar The action bar for which to assign the new context\n! @param context The new context\n! @see action_bar_layer_set_click_config_provider()\n! @see \\ref Clicks"]
     pub fn action_bar_layer_set_context(
         action_bar: *mut ActionBarLayer,
         context: *mut ::core::ffi::c_void,
     );
 }
 unsafe extern "C" {
-    /**! Sets the click configuration provider callback of the action bar.
-! In this callback your application can associate handlers to the different
-! types of click events for each of the buttons, see \ref Clicks.
-! @note If the action bar had already been added to a window and the window
-! is currently on-screen, the click configuration provider will be called
-! before this function returns. Otherwise, it will be called by the system
-! when the window becomes on-screen.
-! @note The `.raw` handlers cannot be used without breaking the automatic
-! highlighting of the segment of the action bar that for which a button is
-! @see action_bar_layer_set_icon()
-! @param action_bar The action bar for which to assign a new click
-! configuration provider
-! @param click_config_provider The new click configuration provider*/
+    #[doc = "! Sets the click configuration provider callback of the action bar.\n! In this callback your application can associate handlers to the different\n! types of click events for each of the buttons, see \\ref Clicks.\n! @note If the action bar had already been added to a window and the window\n! is currently on-screen, the click configuration provider will be called\n! before this function returns. Otherwise, it will be called by the system\n! when the window becomes on-screen.\n! @note The `.raw` handlers cannot be used without breaking the automatic\n! highlighting of the segment of the action bar that for which a button is\n! @see action_bar_layer_set_icon()\n! @param action_bar The action bar for which to assign a new click\n! configuration provider\n! @param click_config_provider The new click configuration provider"]
     pub fn action_bar_layer_set_click_config_provider(
         action_bar: *mut ActionBarLayer,
         click_config_provider: ClickConfigProvider,
     );
 }
 unsafe extern "C" {
-    /**! Sets an action bar icon onto one of the 3 slots as identified by `button_id`.
-! Only \ref BUTTON_ID_UP, \ref BUTTON_ID_SELECT and \ref BUTTON_ID_DOWN can be
-! used. The transition will not be animated.
-! Whenever an icon is set, the click configuration provider will be
-! called, to give the application the opportunity to reconfigure the button
-! interaction.
-! @param action_bar The action bar for which to set the new icon
-! @param button_id The identifier of the button for which to set the icon
-! @param icon Pointer to the \ref GBitmap icon
-! @see action_bar_layer_set_icon_animated()
-! @see action_bar_layer_set_icon_press_animation()
-! @see action_bar_layer_set_click_config_provider()*/
+    #[doc = "! Sets an action bar icon onto one of the 3 slots as identified by `button_id`.\n! Only \\ref BUTTON_ID_UP, \\ref BUTTON_ID_SELECT and \\ref BUTTON_ID_DOWN can be\n! used. The transition will not be animated.\n! Whenever an icon is set, the click configuration provider will be\n! called, to give the application the opportunity to reconfigure the button\n! interaction.\n! @param action_bar The action bar for which to set the new icon\n! @param button_id The identifier of the button for which to set the icon\n! @param icon Pointer to the \\ref GBitmap icon\n! @see action_bar_layer_set_icon_animated()\n! @see action_bar_layer_set_icon_press_animation()\n! @see action_bar_layer_set_click_config_provider()"]
     pub fn action_bar_layer_set_icon(
         action_bar: *mut ActionBarLayer,
         button_id: ButtonId,
@@ -8785,74 +5209,26 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Convenience function to clear out an existing icon.
-! All it does is call `action_bar_layer_set_icon(action_bar, button_id, NULL)`
-! @param action_bar The action bar for which to clear an icon
-! @param button_id The identifier of the button for which to clear the icon
-! @see action_bar_layer_set_icon()*/
-    pub fn action_bar_layer_clear_icon(
-        action_bar: *mut ActionBarLayer,
-        button_id: ButtonId,
-    );
+    #[doc = "! Convenience function to clear out an existing icon.\n! All it does is call `action_bar_layer_set_icon(action_bar, button_id, NULL)`\n! @param action_bar The action bar for which to clear an icon\n! @param button_id The identifier of the button for which to clear the icon\n! @see action_bar_layer_set_icon()"]
+    pub fn action_bar_layer_clear_icon(action_bar: *mut ActionBarLayer, button_id: ButtonId);
 }
 unsafe extern "C" {
-    /**! Adds the action bar's layer on top of the window's root layer. It also
-! adjusts the layout of the action bar to match the geometry of the window it
-! gets added to.
-! Lastly, it calls \ref window_set_click_config_provider_with_context() on
-! the window to set it up to work with the internal callback and raw click
-! handlers of the action bar, to enable the highlighting of the section of the
-! action bar when the user presses a button.
-! @note After this call, do not use
-! \ref window_set_click_config_provider_with_context() with the window that
-! the action bar has been added to (this would de-associate the action bar's
-! click config provider and context). Instead use
-! \ref action_bar_layer_set_click_config_provider() and
-! \ref action_bar_layer_set_context() to register the click configuration
-! provider to configure the buttons actions.
-! @note It is advised to call this is in the window's `.load` or `.appear`
-! handler. Make sure to call \ref action_bar_layer_remove_from_window() in the
-! window's `.unload` or `.disappear` handler.
-! @note Adding additional layers to the window's root layer after this calll
-! can occlude the action bar.
-! @param action_bar The action bar to associate with the window
-! @param window The window with which the action bar is to be associated*/
-    pub fn action_bar_layer_add_to_window(
-        action_bar: *mut ActionBarLayer,
-        window: *mut Window,
-    );
+    #[doc = "! Adds the action bar's layer on top of the window's root layer. It also\n! adjusts the layout of the action bar to match the geometry of the window it\n! gets added to.\n! Lastly, it calls \\ref window_set_click_config_provider_with_context() on\n! the window to set it up to work with the internal callback and raw click\n! handlers of the action bar, to enable the highlighting of the section of the\n! action bar when the user presses a button.\n! @note After this call, do not use\n! \\ref window_set_click_config_provider_with_context() with the window that\n! the action bar has been added to (this would de-associate the action bar's\n! click config provider and context). Instead use\n! \\ref action_bar_layer_set_click_config_provider() and\n! \\ref action_bar_layer_set_context() to register the click configuration\n! provider to configure the buttons actions.\n! @note It is advised to call this is in the window's `.load` or `.appear`\n! handler. Make sure to call \\ref action_bar_layer_remove_from_window() in the\n! window's `.unload` or `.disappear` handler.\n! @note Adding additional layers to the window's root layer after this calll\n! can occlude the action bar.\n! @param action_bar The action bar to associate with the window\n! @param window The window with which the action bar is to be associated"]
+    pub fn action_bar_layer_add_to_window(action_bar: *mut ActionBarLayer, window: *mut Window);
 }
 unsafe extern "C" {
-    /**! Removes the action bar from the window and unconfigures the window's
-! click configuration provider. `NULL` is set as the window's new click config
-! provider and also as its callback context. If it has not been added to a
-! window before, this function is a no-op.
-! @param action_bar The action bar to de-associate from its current window*/
+    #[doc = "! Removes the action bar from the window and unconfigures the window's\n! click configuration provider. `NULL` is set as the window's new click config\n! provider and also as its callback context. If it has not been added to a\n! window before, this function is a no-op.\n! @param action_bar The action bar to de-associate from its current window"]
     pub fn action_bar_layer_remove_from_window(action_bar: *mut ActionBarLayer);
 }
 unsafe extern "C" {
-    /**! Sets the background color of the action bar. Defaults to \ref GColorBlack.
-! The action bar's layer is automatically marked dirty.
-! @param action_bar The action bar of which to set the background color
-! @param background_color The new background color*/
+    #[doc = "! Sets the background color of the action bar. Defaults to \\ref GColorBlack.\n! The action bar's layer is automatically marked dirty.\n! @param action_bar The action bar of which to set the background color\n! @param background_color The new background color"]
     pub fn action_bar_layer_set_background_color(
         action_bar: *mut ActionBarLayer,
         background_color: GColor,
     );
 }
 unsafe extern "C" {
-    /**! Sets an action bar icon onto one of the 3 slots as identified by `button_id`.
-! Only \ref BUTTON_ID_UP, \ref BUTTON_ID_SELECT and \ref BUTTON_ID_DOWN can be
-! used. Optionally, if `animated` is `true`, the transition will be animated.
-! Whenever an icon is set, the click configuration provider will be called,
-! to give the application the opportunity to reconfigure the button interaction.
-! @param action_bar The action bar for which to set the new icon
-! @param button_id The identifier of the button for which to set the icon
-! @param icon Pointer to the \ref GBitmap icon
-! @param animated True = animate the transition, False = do not animate the transition
-! @see action_bar_layer_set_icon()
-! @see action_bar_layer_set_icon_press_animation()
-! @see action_bar_layer_set_click_config_provider()*/
+    #[doc = "! Sets an action bar icon onto one of the 3 slots as identified by `button_id`.\n! Only \\ref BUTTON_ID_UP, \\ref BUTTON_ID_SELECT and \\ref BUTTON_ID_DOWN can be\n! used. Optionally, if `animated` is `true`, the transition will be animated.\n! Whenever an icon is set, the click configuration provider will be called,\n! to give the application the opportunity to reconfigure the button interaction.\n! @param action_bar The action bar for which to set the new icon\n! @param button_id The identifier of the button for which to set the icon\n! @param icon Pointer to the \\ref GBitmap icon\n! @param animated True = animate the transition, False = do not animate the transition\n! @see action_bar_layer_set_icon()\n! @see action_bar_layer_set_icon_press_animation()\n! @see action_bar_layer_set_click_config_provider()"]
     pub fn action_bar_layer_set_icon_animated(
         action_bar: *mut ActionBarLayer,
         button_id: ButtonId,
@@ -8861,97 +5237,55 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Sets the animation to use while a button is pressed on an ActionBarLayer.
-! By default we use ActionBarLayerIconPressAnimationMoveLeft
-! @param action_bar The action bar for which to set the press animation
-! @param button_id The button for which to set the press animation
-! @param animation The animation to use.
-! @see action_bar_layer_set_icon_animated()
-! @see action_bar_layer_set_click_config_provider()*/
+    #[doc = "! Sets the animation to use while a button is pressed on an ActionBarLayer.\n! By default we use ActionBarLayerIconPressAnimationMoveLeft\n! @param action_bar The action bar for which to set the press animation\n! @param button_id The button for which to set the press animation\n! @param animation The animation to use.\n! @see action_bar_layer_set_icon_animated()\n! @see action_bar_layer_set_click_config_provider()"]
     pub fn action_bar_layer_set_icon_press_animation(
         action_bar: *mut ActionBarLayer,
         button_id: ButtonId,
         animation: ActionBarLayerIconPressAnimation,
     );
 }
-/**! @addtogroup StatusBarLayer
-! \brief Layer that serves as a configurable status bar.
-! @{*/
+#[doc = "! @addtogroup StatusBarLayer\n! \\brief Layer that serves as a configurable status bar.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct StatusBarLayer {
     _unused: [u8; 0],
 }
 impl StatusBarLayerSeparatorMode {
-    ///! The default mode. No separator will be shown.
-    pub const StatusBarLayerSeparatorModeNone: StatusBarLayerSeparatorMode = StatusBarLayerSeparatorMode(
-        0,
-    );
-    ///! A dotted separator at the bottom of the status bar.
-    pub const StatusBarLayerSeparatorModeDotted: StatusBarLayerSeparatorMode = StatusBarLayerSeparatorMode(
-        1,
-    );
+    #[doc = "! The default mode. No separator will be shown."]
+    pub const StatusBarLayerSeparatorModeNone: StatusBarLayerSeparatorMode =
+        StatusBarLayerSeparatorMode(0);
+    #[doc = "! A dotted separator at the bottom of the status bar."]
+    pub const StatusBarLayerSeparatorModeDotted: StatusBarLayerSeparatorMode =
+        StatusBarLayerSeparatorMode(1);
 }
 #[repr(transparent)]
-///! Values that are used to indicate the different status bar separator modes.
+#[doc = "! Values that are used to indicate the different status bar separator modes."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct StatusBarLayerSeparatorMode(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Creates a new StatusBarLayer on the heap and initializes it with the default values.
-!
-! * Text color: \ref GColorBlack
-! * Background color: \ref GColorWhite
-! * Frame: `GRect(0, 0, screen_width, STATUS_BAR_LAYER_HEIGHT)`
-! The status bar is automatically marked dirty after this operation.
-! You can call \ref layer_set_frame() to create a StatusBarLayer of a different width.
-!
-! \code{.c}
-! // Change the status bar width to make space for the action bar
-! int16_t width = layer_get_bounds(root_layer).size.w - ACTION_BAR_WIDTH;
-! GRect frame = GRect(0, 0, width, STATUS_BAR_LAYER_HEIGHT);
-! layer_set_frame(status_bar_layer_get_layer(status_bar), frame);
-! layer_add_child(root_layer, status_bar_layer_get_layer(status_bar));
-! \endcode
-! @return A pointer to the StatusBarLayer, which will be allocated to the heap,
-! `NULL` if the StatusBarLayer could not be created*/
+    #[doc = "! Creates a new StatusBarLayer on the heap and initializes it with the default values.\n!\n! * Text color: \\ref GColorBlack\n! * Background color: \\ref GColorWhite\n! * Frame: `GRect(0, 0, screen_width, STATUS_BAR_LAYER_HEIGHT)`\n! The status bar is automatically marked dirty after this operation.\n! You can call \\ref layer_set_frame() to create a StatusBarLayer of a different width.\n!\n! \\code{.c}\n! // Change the status bar width to make space for the action bar\n! int16_t width = layer_get_bounds(root_layer).size.w - ACTION_BAR_WIDTH;\n! GRect frame = GRect(0, 0, width, STATUS_BAR_LAYER_HEIGHT);\n! layer_set_frame(status_bar_layer_get_layer(status_bar), frame);\n! layer_add_child(root_layer, status_bar_layer_get_layer(status_bar));\n! \\endcode\n! @return A pointer to the StatusBarLayer, which will be allocated to the heap,\n! `NULL` if the StatusBarLayer could not be created"]
     pub fn status_bar_layer_create() -> *mut StatusBarLayer;
 }
 unsafe extern "C" {
-    /**! Destroys a StatusBarLayer previously created by status_bar_layer_create.
-! @param status_bar_layer The StatusBarLayer to destroy*/
+    #[doc = "! Destroys a StatusBarLayer previously created by status_bar_layer_create.\n! @param status_bar_layer The StatusBarLayer to destroy"]
     pub fn status_bar_layer_destroy(status_bar_layer: *mut StatusBarLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the status bar, which is the parent for the sub-
-! layers used for its implementation.
-! @param status_bar_layer Pointer to the StatusBarLayer for which to get the "root" Layer
-! @return The "root" Layer of the status bar.
-! @note The result is always equal to `(Layer *) status_bar_layer`.*/
-    pub fn status_bar_layer_get_layer(
-        status_bar_layer: *mut StatusBarLayer,
-    ) -> *mut Layer;
+    #[doc = "! Gets the \"root\" Layer of the status bar, which is the parent for the sub-\n! layers used for its implementation.\n! @param status_bar_layer Pointer to the StatusBarLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the status bar.\n! @note The result is always equal to `(Layer *) status_bar_layer`."]
+    pub fn status_bar_layer_get_layer(status_bar_layer: *mut StatusBarLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Gets background color of StatusBarLayer
-! @param status_bar_layer The StatusBarLayer of which to get the color
-! @return GColor of background color property*/
-    pub fn status_bar_layer_get_background_color(
-        status_bar_layer: *const StatusBarLayer,
-    ) -> GColor;
+    #[doc = "! Gets background color of StatusBarLayer\n! @param status_bar_layer The StatusBarLayer of which to get the color\n! @return GColor of background color property"]
+    pub fn status_bar_layer_get_background_color(status_bar_layer: *const StatusBarLayer)
+        -> GColor;
 }
 unsafe extern "C" {
-    /**! Gets foreground color of StatusBarLayer
-! @param status_bar_layer The StatusBarLayer of which to get the color
-! @return GColor of foreground color property*/
-    pub fn status_bar_layer_get_foreground_color(
-        status_bar_layer: *const StatusBarLayer,
-    ) -> GColor;
+    #[doc = "! Gets foreground color of StatusBarLayer\n! @param status_bar_layer The StatusBarLayer of which to get the color\n! @return GColor of foreground color property"]
+    pub fn status_bar_layer_get_foreground_color(status_bar_layer: *const StatusBarLayer)
+        -> GColor;
 }
 unsafe extern "C" {
-    /**! Sets the background and foreground colors of StatusBarLayer
-! @param status_bar_layer The StatusBarLayer of which to set the colors
-! @param background The new \ref GColor to set for background
-! @param foreground The new \ref GColor to set for text and other foreground elements*/
+    #[doc = "! Sets the background and foreground colors of StatusBarLayer\n! @param status_bar_layer The StatusBarLayer of which to set the colors\n! @param background The new \\ref GColor to set for background\n! @param foreground The new \\ref GColor to set for text and other foreground elements"]
     pub fn status_bar_layer_set_colors(
         status_bar_layer: *mut StatusBarLayer,
         background: GColor,
@@ -8959,267 +5293,111 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Sets the mode of the StatusBarLayer separator, to help divide it from content
-! @param status_bar_layer The StatusBarLayer of which to set the separator mode
-! @param mode Determines the separator mode*/
+    #[doc = "! Sets the mode of the StatusBarLayer separator, to help divide it from content\n! @param status_bar_layer The StatusBarLayer of which to set the separator mode\n! @param mode Determines the separator mode"]
     pub fn status_bar_layer_set_separator_mode(
         status_bar_layer: *mut StatusBarLayer,
         mode: StatusBarLayerSeparatorMode,
     );
 }
-/**! @addtogroup BitmapLayer
-! \brief Layer that displays a bitmap image.
-!
-! ![](bitmap_layer.png)
-! BitmapLayer is a Layer subtype that draws a GBitmap within its frame. It uses an alignment property
-! to specify how to position the bitmap image within its frame. Optionally, when the
-! background color is not GColorClear, it draws a solid background color behind the
-! bitmap image, filling areas of the frame that are not covered by the bitmap image.
-! Lastly, using the compositing mode property of the BitmapLayer, determines the way the
-! bitmap image is drawn on top of what is underneath it (either the background color, or
-! the layers beneath it).
-!
-! <h3>Inside the Implementation</h3>
-! The implementation of BitmapLayer is fairly straightforward and relies heavily on the
-! functionality as exposed by the core drawing functions (see \ref Drawing).
-! \ref BitmapLayer's drawing callback uses \ref graphics_draw_bitmap_in_rect()
-! to perform the actual drawing of the \ref GBitmap. It uses \ref grect_align() to perform
-! the layout of the image and it uses \ref graphics_fill_rect() to draw the background plane.
-! @{*/
+#[doc = "! @addtogroup BitmapLayer\n! \\brief Layer that displays a bitmap image.\n!\n! ![](bitmap_layer.png)\n! BitmapLayer is a Layer subtype that draws a GBitmap within its frame. It uses an alignment property\n! to specify how to position the bitmap image within its frame. Optionally, when the\n! background color is not GColorClear, it draws a solid background color behind the\n! bitmap image, filling areas of the frame that are not covered by the bitmap image.\n! Lastly, using the compositing mode property of the BitmapLayer, determines the way the\n! bitmap image is drawn on top of what is underneath it (either the background color, or\n! the layers beneath it).\n!\n! <h3>Inside the Implementation</h3>\n! The implementation of BitmapLayer is fairly straightforward and relies heavily on the\n! functionality as exposed by the core drawing functions (see \\ref Drawing).\n! \\ref BitmapLayer's drawing callback uses \\ref graphics_draw_bitmap_in_rect()\n! to perform the actual drawing of the \\ref GBitmap. It uses \\ref grect_align() to perform\n! the layout of the image and it uses \\ref graphics_fill_rect() to draw the background plane.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct BitmapLayer {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Creates a new bitmap layer on the heap and initalizes it the default values.
-!
-! * Bitmap: `NULL` (none)
-! * Background color: \ref GColorClear
-! * Compositing mode: \ref GCompOpAssign
-! * Clips: `true`
-! @return A pointer to the BitmapLayer. `NULL` if the BitmapLayer could not
-! be created*/
+    #[doc = "! Creates a new bitmap layer on the heap and initalizes it the default values.\n!\n! * Bitmap: `NULL` (none)\n! * Background color: \\ref GColorClear\n! * Compositing mode: \\ref GCompOpAssign\n! * Clips: `true`\n! @return A pointer to the BitmapLayer. `NULL` if the BitmapLayer could not\n! be created"]
     pub fn bitmap_layer_create(frame: GRect) -> *mut BitmapLayer;
 }
 unsafe extern "C" {
-    ///! Destroys a window previously created by bitmap_layer_create
+    #[doc = "! Destroys a window previously created by bitmap_layer_create"]
     pub fn bitmap_layer_destroy(bitmap_layer: *mut BitmapLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the bitmap layer, which is the parent for the sub-
-! layers used for its implementation.
-! @param bitmap_layer Pointer to the BitmapLayer for which to get the "root" Layer
-! @return The "root" Layer of the bitmap layer.*/
+    #[doc = "! Gets the \"root\" Layer of the bitmap layer, which is the parent for the sub-\n! layers used for its implementation.\n! @param bitmap_layer Pointer to the BitmapLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the bitmap layer."]
     pub fn bitmap_layer_get_layer(bitmap_layer: *const BitmapLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Gets the pointer to the bitmap image that the BitmapLayer is using.
-!
-! @param bitmap_layer The BitmapLayer for which to get the bitmap image
-! @return A pointer to the bitmap image that the BitmapLayer is using*/
+    #[doc = "! Gets the pointer to the bitmap image that the BitmapLayer is using.\n!\n! @param bitmap_layer The BitmapLayer for which to get the bitmap image\n! @return A pointer to the bitmap image that the BitmapLayer is using"]
     pub fn bitmap_layer_get_bitmap(bitmap_layer: *mut BitmapLayer) -> *const GBitmap;
 }
 unsafe extern "C" {
-    /**! Sets the bitmap onto the BitmapLayer. The bitmap is set by reference (no deep
-! copy), thus the caller of this function has to make sure the bitmap is kept
-! in memory.
-!
-! The bitmap layer is automatically marked dirty after this operation.
-! @param bitmap_layer The BitmapLayer for which to set the bitmap image
-! @param bitmap The new \ref GBitmap to set onto the BitmapLayer*/
-    pub fn bitmap_layer_set_bitmap(
-        bitmap_layer: *mut BitmapLayer,
-        bitmap: *const GBitmap,
-    );
+    #[doc = "! Sets the bitmap onto the BitmapLayer. The bitmap is set by reference (no deep\n! copy), thus the caller of this function has to make sure the bitmap is kept\n! in memory.\n!\n! The bitmap layer is automatically marked dirty after this operation.\n! @param bitmap_layer The BitmapLayer for which to set the bitmap image\n! @param bitmap The new \\ref GBitmap to set onto the BitmapLayer"]
+    pub fn bitmap_layer_set_bitmap(bitmap_layer: *mut BitmapLayer, bitmap: *const GBitmap);
 }
 unsafe extern "C" {
-    /**! Sets the alignment of the image to draw with in frame of the BitmapLayer.
-! The aligment parameter specifies which edges of the bitmap should overlap
-! with the frame of the BitmapLayer.
-! If the bitmap is smaller than the frame of the BitmapLayer, the background
-! is filled with the background color.
-!
-! The bitmap layer is automatically marked dirty after this operation.
-! @param bitmap_layer The BitmapLayer for which to set the aligment
-! @param alignment The new alignment for the image inside the BitmapLayer*/
+    #[doc = "! Sets the alignment of the image to draw with in frame of the BitmapLayer.\n! The aligment parameter specifies which edges of the bitmap should overlap\n! with the frame of the BitmapLayer.\n! If the bitmap is smaller than the frame of the BitmapLayer, the background\n! is filled with the background color.\n!\n! The bitmap layer is automatically marked dirty after this operation.\n! @param bitmap_layer The BitmapLayer for which to set the aligment\n! @param alignment The new alignment for the image inside the BitmapLayer"]
     pub fn bitmap_layer_set_alignment(bitmap_layer: *mut BitmapLayer, alignment: GAlign);
 }
 unsafe extern "C" {
-    /**! Sets the background color of bounding box that will be drawn behind the image
-! of the BitmapLayer.
-!
-! The bitmap layer is automatically marked dirty after this operation.
-! @param bitmap_layer The BitmapLayer for which to set the background color
-! @param color The new \ref GColor to set the background to
-! @see \ref bitmap_layer_set_compositing_mode for enabling transparency*/
-    pub fn bitmap_layer_set_background_color(
-        bitmap_layer: *mut BitmapLayer,
-        color: GColor,
-    );
+    #[doc = "! Sets the background color of bounding box that will be drawn behind the image\n! of the BitmapLayer.\n!\n! The bitmap layer is automatically marked dirty after this operation.\n! @param bitmap_layer The BitmapLayer for which to set the background color\n! @param color The new \\ref GColor to set the background to\n! @see \\ref bitmap_layer_set_compositing_mode for enabling transparency"]
+    pub fn bitmap_layer_set_background_color(bitmap_layer: *mut BitmapLayer, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the compositing mode of how the bitmap image is composited onto the
-! BitmapLayer's background plane, or how it is composited onto what has been
-! drawn beneath the BitmapLayer.
-!
-! The compositing mode only affects the drawing of the bitmap and not the
-! drawing of the background color.
-!
-! For black&white platforms, there is no notion of "transparency" in the graphics system.
-! However, the effect of transparency can be created by masking and using compositing modes.
-!
-! For color platforms, when drawing \ref GBitmap images, \ref GCompOpSet is
-! required to apply any transparency.
-!
-! The bitmap layer is automatically marked dirty after this operation.
-! @param bitmap_layer The BitmapLayer for which to set the compositing mode
-! @param mode The compositing mode to set
-! @see See \ref GCompOp for visual examples of the different compositing modes.*/
-    pub fn bitmap_layer_set_compositing_mode(
-        bitmap_layer: *mut BitmapLayer,
-        mode: GCompOp,
-    );
+    #[doc = "! Sets the compositing mode of how the bitmap image is composited onto the\n! BitmapLayer's background plane, or how it is composited onto what has been\n! drawn beneath the BitmapLayer.\n!\n! The compositing mode only affects the drawing of the bitmap and not the\n! drawing of the background color.\n!\n! For black&white platforms, there is no notion of \"transparency\" in the graphics system.\n! However, the effect of transparency can be created by masking and using compositing modes.\n!\n! For color platforms, when drawing \\ref GBitmap images, \\ref GCompOpSet is\n! required to apply any transparency.\n!\n! The bitmap layer is automatically marked dirty after this operation.\n! @param bitmap_layer The BitmapLayer for which to set the compositing mode\n! @param mode The compositing mode to set\n! @see See \\ref GCompOp for visual examples of the different compositing modes."]
+    pub fn bitmap_layer_set_compositing_mode(bitmap_layer: *mut BitmapLayer, mode: GCompOp);
 }
-/**! @addtogroup RotBitmapLayer
-! \brief Layer that displays a rotated bitmap image.
-!
-! A RotBitmapLayer is like a \ref BitmapLayer but has the ability to be rotated (by default, around its center). The amount of rotation
-! is specified using \ref rot_bitmap_layer_set_angle() or \ref rot_bitmap_layer_increment_angle(). The rotation argument
-! to those functions is specified as an amount of clockwise rotation, where the value 0x10000 represents a full 360 degree
-! rotation and 0 represent no rotation, and it scales linearly between those values, just like \ref sin_lookup.
-!
-! The center of rotation in the source bitmap is always placed at the center of the RotBitmapLayer and the size of the RotBitmapLayer
-! is automatically calculated so that the entire Bitmap can fit in at all rotation angles.
-!
-! For example, if the image is 10px wide and high, the RotBitmapLayer will be 14px wide ( sqrt(10^2+10^2) ).
-!
-! By default, the center of rotation in the source bitmap is the center of the bitmap but you can call \ref rot_bitmap_set_src_ic() to change the
-! center of rotation.
-!
-! @note RotBitmapLayer has performance limitations that can degrade user
-! experience (see \ref graphics_draw_rotated_bitmap). Use sparingly.
-! @{*/
+#[doc = "! @addtogroup RotBitmapLayer\n! \\brief Layer that displays a rotated bitmap image.\n!\n! A RotBitmapLayer is like a \\ref BitmapLayer but has the ability to be rotated (by default, around its center). The amount of rotation\n! is specified using \\ref rot_bitmap_layer_set_angle() or \\ref rot_bitmap_layer_increment_angle(). The rotation argument\n! to those functions is specified as an amount of clockwise rotation, where the value 0x10000 represents a full 360 degree\n! rotation and 0 represent no rotation, and it scales linearly between those values, just like \\ref sin_lookup.\n!\n! The center of rotation in the source bitmap is always placed at the center of the RotBitmapLayer and the size of the RotBitmapLayer\n! is automatically calculated so that the entire Bitmap can fit in at all rotation angles.\n!\n! For example, if the image is 10px wide and high, the RotBitmapLayer will be 14px wide ( sqrt(10^2+10^2) ).\n!\n! By default, the center of rotation in the source bitmap is the center of the bitmap but you can call \\ref rot_bitmap_set_src_ic() to change the\n! center of rotation.\n!\n! @note RotBitmapLayer has performance limitations that can degrade user\n! experience (see \\ref graphics_draw_rotated_bitmap). Use sparingly.\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct RotBitmapLayer {
     _unused: [u8; 0],
 }
 unsafe extern "C" {
-    /**! Creates a new RotBitmapLayer on the heap and initializes it with the default values:
-!  * Angle: 0
-!  * Compositing mode: \ref GCompOpAssign
-!  * Corner clip color: \ref GColorClear
-!
-! @param bitmap The bitmap to display in this RotBitmapLayer
-! @return A pointer to the RotBitmapLayer. `NULL` if the RotBitmapLayer could not
-! be created*/
+    #[doc = "! Creates a new RotBitmapLayer on the heap and initializes it with the default values:\n!  * Angle: 0\n!  * Compositing mode: \\ref GCompOpAssign\n!  * Corner clip color: \\ref GColorClear\n!\n! @param bitmap The bitmap to display in this RotBitmapLayer\n! @return A pointer to the RotBitmapLayer. `NULL` if the RotBitmapLayer could not\n! be created"]
     pub fn rot_bitmap_layer_create(bitmap: *mut GBitmap) -> *mut RotBitmapLayer;
 }
 unsafe extern "C" {
-    /**! Destroys a RotBitmapLayer and frees all associated memory.
-! @note It is the developer responsibility to free the \ref GBitmap.
-! @param bitmap The RotBitmapLayer to destroy.*/
+    #[doc = "! Destroys a RotBitmapLayer and frees all associated memory.\n! @note It is the developer responsibility to free the \\ref GBitmap.\n! @param bitmap The RotBitmapLayer to destroy."]
     pub fn rot_bitmap_layer_destroy(bitmap: *mut RotBitmapLayer);
 }
 unsafe extern "C" {
-    /**! Gets the "root" Layer of the RotBitmapLayer, which is the parent for the sub-
-! layers used for its implementation.
-! @param rot_bitmap_layer Pointer to the RotBitmapLayer for which to get the "root" Layer
-! @return The "root" Layer of the RotBitmapLayer.*/
-    pub fn rot_bitmap_layer_get_layer(
-        rot_bitmap_layer: *const RotBitmapLayer,
-    ) -> *mut Layer;
+    #[doc = "! Gets the \"root\" Layer of the RotBitmapLayer, which is the parent for the sub-\n! layers used for its implementation.\n! @param rot_bitmap_layer Pointer to the RotBitmapLayer for which to get the \"root\" Layer\n! @return The \"root\" Layer of the RotBitmapLayer."]
+    pub fn rot_bitmap_layer_get_layer(rot_bitmap_layer: *const RotBitmapLayer) -> *mut Layer;
 }
 unsafe extern "C" {
-    /**! Defines what color to use in areas that are not covered by the source bitmap.
-! By default this is \ref GColorClear.
-! @param bitmap The RotBitmapLayer on which to change the corner clip color
-! @param color The corner clip color*/
-    pub fn rot_bitmap_layer_set_corner_clip_color(
-        bitmap: *mut RotBitmapLayer,
-        color: GColor,
-    );
+    #[doc = "! Defines what color to use in areas that are not covered by the source bitmap.\n! By default this is \\ref GColorClear.\n! @param bitmap The RotBitmapLayer on which to change the corner clip color\n! @param color The corner clip color"]
+    pub fn rot_bitmap_layer_set_corner_clip_color(bitmap: *mut RotBitmapLayer, color: GColor);
 }
 unsafe extern "C" {
-    /**! Sets the rotation angle of this RotBitmapLayer
-! @param bitmap The RotBitmapLayer on which to change the rotation
-! @param angle Rotation is an integer between 0 (no rotation) and 0x10000 (360 degree rotation). @see sin_lookup()*/
+    #[doc = "! Sets the rotation angle of this RotBitmapLayer\n! @param bitmap The RotBitmapLayer on which to change the rotation\n! @param angle Rotation is an integer between 0 (no rotation) and 0x10000 (360 degree rotation). @see sin_lookup()"]
     pub fn rot_bitmap_layer_set_angle(bitmap: *mut RotBitmapLayer, angle: i32);
 }
 unsafe extern "C" {
-    /**! Change the rotation angle of this RotBitmapLayer
-! @param bitmap The RotBitmapLayer on which to change the rotation
-! @param angle_change The rotation angle change*/
-    pub fn rot_bitmap_layer_increment_angle(
-        bitmap: *mut RotBitmapLayer,
-        angle_change: i32,
-    );
+    #[doc = "! Change the rotation angle of this RotBitmapLayer\n! @param bitmap The RotBitmapLayer on which to change the rotation\n! @param angle_change The rotation angle change"]
+    pub fn rot_bitmap_layer_increment_angle(bitmap: *mut RotBitmapLayer, angle_change: i32);
 }
 unsafe extern "C" {
-    /**! Defines the only point that will not be affected by the rotation in the source bitmap.
-!
-! For example, if you pass GPoint(0, 0), the image will rotate around the top-left corner.
-!
-! This point is always projected at the center of the RotBitmapLayer. Calling this function
-! automatically adjusts the width and height of the RotBitmapLayer so that
-! the entire bitmap can fit inside the layer at all rotation angles.
-!
-! @param bitmap The RotBitmapLayer on which to change the rotation
-! @param ic The only point in the original image that will not be affected by the rotation.*/
+    #[doc = "! Defines the only point that will not be affected by the rotation in the source bitmap.\n!\n! For example, if you pass GPoint(0, 0), the image will rotate around the top-left corner.\n!\n! This point is always projected at the center of the RotBitmapLayer. Calling this function\n! automatically adjusts the width and height of the RotBitmapLayer so that\n! the entire bitmap can fit inside the layer at all rotation angles.\n!\n! @param bitmap The RotBitmapLayer on which to change the rotation\n! @param ic The only point in the original image that will not be affected by the rotation."]
     pub fn rot_bitmap_set_src_ic(bitmap: *mut RotBitmapLayer, ic: GPoint);
 }
 unsafe extern "C" {
-    /**! Sets the compositing mode of how the bitmap image is composited onto what has been drawn beneath the
-! RotBitmapLayer.
-! By default this is \ref GCompOpAssign, i.e. transparency disabled.
-! The RotBitmapLayer is automatically marked dirty after this operation.
-! @param bitmap The RotBitmapLayer on which to change the rotation
-! @param mode The compositing mode to set
-! @see \ref GCompOp for visual examples of the different compositing modes.*/
+    #[doc = "! Sets the compositing mode of how the bitmap image is composited onto what has been drawn beneath the\n! RotBitmapLayer.\n! By default this is \\ref GCompOpAssign, i.e. transparency disabled.\n! The RotBitmapLayer is automatically marked dirty after this operation.\n! @param bitmap The RotBitmapLayer on which to change the rotation\n! @param mode The compositing mode to set\n! @see \\ref GCompOp for visual examples of the different compositing modes."]
     pub fn rot_bitmap_set_compositing_mode(bitmap: *mut RotBitmapLayer, mode: GCompOp);
 }
-/**! @addtogroup NumberWindow
-! \brief A ready-made Window prompting the user to pick a number
-!
-! ![](number_window.png)
-! @{*/
+#[doc = "! @addtogroup NumberWindow\n! \\brief A ready-made Window prompting the user to pick a number\n!\n! ![](number_window.png)\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct NumberWindow {
     _unused: [u8; 0],
 }
-///! Function signature for NumberWindow callbacks.
+#[doc = "! Function signature for NumberWindow callbacks."]
 pub type NumberWindowCallback = ::core::option::Option<
-    unsafe extern "C" fn(
-        number_window: *mut NumberWindow,
-        context: *mut ::core::ffi::c_void,
-    ),
+    unsafe extern "C" fn(number_window: *mut NumberWindow, context: *mut ::core::ffi::c_void),
 >;
-///! Data structure containing all the callbacks for a NumberWindow.
+#[doc = "! Data structure containing all the callbacks for a NumberWindow."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct NumberWindowCallbacks {
-    /**! Callback that gets called as the value is incremented.
-! Optional, leave `NULL` if unused.*/
+    #[doc = "! Callback that gets called as the value is incremented.\n! Optional, leave `NULL` if unused."]
     pub incremented: NumberWindowCallback,
-    /**! Callback that gets called as the value is decremented.
-! Optional, leave `NULL` if unused.*/
+    #[doc = "! Callback that gets called as the value is decremented.\n! Optional, leave `NULL` if unused."]
     pub decremented: NumberWindowCallback,
-    /**! Callback that gets called as the value is confirmed, in other words the
-! SELECT button is clicked.
-! Optional, leave `NULL` if unused.*/
+    #[doc = "! Callback that gets called as the value is confirmed, in other words the\n! SELECT button is clicked.\n! Optional, leave `NULL` if unused."]
     pub selected: NumberWindowCallback,
 }
 unsafe extern "C" {
-    /**! Creates a new NumberWindow on the heap and initalizes it with the default values.
-!
-! @param label The title or prompt to display in the NumberWindow. Must be long-lived and cannot be stack-allocated.
-! @param callbacks The callbacks
-! @param callback_context Pointer to application specific data that is passed
-! @note The number window is not pushed to the window stack. Use \ref window_stack_push() to do this.
-! @return A pointer to the NumberWindow. `NULL` if the NumberWindow could not
-! be created*/
+    #[doc = "! Creates a new NumberWindow on the heap and initalizes it with the default values.\n!\n! @param label The title or prompt to display in the NumberWindow. Must be long-lived and cannot be stack-allocated.\n! @param callbacks The callbacks\n! @param callback_context Pointer to application specific data that is passed\n! @note The number window is not pushed to the window stack. Use \\ref window_stack_push() to do this.\n! @return A pointer to the NumberWindow. `NULL` if the NumberWindow could not\n! be created"]
     pub fn number_window_create(
         label: *const ::core::ffi::c_char,
         callbacks: NumberWindowCallbacks,
@@ -9227,63 +5405,41 @@ unsafe extern "C" {
     ) -> *mut NumberWindow;
 }
 unsafe extern "C" {
-    ///! Destroys a NumberWindow previously created by number_window_create.
+    #[doc = "! Destroys a NumberWindow previously created by number_window_create."]
     pub fn number_window_destroy(number_window: *mut NumberWindow);
 }
 unsafe extern "C" {
-    /**! Sets the text of the title or prompt label.
-! @param numberwindow Pointer to the NumberWindow for which to set the label
-! text
-! @param label The new label text. Must be long-lived and cannot be
-! stack-allocated.*/
+    #[doc = "! Sets the text of the title or prompt label.\n! @param numberwindow Pointer to the NumberWindow for which to set the label\n! text\n! @param label The new label text. Must be long-lived and cannot be\n! stack-allocated."]
     pub fn number_window_set_label(
         numberwindow: *mut NumberWindow,
         label: *const ::core::ffi::c_char,
     );
 }
 unsafe extern "C" {
-    /**! Sets the maximum value this field can hold
-! @param numberwindow Pointer to the NumberWindow for which to set the maximum
-! value
-! @param max The maximum value*/
+    #[doc = "! Sets the maximum value this field can hold\n! @param numberwindow Pointer to the NumberWindow for which to set the maximum\n! value\n! @param max The maximum value"]
     pub fn number_window_set_max(numberwindow: *mut NumberWindow, max: i32);
 }
 unsafe extern "C" {
-    /**! Sets the minimum value this field can hold
-! @param numberwindow Pointer to the NumberWindow for which to set the minimum
-! value
-! @param min The minimum value*/
+    #[doc = "! Sets the minimum value this field can hold\n! @param numberwindow Pointer to the NumberWindow for which to set the minimum\n! value\n! @param min The minimum value"]
     pub fn number_window_set_min(numberwindow: *mut NumberWindow, min: i32);
 }
 unsafe extern "C" {
-    /**! Sets the current value of the field
-! @param numberwindow Pointer to the NumberWindow for which to set the current
-! value
-! @param value The new current value*/
+    #[doc = "! Sets the current value of the field\n! @param numberwindow Pointer to the NumberWindow for which to set the current\n! value\n! @param value The new current value"]
     pub fn number_window_set_value(numberwindow: *mut NumberWindow, value: i32);
 }
 unsafe extern "C" {
-    /**! Sets the amount by which to increment/decrement by on a button click
-! @param numberwindow Pointer to the NumberWindow for which to set the step
-! increment
-! @param step The new step increment*/
+    #[doc = "! Sets the amount by which to increment/decrement by on a button click\n! @param numberwindow Pointer to the NumberWindow for which to set the step\n! increment\n! @param step The new step increment"]
     pub fn number_window_set_step_size(numberwindow: *mut NumberWindow, step: i32);
 }
 unsafe extern "C" {
-    /**! Gets the current value
-! @param numberwindow Pointer to the NumberWindow for which to get the current
-! value
-! @return The current value*/
+    #[doc = "! Gets the current value\n! @param numberwindow Pointer to the NumberWindow for which to get the current\n! value\n! @return The current value"]
     pub fn number_window_get_value(numberwindow: *const NumberWindow) -> i32;
 }
 unsafe extern "C" {
-    /**! Gets the "root" Window of the number window
-! @param numberwindow Pointer to the NumberWindow for which to get the "root" Window
-! @return The "root" Window of the number window.*/
+    #[doc = "! Gets the \"root\" Window of the number window\n! @param numberwindow Pointer to the NumberWindow for which to get the \"root\" Window\n! @return The \"root\" Window of the number window."]
     pub fn number_window_get_window(numberwindow: *mut NumberWindow) -> *mut Window;
 }
-/**! @addtogroup ActionMenu
-! @{*/
+#[doc = "! @addtogroup ActionMenu\n! @{"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ActionMenuItem {
@@ -9306,11 +5462,7 @@ pub struct ActionMenuAlign(pub ::core::ffi::c_uchar);
 pub struct ActionMenu {
     _unused: [u8; 0],
 }
-/**! Callback executed after the ActionMenu has closed, so memory may be freed.
-! @param root_level the root level passed to the ActionMenu
-! @param performed_action the ActionMenuItem for the action that was performed,
-! NULL if the ActionMenu is closing without an action being selected by the user
-! @param context the context passed to the ActionMenu*/
+#[doc = "! Callback executed after the ActionMenu has closed, so memory may be freed.\n! @param root_level the root level passed to the ActionMenu\n! @param performed_action the ActionMenuItem for the action that was performed,\n! NULL if the ActionMenu is closing without an action being selected by the user\n! @param context the context passed to the ActionMenu"]
 pub type ActionMenuDidCloseCb = ::core::option::Option<
     unsafe extern "C" fn(
         menu: *mut ActionMenu,
@@ -9319,26 +5471,18 @@ pub type ActionMenuDidCloseCb = ::core::option::Option<
     ),
 >;
 impl ActionMenuLevelDisplayMode {
-    ///!< Each item gets its own row
-    pub const ActionMenuLevelDisplayModeWide: ActionMenuLevelDisplayMode = ActionMenuLevelDisplayMode(
-        0,
-    );
-    ///!< Grid view: multiple items per row
-    pub const ActionMenuLevelDisplayModeThin: ActionMenuLevelDisplayMode = ActionMenuLevelDisplayMode(
-        1,
-    );
+    #[doc = "!< Each item gets its own row"]
+    pub const ActionMenuLevelDisplayModeWide: ActionMenuLevelDisplayMode =
+        ActionMenuLevelDisplayMode(0);
+    #[doc = "!< Grid view: multiple items per row"]
+    pub const ActionMenuLevelDisplayModeThin: ActionMenuLevelDisplayMode =
+        ActionMenuLevelDisplayMode(1);
 }
 #[repr(transparent)]
-/**! enum value that controls whether menu items are displayed in a grid
-! (similarly to the emoji replies) or in a single column (reminiscent of \ref MenuLayer)*/
+#[doc = "! enum value that controls whether menu items are displayed in a grid\n! (similarly to the emoji replies) or in a single column (reminiscent of \\ref MenuLayer)"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct ActionMenuLevelDisplayMode(pub ::core::ffi::c_uchar);
-/**! Callback executed when a given action is selected
-! @param action_menu the action menu currently on screen
-! @param action the action that was triggered
-! @param context the context passed to the action menu
-! @note the action menu is closed immediately after an action is performed,
-! unless it is frozen in the ActionMenuPerformActionCb*/
+#[doc = "! Callback executed when a given action is selected\n! @param action_menu the action menu currently on screen\n! @param action the action that was triggered\n! @param context the context passed to the action menu\n! @note the action menu is closed immediately after an action is performed,\n! unless it is frozen in the ActionMenuPerformActionCb"]
 pub type ActionMenuPerformActionCb = ::core::option::Option<
     unsafe extern "C" fn(
         action_menu: *mut ActionMenu,
@@ -9346,33 +5490,31 @@ pub type ActionMenuPerformActionCb = ::core::option::Option<
         context: *mut ::core::ffi::c_void,
     ),
 >;
-/**! Callback invoked for each item in an action menu hierarchy.
-! @param item the current action menu item
-! @param a caller-provided context callback*/
+#[doc = "! Callback invoked for each item in an action menu hierarchy.\n! @param item the current action menu item\n! @param a caller-provided context callback"]
 pub type ActionMenuEachItemCb = ::core::option::Option<
     unsafe extern "C" fn(item: *const ActionMenuItem, context: *mut ::core::ffi::c_void),
 >;
-///! Configuration struct for the ActionMenu
+#[doc = "! Configuration struct for the ActionMenu"]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ActionMenuConfig {
-    ///!< the root level of the ActionMenu
+    #[doc = "!< the root level of the ActionMenu"]
     pub root_level: *const ActionMenuLevel,
-    ///!< a context pointer which will be accessbile when actions are performed
+    #[doc = "!< a context pointer which will be accessbile when actions are performed"]
     pub context: *mut ::core::ffi::c_void,
     pub colors: ActionMenuConfig__bindgen_ty_1,
-    ///!< Called immediately before the ActionMenu closes
+    #[doc = "!< Called immediately before the ActionMenu closes"]
     pub will_close: ActionMenuDidCloseCb,
-    ///!< a callback used to cleanup memory after the menu has closed
+    #[doc = "!< a callback used to cleanup memory after the menu has closed"]
     pub did_close: ActionMenuDidCloseCb,
     pub align: ActionMenuAlign,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct ActionMenuConfig__bindgen_ty_1 {
-    ///!< the color of the left column of the ActionMenu
+    #[doc = "!< the color of the left column of the ActionMenu"]
     pub background: GColor,
-    ///!< the color of the individual "crumbs" that indicate menu depth
+    #[doc = "!< the color of the individual \"crumbs\" that indicate menu depth"]
     pub foreground: GColor,
 }
 impl Default for ActionMenuConfig__bindgen_ty_1 {
@@ -9394,47 +5536,28 @@ impl Default for ActionMenuConfig {
     }
 }
 unsafe extern "C" {
-    /**! Getter for the label of a given \ref ActionMenuItem
-! @param item the \ref ActionMenuItem of interest
-! @return a pointer to the string label. NULL if invalid.*/
-    pub fn action_menu_item_get_label(
-        item: *const ActionMenuItem,
-    ) -> *mut ::core::ffi::c_char;
+    #[doc = "! Getter for the label of a given \\ref ActionMenuItem\n! @param item the \\ref ActionMenuItem of interest\n! @return a pointer to the string label. NULL if invalid."]
+    pub fn action_menu_item_get_label(item: *const ActionMenuItem) -> *mut ::core::ffi::c_char;
 }
 unsafe extern "C" {
-    /**! Getter for the action_data pointer of a given \ref ActionMenuitem.
-! @see action_menu_level_add_action
-! @param item the \ref ActionMenuItem of interest
-! @return a pointer to the data. NULL if invalid.*/
+    #[doc = "! Getter for the action_data pointer of a given \\ref ActionMenuitem.\n! @see action_menu_level_add_action\n! @param item the \\ref ActionMenuItem of interest\n! @return a pointer to the data. NULL if invalid."]
     pub fn action_menu_item_get_action_data(
         item: *const ActionMenuItem,
     ) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Create a new action menu level with storage allocated for a given number of items
-! @param max_items the max number of items that will be displayed at that level
-! @note levels are freed alongside the whole hierarchy so no destroy API is provided.
-! @note by default, levels are using ActionMenuLevelDisplayModeWide.
-! Use \ref action_menu_level_set_display_mode to change it.
-! @see action_menu_hierarchy_destroy*/
+    #[doc = "! Create a new action menu level with storage allocated for a given number of items\n! @param max_items the max number of items that will be displayed at that level\n! @note levels are freed alongside the whole hierarchy so no destroy API is provided.\n! @note by default, levels are using ActionMenuLevelDisplayModeWide.\n! Use \\ref action_menu_level_set_display_mode to change it.\n! @see action_menu_hierarchy_destroy"]
     pub fn action_menu_level_create(max_items: u16) -> *mut ActionMenuLevel;
 }
 unsafe extern "C" {
-    /**! Set the action menu display mode
-! @param level The ActionMenuLevel whose display mode you want to change
-! @param display_mode The display mode for the action menu (3 vs. 1 item per row)*/
+    #[doc = "! Set the action menu display mode\n! @param level The ActionMenuLevel whose display mode you want to change\n! @param display_mode The display mode for the action menu (3 vs. 1 item per row)"]
     pub fn action_menu_level_set_display_mode(
         level: *mut ActionMenuLevel,
         display_mode: ActionMenuLevelDisplayMode,
     );
 }
 unsafe extern "C" {
-    /**! Add an action to an ActionLevel
-! @param level the level to add the action to
-! @param label the text to display for the action in the menu
-! @param cb the callback that will be triggered when this action is actuated
-! @param action_data data to pass to the callback for this action
-! @return a reference to the new \ref ActionMenuItem on success, NULL if the level is full*/
+    #[doc = "! Add an action to an ActionLevel\n! @param level the level to add the action to\n! @param label the text to display for the action in the menu\n! @param cb the callback that will be triggered when this action is actuated\n! @param action_data data to pass to the callback for this action\n! @return a reference to the new \\ref ActionMenuItem on success, NULL if the level is full"]
     pub fn action_menu_level_add_action(
         level: *mut ActionMenuLevel,
         label: *const ::core::ffi::c_char,
@@ -9443,11 +5566,7 @@ unsafe extern "C" {
     ) -> *mut ActionMenuItem;
 }
 unsafe extern "C" {
-    /**! Add a child to this ActionMenuLevel
-! @param level the parent level
-! @param child the child level
-! @param label the text to display in the action menu for this level
-! @return a reference to the new \ref ActionMenuItem on success, NULL if the level is full*/
+    #[doc = "! Add a child to this ActionMenuLevel\n! @param level the parent level\n! @param child the child level\n! @param label the text to display in the action menu for this level\n! @return a reference to the new \\ref ActionMenuItem on success, NULL if the level is full"]
     pub fn action_menu_level_add_child(
         level: *mut ActionMenuLevel,
         child: *mut ActionMenuLevel,
@@ -9455,14 +5574,7 @@ unsafe extern "C" {
     ) -> *mut ActionMenuItem;
 }
 unsafe extern "C" {
-    /**! Destroy a hierarchy of ActionMenuLevels
-! @param root the root level in the hierarchy
-! @param each_cb a callback to call on every \ref ActionMenuItem in every level
-! @param context a context pointer to pass to each_cb on invocation
-! @note Typical implementations will cleanup memory allocated for the item label/data
-!       associated with each item in the callback
-! @note Hierarchy is traversed in post-order.
-!       In other words, all children items are freed before their parent is freed.*/
+    #[doc = "! Destroy a hierarchy of ActionMenuLevels\n! @param root the root level in the hierarchy\n! @param each_cb a callback to call on every \\ref ActionMenuItem in every level\n! @param context a context pointer to pass to each_cb on invocation\n! @note Typical implementations will cleanup memory allocated for the item label/data\n!       associated with each item in the callback\n! @note Hierarchy is traversed in post-order.\n!       In other words, all children items are freed before their parent is freed."]
     pub fn action_menu_hierarchy_destroy(
         root: *const ActionMenuLevel,
         each_cb: ActionMenuEachItemCb,
@@ -9470,82 +5582,40 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    /**! Get the context pointer this ActionMenu was created with
-! @param action_menu A pointer to an ActionMenu
-! @return the context pointer initially provided in the \ref ActionMenuConfig.
-! NULL if none exists.*/
-    pub fn action_menu_get_context(
-        action_menu: *mut ActionMenu,
-    ) -> *mut ::core::ffi::c_void;
+    #[doc = "! Get the context pointer this ActionMenu was created with\n! @param action_menu A pointer to an ActionMenu\n! @return the context pointer initially provided in the \\ref ActionMenuConfig.\n! NULL if none exists."]
+    pub fn action_menu_get_context(action_menu: *mut ActionMenu) -> *mut ::core::ffi::c_void;
 }
 unsafe extern "C" {
-    /**! Get the root level of an ActionMenu
-! @param action_menu the ActionMenu you want to know about
-! @return a pointer to the root ActionMenuLevel for the given ActionMenu, NULL if invalid*/
-    pub fn action_menu_get_root_level(
-        action_menu: *mut ActionMenu,
-    ) -> *mut ActionMenuLevel;
+    #[doc = "! Get the root level of an ActionMenu\n! @param action_menu the ActionMenu you want to know about\n! @return a pointer to the root ActionMenuLevel for the given ActionMenu, NULL if invalid"]
+    pub fn action_menu_get_root_level(action_menu: *mut ActionMenu) -> *mut ActionMenuLevel;
 }
 unsafe extern "C" {
-    /**! Open a new ActionMenu.
-! The ActionMenu acts much like a window. It fills the whole screen and handles clicks.
-! @param config the configuration info for this new ActionMenu
-! @return the new ActionMenu*/
+    #[doc = "! Open a new ActionMenu.\n! The ActionMenu acts much like a window. It fills the whole screen and handles clicks.\n! @param config the configuration info for this new ActionMenu\n! @return the new ActionMenu"]
     pub fn action_menu_open(config: *mut ActionMenuConfig) -> *mut ActionMenu;
 }
 unsafe extern "C" {
-    /**! Freeze the ActionMenu. The ActionMenu will no longer respond to user input.
-! @note this API should be used when waiting for asynchronous operation.
-! @param action_menu the ActionMenu*/
+    #[doc = "! Freeze the ActionMenu. The ActionMenu will no longer respond to user input.\n! @note this API should be used when waiting for asynchronous operation.\n! @param action_menu the ActionMenu"]
     pub fn action_menu_freeze(action_menu: *mut ActionMenu);
 }
 unsafe extern "C" {
-    /**! Unfreeze the ActionMenu previously frozen with \ref action_menu_freeze
-! @param action_menu the ActionMenu to unfreeze*/
+    #[doc = "! Unfreeze the ActionMenu previously frozen with \\ref action_menu_freeze\n! @param action_menu the ActionMenu to unfreeze"]
     pub fn action_menu_unfreeze(action_menu: *mut ActionMenu);
 }
 unsafe extern "C" {
-    /**! Set the result window for an ActionMenu. The result window will be
-! shown when the ActionMenu closes
-! @param action_menu the ActionMenu
-! @param result_window the window to insert, pass NULL to remove the current result window
-! @note repeated call will result in only the last call to be applied, i.e. only
-! one result window is ever set*/
-    pub fn action_menu_set_result_window(
-        action_menu: *mut ActionMenu,
-        result_window: *mut Window,
-    );
+    #[doc = "! Set the result window for an ActionMenu. The result window will be\n! shown when the ActionMenu closes\n! @param action_menu the ActionMenu\n! @param result_window the window to insert, pass NULL to remove the current result window\n! @note repeated call will result in only the last call to be applied, i.e. only\n! one result window is ever set"]
+    pub fn action_menu_set_result_window(action_menu: *mut ActionMenu, result_window: *mut Window);
 }
 unsafe extern "C" {
-    /**! Close the ActionMenu, whether it is frozen or not.
-! @note this API can be used on a frozen ActionMenu once the data required to
-! build the result window has been received and the result window has been set
-! @param action_menu the ActionMenu to close
-! @param animated whether or not show a close animation*/
+    #[doc = "! Close the ActionMenu, whether it is frozen or not.\n! @note this API can be used on a frozen ActionMenu once the data required to\n! build the result window has been received and the result window has been set\n! @param action_menu the ActionMenu to close\n! @param animated whether or not show a close animation"]
     pub fn action_menu_close(action_menu: *mut ActionMenu, animated: bool);
 }
-/** Data structure describing a vibration pattern.
-A pattern consists of at least 1 vibe-on duration, optionally followed by
-alternating vibe-off + vibe-on durations. Each segment may have a different duration.
-
-Example code:
-\code{.c}
-// Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
-static const uint32_t segments[] = { 200, 100, 400 };
-VibePattern pat = {
-.durations = segments,
-.num_segments = ARRAY_LENGTH(segments),
-};
-vibes_enqueue_custom_pattern(pat);
-\endcode
-@see vibes_enqueue_custom_pattern*/
+#[doc = " Data structure describing a vibration pattern.\nA pattern consists of at least 1 vibe-on duration, optionally followed by\nalternating vibe-off + vibe-on durations. Each segment may have a different duration.\n\nExample code:\n\\code{.c}\n// Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:\nstatic const uint32_t segments[] = { 200, 100, 400 };\nVibePattern pat = {\n.durations = segments,\n.num_segments = ARRAY_LENGTH(segments),\n};\nvibes_enqueue_custom_pattern(pat);\n\\endcode\n@see vibes_enqueue_custom_pattern"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct VibePattern {
-    /**Pointer to an array of segment durations, measured in milli-seconds.
-The maximum allowed duration is 10000ms.*/
+    #[doc = "Pointer to an array of segment durations, measured in milli-seconds.\nThe maximum allowed duration is 10000ms."]
     pub durations: *const u32,
-    ///The length of the array of durations.
+    #[doc = "The length of the array of durations."]
     pub num_segments: u32,
 }
 impl Default for VibePattern {
@@ -9558,27 +5628,23 @@ impl Default for VibePattern {
     }
 }
 unsafe extern "C" {
-    /**! Cancel any in-flight vibe patterns; this is a no-op if there is no
-! on-going vibe.*/
+    #[doc = "! Cancel any in-flight vibe patterns; this is a no-op if there is no\n! on-going vibe."]
     pub fn vibes_cancel();
 }
 unsafe extern "C" {
-    ///! Makes the watch emit one short vibration.
+    #[doc = "! Makes the watch emit one short vibration."]
     pub fn vibes_short_pulse();
 }
 unsafe extern "C" {
-    ///! Makes the watch emit one long vibration.
+    #[doc = "! Makes the watch emit one long vibration."]
     pub fn vibes_long_pulse();
 }
 unsafe extern "C" {
-    /**! Makes the watch emit two brief vibrations.
-!*/
+    #[doc = "! Makes the watch emit two brief vibrations.\n!"]
     pub fn vibes_double_pulse();
 }
 unsafe extern "C" {
-    /**! Makes the watch emit a 'custom' vibration pattern.
-! @param pattern An arbitrary vibration pattern
-! @see VibePattern*/
+    #[doc = "! Makes the watch emit a 'custom' vibration pattern.\n! @param pattern An arbitrary vibration pattern\n! @see VibePattern"]
     pub fn vibes_enqueue_custom_pattern(pattern: VibePattern);
 }
 impl SpeakerWaveform {
@@ -9589,24 +5655,10 @@ impl SpeakerWaveform {
     pub const SpeakerWaveformCount: SpeakerWaveform = SpeakerWaveform(4);
 }
 #[repr(transparent)]
-/**! @addtogroup Speaker
-! \brief Controlling the speaker
-!
-! The Speaker API provides calls that let you play sounds through the watch's speaker.
-! You can play simple note sequences (melodies), single tones, or stream raw PCM audio.
-!
-! Note sequences are compact representations of melodies using MIDI-like note definitions,
-! supporting 4 basic waveforms: sine, square, triangle, and sawtooth.
-!
-! Raw PCM streaming allows apps to generate arbitrary audio in configurable formats.
-! @{*/
+#[doc = "! @addtogroup Speaker\n! \\brief Controlling the speaker\n!\n! The Speaker API provides calls that let you play sounds through the watch's speaker.\n! You can play simple note sequences (melodies), single tones, or stream raw PCM audio.\n!\n! Note sequences are compact representations of melodies using MIDI-like note definitions,\n! supporting 4 basic waveforms: sine, square, triangle, and sawtooth.\n!\n! Raw PCM streaming allows apps to generate arbitrary audio in configurable formats.\n! @{"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SpeakerWaveform(pub ::core::ffi::c_uchar);
-/**! A single note in a sequence.
-! midi_note: MIDI note number (0-127, 60=C4). 0 = rest (silence).
-! waveform: SpeakerWaveform value.
-! duration_ms: Note duration in ms (max 10000).
-! velocity: Volume 0-127 (0 = use global volume).*/
+#[doc = "! A single note in a sequence.\n! midi_note: MIDI note number (0-127, 60=C4). 0 = rest (silence).\n! waveform: SpeakerWaveform value.\n! duration_ms: Note duration in ms (max 10000).\n! velocity: Volume 0-127 (0 = use global volume)."]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct PACKED {
@@ -9616,27 +5668,21 @@ pub struct PACKED {
     pub velocity: u8,
     pub reserved: u8,
 }
-/**! A single note in a sequence.
-! midi_note: MIDI note number (0-127, 60=C4). 0 = rest (silence).
-! waveform: SpeakerWaveform value.
-! duration_ms: Note duration in ms (max 10000).
-! velocity: Volume 0-127 (0 = use global volume).*/
+#[doc = "! A single note in a sequence.\n! midi_note: MIDI note number (0-127, 60=C4). 0 = rest (silence).\n! waveform: SpeakerWaveform value.\n! duration_ms: Note duration in ms (max 10000).\n! velocity: Volume 0-127 (0 = use global volume)."]
 pub type SpeakerNote = PACKED;
 impl SpeakerPcmFormat {
-    ///!< 8kHz 8-bit signed (1 byte/sample)
+    #[doc = "!< 8kHz 8-bit signed (1 byte/sample)"]
     pub const SpeakerPcmFormat_8kHz_8bit: SpeakerPcmFormat = SpeakerPcmFormat(0);
-    ///!< 16kHz 8-bit signed (1 byte/sample)
+    #[doc = "!< 16kHz 8-bit signed (1 byte/sample)"]
     pub const SpeakerPcmFormat_16kHz_8bit: SpeakerPcmFormat = SpeakerPcmFormat(1);
-    ///!< 8kHz 16-bit signed little-endian (2 bytes/sample)
+    #[doc = "!< 8kHz 16-bit signed little-endian (2 bytes/sample)"]
     pub const SpeakerPcmFormat_8kHz_16bit: SpeakerPcmFormat = SpeakerPcmFormat(2);
-    ///!< 16kHz 16-bit signed little-endian (2 bytes/sample)
+    #[doc = "!< 16kHz 16-bit signed little-endian (2 bytes/sample)"]
     pub const SpeakerPcmFormat_16kHz_16bit: SpeakerPcmFormat = SpeakerPcmFormat(3);
     pub const SpeakerPcmFormatCount: SpeakerPcmFormat = SpeakerPcmFormat(4);
 }
 #[repr(transparent)]
-/**! PCM audio format for speaker streaming.
-! Bit layout: bit0 = sample rate (0=8kHz, 1=16kHz), bit1 = bit depth (0=8-bit, 1=16-bit).
-! All formats are mono signed PCM (8-bit samples are signed [-128,127], not unsigned).*/
+#[doc = "! PCM audio format for speaker streaming.\n! Bit layout: bit0 = sample rate (0=8kHz, 1=16kHz), bit1 = bit depth (0=8-bit, 1=16-bit).\n! All formats are mono signed PCM (8-bit samples are signed [-128,127], not unsigned)."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SpeakerPcmFormat(pub ::core::ffi::c_uchar);
 impl SpeakerStatus {
@@ -9645,37 +5691,28 @@ impl SpeakerStatus {
     pub const SpeakerStatusDraining: SpeakerStatus = SpeakerStatus(2);
 }
 #[repr(transparent)]
-///! Speaker status
+#[doc = "! Speaker status"]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SpeakerStatus(pub ::core::ffi::c_uchar);
 impl SpeakerFinishReason {
-    ///!< Playback completed naturally
+    #[doc = "!< Playback completed naturally"]
     pub const SpeakerFinishReasonDone: SpeakerFinishReason = SpeakerFinishReason(0);
-    ///!< Playback was stopped by the app
+    #[doc = "!< Playback was stopped by the app"]
     pub const SpeakerFinishReasonStopped: SpeakerFinishReason = SpeakerFinishReason(1);
-    ///!< Preempted by higher priority source
+    #[doc = "!< Preempted by higher priority source"]
     pub const SpeakerFinishReasonPreempted: SpeakerFinishReason = SpeakerFinishReason(2);
-    ///!< An error occurred
+    #[doc = "!< An error occurred"]
     pub const SpeakerFinishReasonError: SpeakerFinishReason = SpeakerFinishReason(3);
 }
 #[repr(transparent)]
-///! Reason reported when speaker playback ends.
+#[doc = "! Reason reported when speaker playback ends."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SpeakerFinishReason(pub ::core::ffi::c_uchar);
-/**! Callback invoked when playback finishes.
-! @param reason Why playback ended
-! @param ctx User context*/
+#[doc = "! Callback invoked when playback finishes.\n! @param reason Why playback ended\n! @param ctx User context"]
 pub type SpeakerFinishedCallback = ::core::option::Option<
     unsafe extern "C" fn(reason: SpeakerFinishReason, ctx: *mut ::core::ffi::c_void),
 >;
-/**! A raw PCM sample that can be pitch-shifted when played by a track.
-! data: mono signed PCM in the given format.
-! num_bytes: size of data in bytes.
-! format: sample rate + bit depth (see SpeakerPcmFormat).
-! base_midi_note: the MIDI note at which the sample plays unshifted (e.g. 60 = C4).
-!                 Notes above/below this value are produced by resampling.
-! loop: if true, the sample restarts from the beginning each time it runs out,
-!       and keeps playing until the owning note's duration elapses.*/
+#[doc = "! A raw PCM sample that can be pitch-shifted when played by a track.\n! data: mono signed PCM in the given format.\n! num_bytes: size of data in bytes.\n! format: sample rate + bit depth (see SpeakerPcmFormat).\n! base_midi_note: the MIDI note at which the sample plays unshifted (e.g. 60 = C4).\n!                 Notes above/below this value are produced by resampling.\n! loop: if true, the sample restarts from the beginning each time it runs out,\n!       and keeps playing until the owning note's duration elapses."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SpeakerSample {
@@ -9694,12 +5731,7 @@ impl Default for SpeakerSample {
         }
     }
 }
-/**! A single monophonic voice. Multiple tracks are mixed together by
-! speaker_play_tracks() to produce polyphony.
-! notes: array of notes to play sequentially.
-! num_notes: length of the notes array.
-! sample: if non-NULL, notes are played by pitch-shifting this sample;
-!         note.waveform is ignored. If NULL, notes use their waveform field.*/
+#[doc = "! A single monophonic voice. Multiple tracks are mixed together by\n! speaker_play_tracks() to produce polyphony.\n! notes: array of notes to play sequentially.\n! num_notes: length of the notes array.\n! sample: if non-NULL, notes are played by pitch-shifting this sample;\n!         note.waveform is ignored. If NULL, notes use their waveform field."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SpeakerTrack {
@@ -9717,36 +5749,15 @@ impl Default for SpeakerTrack {
     }
 }
 unsafe extern "C" {
-    /**! Play a sequence of notes on the speaker.
-! @param notes Array of SpeakerNote structs defining the melody
-! @param num_notes Number of notes in the array (max SPEAKER_MAX_NOTES)
-! @param volume Playback volume (0-100)
-! @return true if playback started successfully*/
-    pub fn speaker_play_notes(
-        notes: *const SpeakerNote,
-        num_notes: u32,
-        volume: u8,
-    ) -> bool;
+    #[doc = "! Play a sequence of notes on the speaker.\n! @param notes Array of SpeakerNote structs defining the melody\n! @param num_notes Number of notes in the array (max SPEAKER_MAX_NOTES)\n! @param volume Playback volume (0-100)\n! @return true if playback started successfully"]
+    pub fn speaker_play_notes(notes: *const SpeakerNote, num_notes: u32, volume: u8) -> bool;
 }
 unsafe extern "C" {
-    /**! Play N monophonic tracks in parallel, mixed (polyphony).
-! @param tracks Array of track descriptors (notes + optional sample).
-! @param num_tracks Number of tracks. Must be >= 1 and <= SPEAKER_MAX_TRACKS.
-! @param volume Playback volume (0-100).
-! @return true if playback started successfully.*/
-    pub fn speaker_play_tracks(
-        tracks: *const SpeakerTrack,
-        num_tracks: u32,
-        volume: u8,
-    ) -> bool;
+    #[doc = "! Play N monophonic tracks in parallel, mixed (polyphony).\n! @param tracks Array of track descriptors (notes + optional sample).\n! @param num_tracks Number of tracks. Must be >= 1 and <= SPEAKER_MAX_TRACKS.\n! @param volume Playback volume (0-100).\n! @return true if playback started successfully."]
+    pub fn speaker_play_tracks(tracks: *const SpeakerTrack, num_tracks: u32, volume: u8) -> bool;
 }
 unsafe extern "C" {
-    /**! Play a single tone on the speaker (convenience wrapper).
-! @param frequency_hz Tone frequency in Hz
-! @param duration_ms Tone duration in milliseconds (max 10000)
-! @param volume Playback volume (0-100)
-! @param waveform Waveform to use
-! @return true if playback started successfully*/
+    #[doc = "! Play a single tone on the speaker (convenience wrapper).\n! @param frequency_hz Tone frequency in Hz\n! @param duration_ms Tone duration in milliseconds (max 10000)\n! @param volume Playback volume (0-100)\n! @param waveform Waveform to use\n! @return true if playback started successfully"]
     pub fn speaker_play_tone(
         frequency_hz: u16,
         duration_ms: u32,
@@ -9755,173 +5766,113 @@ unsafe extern "C" {
     ) -> bool;
 }
 unsafe extern "C" {
-    /**! Open a raw PCM stream for app-generated audio.
-! @param format PCM format specifying sample rate and bit depth
-! @param volume Playback volume (0-100)
-! @return true if stream opened successfully*/
+    #[doc = "! Open a raw PCM stream for app-generated audio.\n! @param format PCM format specifying sample rate and bit depth\n! @param volume Playback volume (0-100)\n! @return true if stream opened successfully"]
     pub fn speaker_stream_open(format: SpeakerPcmFormat, volume: u8) -> bool;
 }
 unsafe extern "C" {
-    /**! Write PCM data to the open stream.
-! @param data Buffer of PCM data in the format specified at open
-! @param num_bytes Number of bytes to write
-! @return Number of bytes actually written (may be less if buffer is full)*/
+    #[doc = "! Write PCM data to the open stream.\n! @param data Buffer of PCM data in the format specified at open\n! @param num_bytes Number of bytes to write\n! @return Number of bytes actually written (may be less if buffer is full)"]
     pub fn speaker_stream_write(data: *const ::core::ffi::c_void, num_bytes: u32) -> u32;
 }
 unsafe extern "C" {
-    ///! Close the PCM stream. Buffered data will be played before stopping.
+    #[doc = "! Close the PCM stream. Buffered data will be played before stopping."]
     pub fn speaker_stream_close();
 }
 unsafe extern "C" {
-    ///! Stop any active speaker playback immediately.
+    #[doc = "! Stop any active speaker playback immediately."]
     pub fn speaker_stop();
 }
 unsafe extern "C" {
-    /**! Set the speaker volume.
-! @param volume Volume level (0-100)*/
+    #[doc = "! Set the speaker volume.\n! @param volume Volume level (0-100)"]
     pub fn speaker_set_volume(volume: u8);
 }
 unsafe extern "C" {
-    /**! Get the current speaker status.
-! @return Current SpeakerStatus*/
+    #[doc = "! Get the current speaker status.\n! @return Current SpeakerStatus"]
     pub fn speaker_get_status() -> SpeakerStatus;
 }
 unsafe extern "C" {
-    /**! Register a callback invoked when speaker playback ends.
-! The callback runs on the app task.
-! @param cb Callback to invoke, or NULL to unregister.
-! @param ctx User context passed back to cb.*/
-    pub fn speaker_set_finish_callback(
-        cb: SpeakerFinishedCallback,
-        ctx: *mut ::core::ffi::c_void,
-    );
+    #[doc = "! Register a callback invoked when speaker playback ends.\n! The callback runs on the app task.\n! @param cb Callback to invoke, or NULL to unregister.\n! @param ctx User context passed back to cb."]
+    pub fn speaker_set_finish_callback(cb: SpeakerFinishedCallback, ctx: *mut ::core::ffi::c_void);
 }
 unsafe extern "C" {
-    /**! Check whether the speaker is currently muted system-wide. The watch can
-! mute the speaker either always-on (Settings → Sounds & Haptics) or for
-! the duration of Quiet Time (Settings → Quiet Time). Apps cannot
-! override the mute, but they can use this to adapt UI or skip long
-! sounds the user won't hear.
-! @return true if the speaker is currently muted*/
+    #[doc = "! Check whether the speaker is currently muted system-wide. The watch can\n! mute the speaker either always-on (Settings → Sounds & Haptics) or for\n! the duration of Quiet Time (Settings → Quiet Time). Apps cannot\n! override the mute, but they can use this to adapt UI or skip long\n! sounds the user won't hear.\n! @return true if the speaker is currently muted"]
     pub fn speaker_is_muted() -> bool;
 }
 unsafe extern "C" {
-    /**! @return true if the backlight is currently on in any form (on, timed,
-! or fading out). Returns false only when the backlight is fully off.
-! Useful for apps that want to behave differently depending on whether
-! the screen is currently lit — e.g. skipping an animation or queuing a
-! visual cue for when the screen wakes.*/
+    #[doc = "! @return true if the backlight is currently on in any form (on, timed,\n! or fading out). Returns false only when the backlight is fully off.\n! Useful for apps that want to behave differently depending on whether\n! the screen is currently lit — e.g. skipping an animation or queuing a\n! visual cue for when the screen wakes."]
     pub fn light_is_on() -> bool;
 }
 unsafe extern "C" {
-    /**! Trigger the backlight and schedule a timer to automatically disable the backlight
-! after a short delay. This is the preferred method of interacting with the backlight.*/
+    #[doc = "! Trigger the backlight and schedule a timer to automatically disable the backlight\n! after a short delay. This is the preferred method of interacting with the backlight."]
     pub fn light_enable_interaction();
 }
 unsafe extern "C" {
-    /**! Turn the watch's backlight on or put it back into automatic control.
-! Developers should take care when calling this function, keeping Pebble's backlight on for long periods of time
-! will rapidly deplete the battery.
-! @param enable Turn the backlight on if `true`, otherwise `false` to put it back into automatic control.*/
+    #[doc = "! Turn the watch's backlight on or put it back into automatic control.\n! Developers should take care when calling this function, keeping Pebble's backlight on for long periods of time\n! will rapidly deplete the battery.\n! @param enable Turn the backlight on if `true`, otherwise `false` to put it back into automatic control."]
     pub fn light_enable(enable: bool);
 }
 unsafe extern "C" {
-    /**! Tint the backlight LED to the given color. The color persists while the
-! app is foregrounded and is automatically reset to the user's default
-! (white) when the app exits or is preempted by a system notification.
-! On platforms without a color backlight this is a no-op.
-! @note GColor carries only 2 bits per channel (64 distinct tints). Use
-! light_set_color_rgb888() if you need the full 8-bit-per-channel range
-! that the LED hardware supports.
-! @param color The color to tint the backlight to.*/
+    #[doc = "! Tint the backlight LED to the given color. The color persists while the\n! app is foregrounded and is automatically reset to the user's default\n! (white) when the app exits or is preempted by a system notification.\n! On platforms without a color backlight this is a no-op.\n! @note GColor carries only 2 bits per channel (64 distinct tints). Use\n! light_set_color_rgb888() if you need the full 8-bit-per-channel range\n! that the LED hardware supports.\n! @param color The color to tint the backlight to."]
     pub fn light_set_color(color: GColor);
 }
 unsafe extern "C" {
-    /**! Tint the backlight LED to a packed 24-bit RGB value (0x00RRGGBB).
-! Same persistence semantics as light_set_color(): the override lasts
-! while the app is foregrounded and is reset on app exit or system preempt.
-! No-op on platforms without a color backlight.
-! @param rgb Packed 0x00RRGGBB value; 8 bits per channel. High byte ignored.*/
+    #[doc = "! Tint the backlight LED to a packed 24-bit RGB value (0x00RRGGBB).\n! Same persistence semantics as light_set_color(): the override lasts\n! while the app is foregrounded and is reset on app exit or system preempt.\n! No-op on platforms without a color backlight.\n! @param rgb Packed 0x00RRGGBB value; 8 bits per channel. High byte ignored."]
     pub fn light_set_color_rgb888(rgb: u32);
 }
 unsafe extern "C" {
-    /**! Restore the backlight to the user's default color. Rarely needed — the
-! system resets automatically on app exit. No-op on platforms without a
-! color backlight.*/
+    #[doc = "! Restore the backlight to the user's default color. Rarely needed — the\n! system resets automatically on app exit. No-op on platforms without a\n! color backlight."]
     pub fn light_set_system_color();
 }
 unsafe extern "C" {
-    /**! Get the recommended amount of milliseconds a result window should be visible before it should
-! automatically close.
-! @note It is the application developer's responsibility to automatically close a result window.
-! @return The recommended result window timeout duration in milliseconds*/
+    #[doc = "! Get the recommended amount of milliseconds a result window should be visible before it should\n! automatically close.\n! @note It is the application developer's responsibility to automatically close a result window.\n! @return The recommended result window timeout duration in milliseconds"]
     pub fn preferred_result_display_duration() -> u32;
 }
 impl PreferredContentSize {
     pub const PreferredContentSizeSmall: PreferredContentSize = PreferredContentSize(0);
     pub const PreferredContentSizeMedium: PreferredContentSize = PreferredContentSize(1);
     pub const PreferredContentSizeLarge: PreferredContentSize = PreferredContentSize(2);
-    pub const PreferredContentSizeExtraLarge: PreferredContentSize = PreferredContentSize(
-        3,
-    );
+    pub const PreferredContentSizeExtraLarge: PreferredContentSize = PreferredContentSize(3);
     pub const NumPreferredContentSizes: PreferredContentSize = PreferredContentSize(4);
 }
 #[repr(transparent)]
-/**! PreferredContentSize represents the display scale of all the app's UI components. The enum
-! contains all sizes that all platforms as a whole are capable of displaying, but each individual
-! platform may not be able to display all sizes.
-! @note As of version 4.1, platforms other than Emery cannot display extra large and Emery itself
-! cannot display small.*/
+#[doc = "! PreferredContentSize represents the display scale of all the app's UI components. The enum\n! contains all sizes that all platforms as a whole are capable of displaying, but each individual\n! platform may not be able to display all sizes.\n! @note As of version 4.1, platforms other than Emery cannot display extra large and Emery itself\n! cannot display small."]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PreferredContentSize(pub ::core::ffi::c_uchar);
 unsafe extern "C" {
-    /**! Returns the user's preferred content size representing the scale of all the app's UI components
-! should use for display.
-! @return The user's \ref PreferredContentSize setting.*/
+    #[doc = "! Returns the user's preferred content size representing the scale of all the app's UI components\n! should use for display.\n! @return The user's \\ref PreferredContentSize setting."]
     pub fn preferred_content_size() -> PreferredContentSize;
 }
 unsafe extern "C" {
-    /**! Users can toggle Quiet Time manually or on schedule. Watchfaces and apps should respect this
-! choice and avoid disturbing actions such as vibration if quiet time is active.
-! @return True, if Quiet Time is currently active.*/
+    #[doc = "! Users can toggle Quiet Time manually or on schedule. Watchfaces and apps should respect this\n! choice and avoid disturbing actions such as vibration if quiet time is active.\n! @return True, if Quiet Time is currently active."]
     pub fn quiet_time_is_active() -> bool;
 }
-/**! structure containing broken-down time for expressing calendar time
-! (ie. Year, Month, Day of Month, Hour of Day) and timezone information*/
+#[doc = "! structure containing broken-down time for expressing calendar time\n! (ie. Year, Month, Day of Month, Hour of Day) and timezone information"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct tm {
-    ///< Seconds. [0-60] (1 leap second)
+    #[doc = "< Seconds. [0-60] (1 leap second)"]
     pub tm_sec: ::core::ffi::c_int,
-    ///< Minutes. [0-59]
+    #[doc = "< Minutes. [0-59]"]
     pub tm_min: ::core::ffi::c_int,
-    ///< Hours.  [0-23]
+    #[doc = "< Hours.  [0-23]"]
     pub tm_hour: ::core::ffi::c_int,
-    ///< Day. [1-31]
+    #[doc = "< Day. [1-31]"]
     pub tm_mday: ::core::ffi::c_int,
-    ///< Month. [0-11]
+    #[doc = "< Month. [0-11]"]
     pub tm_mon: ::core::ffi::c_int,
-    ///< Years since 1900
+    #[doc = "< Years since 1900"]
     pub tm_year: ::core::ffi::c_int,
-    ///< Day of week. [0-6]
+    #[doc = "< Day of week. [0-6]"]
     pub tm_wday: ::core::ffi::c_int,
-    ///< Days in year.[0-365]
+    #[doc = "< Days in year.[0-365]"]
     pub tm_yday: ::core::ffi::c_int,
-    ///< DST. [-1/0/1]
+    #[doc = "< DST. [-1/0/1]"]
     pub tm_isdst: ::core::ffi::c_int,
-    ///< Seconds east of UTC
+    #[doc = "< Seconds east of UTC"]
     pub tm_gmtoff: ::core::ffi::c_int,
-    ///< Timezone abbreviation
+    #[doc = "< Timezone abbreviation"]
     pub tm_zone: [::core::ffi::c_char; 6usize],
 }
 unsafe extern "C" {
-    /**! Format the time value at tm according to fmt and place the result in a buffer s of size max
-! @param s A preallocation char array of size max
-! @param maxsize the size of the array s
-! @param format a formatting string
-! @param tm_p A pointer to a struct tm containing a broken out time value
-! @return The number of bytes placed in the array s, not including the null byte,
-!   0 if the value does not fit.*/
+    #[doc = "! Format the time value at tm according to fmt and place the result in a buffer s of size max\n! @param s A preallocation char array of size max\n! @param maxsize the size of the array s\n! @param format a formatting string\n! @param tm_p A pointer to a struct tm containing a broken out time value\n! @return The number of bytes placed in the array s, not including the null byte,\n!   0 if the value does not fit."]
     pub fn strftime(
         s: *mut ::core::ffi::c_char,
         maxsize: usize,
@@ -9930,63 +5881,30 @@ unsafe extern "C" {
     ) -> usize;
 }
 unsafe extern "C" {
-    /**! convert the time value pointed at by clock to a struct tm which contains the time
-! adjusted for the local timezone
-! @param timep A pointer to an object of type time_t that contains a time value
-! @return A pointer to a struct tm containing the broken out time value adjusted
-!   for the local timezone*/
+    #[doc = "! convert the time value pointed at by clock to a struct tm which contains the time\n! adjusted for the local timezone\n! @param timep A pointer to an object of type time_t that contains a time value\n! @return A pointer to a struct tm containing the broken out time value adjusted\n!   for the local timezone"]
     pub fn localtime(timep: *const ::core::ffi::c_long) -> *mut tm;
 }
 unsafe extern "C" {
-    /**! convert the time value pointed at by clock to a struct tm
-!   which contains the time expressed in Coordinated Universal Time (UTC)
-! @param timep A pointer to an object of type time_t that contains a time value
-! @return A pointer to a struct tm containing Coordinated Universal Time (UTC)*/
+    #[doc = "! convert the time value pointed at by clock to a struct tm\n!   which contains the time expressed in Coordinated Universal Time (UTC)\n! @param timep A pointer to an object of type time_t that contains a time value\n! @return A pointer to a struct tm containing Coordinated Universal Time (UTC)"]
     pub fn gmtime(timep: *const ::core::ffi::c_long) -> *mut tm;
 }
 unsafe extern "C" {
-    /**! convert the broken-down time structure to a timestamp
-!   expressed in Coordinated Universal Time (UTC)
-! @param tb A pointer to an object of type tm that contains broken-down time
-! @return The number of seconds since epoch, January 1st 1970*/
+    #[doc = "! convert the broken-down time structure to a timestamp\n!   expressed in Coordinated Universal Time (UTC)\n! @param tb A pointer to an object of type tm that contains broken-down time\n! @return The number of seconds since epoch, January 1st 1970"]
     pub fn mktime(tb: *mut tm) -> ::core::ffi::c_long;
 }
 unsafe extern "C" {
-    /**! Obtain the number of seconds since epoch.
-! Note that the epoch is not adjusted for Timezones and Daylight Savings.
-! @param tloc Optionally points to an address of a time_t variable to store the time in.
-!     If you only want to use the return value, you may pass NULL into tloc instead
-! @return The number of seconds since epoch, January 1st 1970*/
+    #[doc = "! Obtain the number of seconds since epoch.\n! Note that the epoch is not adjusted for Timezones and Daylight Savings.\n! @param tloc Optionally points to an address of a time_t variable to store the time in.\n!     If you only want to use the return value, you may pass NULL into tloc instead\n! @return The number of seconds since epoch, January 1st 1970"]
     pub fn time(tloc: *mut ::core::ffi::c_long) -> ::core::ffi::c_long;
 }
 unsafe extern "C" {
-    /**! Obtain the number of seconds elapsed between beginning and end represented as a double.
-! @param end A time_t variable representing some number of seconds since epoch, January 1st 1970
-! @param beginning A time_t variable representing some number of seconds since epoch,
-!     January 1st 1970. Note that end should be greater than beginning, but this is not enforced.
-! @return The number of seconds elapsed between beginning and end.
-! @note Pebble uses software floating point emulation.  Including this function which returns a
-!     double will significantly increase the size of your binary.  We recommend directly
-!     subtracting both timestamps to calculate a time difference.
-!     \code{.c}
-!     int difference = ts1 - ts2;
-!     \endcode*/
+    #[doc = "! Obtain the number of seconds elapsed between beginning and end represented as a double.\n! @param end A time_t variable representing some number of seconds since epoch, January 1st 1970\n! @param beginning A time_t variable representing some number of seconds since epoch,\n!     January 1st 1970. Note that end should be greater than beginning, but this is not enforced.\n! @return The number of seconds elapsed between beginning and end.\n! @note Pebble uses software floating point emulation.  Including this function which returns a\n!     double will significantly increase the size of your binary.  We recommend directly\n!     subtracting both timestamps to calculate a time difference.\n!     \\code{.c}\n!     int difference = ts1 - ts2;\n!     \\endcode"]
     pub fn difftime(end: ::core::ffi::c_long, beginning: ::core::ffi::c_long) -> f64;
 }
 unsafe extern "C" {
-    /**! Obtain the number of seconds and milliseconds part since the epoch.
-!   This is a non-standard C function provided for convenience.
-! @param tloc Optionally points to an address of a time_t variable to store the time in.
-!   You may pass NULL into tloc if you don't need a time_t variable to be set
-!   with the seconds since the epoch
-! @param out_ms Optionally points to an address of a uint16_t variable to store the
-!   number of milliseconds since the last second in.
-!   If you only want to use the return value, you may pass NULL into out_ms instead
-! @return The number of milliseconds since the last second*/
+    #[doc = "! Obtain the number of seconds and milliseconds part since the epoch.\n!   This is a non-standard C function provided for convenience.\n! @param tloc Optionally points to an address of a time_t variable to store the time in.\n!   You may pass NULL into tloc if you don't need a time_t variable to be set\n!   with the seconds since the epoch\n! @param out_ms Optionally points to an address of a uint16_t variable to store the\n!   number of milliseconds since the last second in.\n!   If you only want to use the return value, you may pass NULL into out_ms instead\n! @return The number of milliseconds since the last second"]
     pub fn time_ms(t_utc: *mut ::core::ffi::c_long, out_ms: *mut u16) -> u16;
 }
 unsafe extern "C" {
-    /**! Return the UTC time that corresponds to the start of today (midnight).
-! @return the UTC time corresponding to the start of today (midnight)*/
+    #[doc = "! Return the UTC time that corresponds to the start of today (midnight).\n! @return the UTC time corresponding to the start of today (midnight)"]
     pub fn time_start_of_today() -> ::core::ffi::c_long;
 }
