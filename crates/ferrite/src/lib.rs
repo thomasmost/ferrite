@@ -39,7 +39,7 @@ impl App {
 pub fn log_info(msg: &CStr) {
     unsafe {
         sys::app_log(
-            sys::APP_LOG_LEVEL_INFO,
+            sys::AppLogLevel::APP_LOG_LEVEL_INFO.0,
             c"rust".as_ptr(),
             0,
             c"%s".as_ptr(),

@@ -36,7 +36,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     out.buf[out.len] = 0;
     unsafe {
         crate::sys::app_log(
-            crate::sys::APP_LOG_LEVEL_ERROR,
+            crate::sys::AppLogLevel::APP_LOG_LEVEL_ERROR.0,
             c"rust".as_ptr(),
             0,
             c"%s".as_ptr(),
