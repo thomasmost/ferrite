@@ -8,7 +8,7 @@
 
 **Scope:** Phase 2 of 7 from `docs/design-plans/2026-08-05-ferrite-rust-toolchain.md`.
 
-**Codebase verified:** 2026-08-05. Verified: `pebble.h` (440 KB, ~8,800 lines) `#include`s two per-project generated headers — `"message_keys.auto.h"` and `"src/resource_ids.auto.h"` — that don't exist in the SDK (must be stubbed), plus newlib headers (`stdlib.h`, `stdio.h`, `string.h`, `time.h`, `locale.h`) which exist in the SDK's bundled toolchain at `$SDK/toolchain/arm-none-eabi/arm-none-eabi/include/` (confirmed `stdlib.h` present). libclang exists at `/Library/Developer/CommandLineTools/usr/lib/libclang.dylib`. A clang dry run with stubs + newlib include succeeds.
+**Codebase verified:** 2026-08-05. Verified: `pebble.h` (440 KB, ~8,800 lines) `#include`s two per-project generated headers — `"message_keys.auto.h"` and `"src/resource_ids.auto.h"` — that don't exist in the SDK (must be stubbed), plus newlib headers (`stdlib.h`, `stdio.h`, `string.h`, `time.h`, `locale.h`) which exist in the SDK's bundled toolchain at `$SDK/toolchain/arm-none-eabi/arm-none-eabi/include/` (confirmed `stdlib.h` present). libclang exists at `/Library/Developer/CommandLineTools/usr/lib/libclang.dylib`. ~~A clang dry run with stubs + newlib include succeeds.~~ **CORRECTED during Phase 2 (this last claim was wrong):** it does not — `pebble.h` includes `<time.h>` and then redefines `struct tm`, which is a hard error that real `arm-none-eabi-gcc` hits too. The generator mirrors the SDK's own `-D_TIME_H_ -Dtime_t=long` workaround; see the correction note on Task 2 below for the full reasoning.
 
 ---
 
@@ -122,8 +122,8 @@ git commit -m "chore(xtask): scaffold cargo xtask runner"
 - Generates: `crates/ferrite-sys/src/bindings_emery.rs` (committed output)
 
 > **CORRECTED during Phase 2 — the shipped `gen_bindings.rs` differs from the
-> listing below in four ways. The listing is kept for context; the code is the
-> source of truth.**
+> listing below in the following ways. The listing is kept for context; the
+> code is the source of truth.**
 >
 > 1. **The "Codebase verified" claim at the top of this file that "A clang dry
 >    run with stubs + newlib include succeeds" is wrong.** `pebble.h` includes
@@ -139,13 +139,20 @@ git commit -m "chore(xtask): scaffold cargo xtask runner"
 >    rustfmt-canonical, so `cargo fmt --all --check` could never pass and
 >    `cargo fmt` would reformat a file the next regeneration rewrites.
 > 3. **`raw_line` also emits `PEBBLE_SDK_VERSION`, `PEBBLE_SDK_PLATFORM` and
->    `pub type time_t`.** Step 1 of Task 3 below hand-writes the first two in
->    `ferrite-sys/src/lib.rs`; do not — they are generated, and `lib.rs`
->    re-exports them through its glob. `time_t` has to be written by hand
->    because `-Dtime_t=long` erases the name before clang sees it.
+>    `pub type time_t`.** Task 3 Step 1's listing originally hand-wrote the
+>    first two in `ferrite-sys/src/lib.rs`; it has been corrected — they are
+>    generated, and `lib.rs` re-exports them through its glob. `time_t` has to
+>    be emitted by hand because `-Dtime_t=long` erases the name before clang
+>    sees it, so bindgen never observes it.
 > 4. **No `expect()`.** Bindgen failure, file-write failure and an
 >    undeterminable home directory all return `ExitCode::FAILURE` with a
 >    message, matching the missing-SDK path.
+> 5. **A `const PLATFORM` was added** next to `SDK_VERSION`, feeding both the
+>    `@generated` header line and the emitted `PEBBLE_SDK_PLATFORM`.
+> 6. **`-I{stubs}` comes first in `clang_args`**, before the SDK include dirs.
+>    Behaviourally inert here — the SDK's emery include tree contains neither
+>    `message_keys.auto.h` nor a `src/` subdirectory, so the stubs cannot
+>    shadow a real SDK header in either ordering.
 
 **Step 1: Create the stub headers**
 
@@ -420,6 +427,16 @@ const _: () = {
     assert!(size_of::<ButtonId>() == 1);
     // ... but 2 bytes for AppMessageResult (APP_MSG_INTERNAL_ERROR = 1 << 15)
     assert!(size_of::<AppMessageResult>() == 2);
+
+    // ADDED during Phase 2: `struct tm` is Pebble's own definition, not
+    // newlib's -- pebble.h redefines it and the SDK compiles with -D_TIME_H_.
+    // Phase 3 and Phase 6 both take `*mut tm` from TickHandler, so the layout
+    // is worth pinning. Ground truth measured with real arm-none-eabi-gcc
+    // under the SDK's own CFLAGS. The offsets matter as much as the size:
+    // they catch a field reorder that preserves the total.
+    assert!(size_of::<tm>() == 48);
+    assert!(core::mem::offset_of!(tm, tm_gmtoff) == 36);
+    assert!(core::mem::offset_of!(tm, tm_zone) == 40);
 };
 ```
 
