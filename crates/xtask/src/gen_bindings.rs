@@ -67,14 +67,24 @@ pub fn run() -> ExitCode {
         // enum-typed fields (e.g. Tuplet) are wrong.
         "-fshort-enums".into(),
         "-ffreestanding".into(),
-        // Prevent time.h from being included by pebble.h. We define struct tm
-        // with the extended Pebble fields in our pebble.h wrapper.
+        // pebble.h includes <time.h> and then defines its OWN `struct tm`
+        // (9 ints + int tm_gmtoff + char tm_zone[6], 48 bytes) plus its own
+        // strftime/localtime/gmtime/mktime prototypes. Against newlib's
+        // time.h that is a hard redefinition error -- real arm-none-eabi-gcc
+        // fails on it too.
+        //
+        // These two defines are NOT our invention: they are exactly what the
+        // SDK's own compiler config applies, so app C code sees Pebble's
+        // struct tm and a 32-bit time_t rather than newlib's. Mirroring them
+        // is what makes our bindings match the ABI the firmware was built
+        // against. Source: sdk-core/pebble/<waf>/waflib/extras/pebble_sdk_gcc.py,
+        // and confirmed present in examples/hello/build/c4che/emery_cache.py
+        // CFLAGS for this very project.
         "-D_TIME_H_".into(),
         "-Dtime_t=long".into(),
-        "-Dclock_t=long".into(),
         format!("-I{}", stubs.display()),
-        format!("-isystem{}", emery_include.display()),
-        format!("-isystem{}", newlib_include.display()),
+        format!("-I{}", emery_include.display()),
+        format!("-I{}", newlib_include.display()),
     ];
     clang_args.extend(EMERY_DEFINES.iter().map(|d| d.to_string()));
 
@@ -85,29 +95,6 @@ pub fn run() -> ExitCode {
         .allowlist_file(".*/pebble\\.h")
         .allowlist_file(".*/pebble_fonts\\.h")
         .allowlist_file(".*/gcolor_definitions\\.h")
-        // pebble.h redefines 'tm' struct from time.h and causes a fatal clang error.
-        // Block everything time-related to work around the conflict.
-        .blocklist_file(".*/time\\.h")
-        .blocklist_type("tm")
-        .blocklist_type("time_t")
-        .blocklist_function("time")
-        .blocklist_function("difftime")
-        .blocklist_function("mktime")
-        .blocklist_function("localtime")
-        .blocklist_function("gmtime")
-        .blocklist_function("strftime")
-        .blocklist_function("strptime")
-        .blocklist_function("asctime")
-        .blocklist_function("ctime")
-        .blocklist_function("clock")
-        .blocklist_function("clock_gettime")
-        .blocklist_function("clock_settime")
-        .blocklist_function("timer_create")
-        .blocklist_function("timer_delete")
-        .blocklist_function("timer_getoverrun")
-        .blocklist_function("timer_gettime")
-        .blocklist_function("timer_settime")
-        .blocklist_function("nanosleep")
         .default_enum_style(bindgen::EnumVariation::NewType {
             is_bitfield: false,
             is_global: false,

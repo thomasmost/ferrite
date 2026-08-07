@@ -469,7 +469,7 @@ mod tests {
 }
 ```
 
-(If the generated `sys::tm` has extra fields — check `grep -A 14 "pub struct tm" crates/ferrite-sys/src/bindings_emery.rs` — construct with `..Default::default()` for the remainder. The nine fields above are newlib's standard set on this toolchain.)
+(**Confirmed during Phase 2:** the generated `sys::tm` *does* have extra fields — it is Pebble's own definition, not newlib's, so beyond the nine standard fields it also carries `tm_gmtoff: c_int` and `tm_zone: [c_char; 6]` (48 bytes total, `tm_gmtoff` at offset 36). Construct with `..Default::default()` for the remainder. See the corrected note at the top of `phase_03.md` for why.)
 
 **Step 2: Run test to verify it fails**
 

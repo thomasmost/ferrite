@@ -8,7 +8,18 @@
 
 **Scope:** Phase 3 of 7 from `docs/design-plans/2026-08-05-ferrite-rust-toolchain.md`.
 
-**Codebase verified:** 2026-08-05. Verified in `libpebble.a` (via bundled `arm-none-eabi-nm`): `malloc`, `free`, `calloc`, `realloc`, `heap_bytes_free`, `heap_bytes_used`, `memcpy`, `memset`, `strlen` all defined (`T`). Verified in `pebble.h`: `typedef void (*TickHandler)(struct tm *tick_time, TimeUnits units_changed)` (line 903), `void tick_timer_service_subscribe(TimeUnits, TickHandler)` (911). `struct tm` is newlib's nine-`int` struct (no gmtoff/zone fields on this toolchain). Verified pebble CLI: `pebble install --logs` exists; `pebble logs` streams forever (no timeout flag); `pebble kill [--force]` and `pebble screenshot <filename> --no-open` exist.
+**Codebase verified:** 2026-08-05. Verified in `libpebble.a` (via bundled `arm-none-eabi-nm`): `malloc`, `free`, `calloc`, `realloc`, `heap_bytes_free`, `heap_bytes_used`, `memcpy`, `memset`, `strlen` all defined (`T`). Verified in `pebble.h`: `typedef void (*TickHandler)(struct tm *tick_time, TimeUnits units_changed)` (line 903), `void tick_timer_service_subscribe(TimeUnits, TickHandler)` (911). **CORRECTED during Phase 2 (this line was wrong):** `struct tm` is *not* newlib's
+nine-`int` struct. `pebble.h` includes `<time.h>` and then defines its **own**
+`struct tm` at line 8753 — the nine ints plus `int tm_gmtoff` and
+`char tm_zone[6]`. That is a hard redefinition conflict, and the SDK resolves
+it by compiling app C with `-D_TIME_H_ -Dtime_t=long` (see
+`waflib/extras/pebble_sdk_gcc.py`, and this project's own
+`examples/hello/build/c4che/emery_cache.py` CFLAGS), which suppresses newlib's
+`time.h` entirely. So Pebble's definition is the one the firmware ABI uses.
+Measured with real `arm-none-eabi-gcc` under those flags: `sizeof(struct tm)`
+is **48**, `tm_gmtoff` at offset 36, `tm_zone` at 40, and `time_t` is 4 bytes
+(`long`). `cargo xtask bindgen` mirrors those two defines, and the generated
+`sys::tm` has all eleven fields — assert-checked in `ferrite-sys`. Verified pebble CLI: `pebble install --logs` exists; `pebble logs` streams forever (no timeout flag); `pebble kill [--force]` and `pebble screenshot <filename> --no-open` exist.
 
 ---
 

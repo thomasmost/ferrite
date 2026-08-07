@@ -9886,6 +9886,93 @@ unsafe extern "C" {
 ! @return True, if Quiet Time is currently active.*/
     pub fn quiet_time_is_active() -> bool;
 }
+/**! structure containing broken-down time for expressing calendar time
+! (ie. Year, Month, Day of Month, Hour of Day) and timezone information*/
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct tm {
+    ///< Seconds. [0-60] (1 leap second)
+    pub tm_sec: ::core::ffi::c_int,
+    ///< Minutes. [0-59]
+    pub tm_min: ::core::ffi::c_int,
+    ///< Hours.  [0-23]
+    pub tm_hour: ::core::ffi::c_int,
+    ///< Day. [1-31]
+    pub tm_mday: ::core::ffi::c_int,
+    ///< Month. [0-11]
+    pub tm_mon: ::core::ffi::c_int,
+    ///< Years since 1900
+    pub tm_year: ::core::ffi::c_int,
+    ///< Day of week. [0-6]
+    pub tm_wday: ::core::ffi::c_int,
+    ///< Days in year.[0-365]
+    pub tm_yday: ::core::ffi::c_int,
+    ///< DST. [-1/0/1]
+    pub tm_isdst: ::core::ffi::c_int,
+    ///< Seconds east of UTC
+    pub tm_gmtoff: ::core::ffi::c_int,
+    ///< Timezone abbreviation
+    pub tm_zone: [::core::ffi::c_char; 6usize],
+}
+unsafe extern "C" {
+    /**! Format the time value at tm according to fmt and place the result in a buffer s of size max
+! @param s A preallocation char array of size max
+! @param maxsize the size of the array s
+! @param format a formatting string
+! @param tm_p A pointer to a struct tm containing a broken out time value
+! @return The number of bytes placed in the array s, not including the null byte,
+!   0 if the value does not fit.*/
+    pub fn strftime(
+        s: *mut ::core::ffi::c_char,
+        maxsize: usize,
+        format: *const ::core::ffi::c_char,
+        tm_p: *const tm,
+    ) -> usize;
+}
+unsafe extern "C" {
+    /**! convert the time value pointed at by clock to a struct tm which contains the time
+! adjusted for the local timezone
+! @param timep A pointer to an object of type time_t that contains a time value
+! @return A pointer to a struct tm containing the broken out time value adjusted
+!   for the local timezone*/
+    pub fn localtime(timep: *const ::core::ffi::c_long) -> *mut tm;
+}
+unsafe extern "C" {
+    /**! convert the time value pointed at by clock to a struct tm
+!   which contains the time expressed in Coordinated Universal Time (UTC)
+! @param timep A pointer to an object of type time_t that contains a time value
+! @return A pointer to a struct tm containing Coordinated Universal Time (UTC)*/
+    pub fn gmtime(timep: *const ::core::ffi::c_long) -> *mut tm;
+}
+unsafe extern "C" {
+    /**! convert the broken-down time structure to a timestamp
+!   expressed in Coordinated Universal Time (UTC)
+! @param tb A pointer to an object of type tm that contains broken-down time
+! @return The number of seconds since epoch, January 1st 1970*/
+    pub fn mktime(tb: *mut tm) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    /**! Obtain the number of seconds since epoch.
+! Note that the epoch is not adjusted for Timezones and Daylight Savings.
+! @param tloc Optionally points to an address of a time_t variable to store the time in.
+!     If you only want to use the return value, you may pass NULL into tloc instead
+! @return The number of seconds since epoch, January 1st 1970*/
+    pub fn time(tloc: *mut ::core::ffi::c_long) -> ::core::ffi::c_long;
+}
+unsafe extern "C" {
+    /**! Obtain the number of seconds elapsed between beginning and end represented as a double.
+! @param end A time_t variable representing some number of seconds since epoch, January 1st 1970
+! @param beginning A time_t variable representing some number of seconds since epoch,
+!     January 1st 1970. Note that end should be greater than beginning, but this is not enforced.
+! @return The number of seconds elapsed between beginning and end.
+! @note Pebble uses software floating point emulation.  Including this function which returns a
+!     double will significantly increase the size of your binary.  We recommend directly
+!     subtracting both timestamps to calculate a time difference.
+!     \code{.c}
+!     int difference = ts1 - ts2;
+!     \endcode*/
+    pub fn difftime(end: ::core::ffi::c_long, beginning: ::core::ffi::c_long) -> f64;
+}
 unsafe extern "C" {
     /**! Obtain the number of seconds and milliseconds part since the epoch.
 !   This is a non-standard C function provided for convenience.
