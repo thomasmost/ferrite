@@ -41,6 +41,12 @@ In `crates/ferrite/src/lib.rs`:
 ```rust
 #![cfg_attr(not(test), no_std)]
 ```
+   **Already done in Phase 1** (commit 5e2c34c): this was pulled forward so
+   `FixedBuf`'s UTF-8 truncation arithmetic in `panic.rs` could be unit-tested
+   on the host after it regressed twice. `panic.rs` is now declared
+   `#[cfg(any(target_os = "none", test))]` with only `#[panic_handler]` gated
+   on `target_os = "none"`. Verify the line is present and move on — no edit
+   needed.
 2. Add below the attribute:
 ```rust
 extern crate alloc;

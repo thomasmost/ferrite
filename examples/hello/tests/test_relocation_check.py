@@ -16,8 +16,10 @@ exec its module-level definitions in an isolated namespace and stub out both
 """
 
 import os
+import shutil
 import subprocess as real_subprocess
 import sys
+import tempfile
 import types
 import unittest
 
@@ -165,10 +167,19 @@ class RelocationCheckTest(unittest.TestCase):
             _entry('R_ARM_ABS32', '.text'),
         ]), 'non-allocated debug relocations are inert')
 
-    def test_exidx_is_exempt(self):
+    def test_exidx_prel31_is_clean(self):
+        # .ARM.exidx IS allocated, so it is checked like any loaded section --
+        # its legitimate PREL31 entries pass on type, not on section name.
         self.assertClean('\n'.join([
             _header('.rel.ARM.exidx.text.main'), _entry('R_ARM_PREL31', '.text'),
         ]), 'PREL31 is self-relative')
+
+    def test_abs32_in_exidx_is_flagged(self):
+        # .ARM.exidx carries AL in readelf -S and inject_metadata.py does not
+        # fix it up, so a non-relative entry here would ship uncorrected.
+        self.assertFlagged('\n'.join([
+            _header('.rel.ARM.exidx.text.main'), _entry('R_ARM_ABS32', '.text'),
+        ]), 'absolute relocation in a loaded exidx section')
 
     # --- parser state machine -------------------------------------------
 
@@ -212,6 +223,17 @@ class RelocationCheckTest(unittest.TestCase):
         self.assertFlagged('\n'.join([
             _header('.rel.text'), _entry('R_ARM_MOVW_ABS_NC', '.Lanon.1'),
         ]), 'ARM (non-Thumb) absolute movw')
+
+    def test_unrecognized_relocation_number_is_flagged(self):
+        # readelf prints "unrecognized: f8" for a reloc number it cannot name.
+        # That is the least-understood input there is, so it must fail closed;
+        # an earlier version gated on startswith('R_') and skipped it.
+        self.assertFlagged(
+            '\n'.join([
+                _header('.rel.text'),
+                '000000e0  00009bf8 unrecognized: f8      00000e21   app_log',
+            ]),
+            'a relocation type readelf cannot name')
 
     def test_unparseable_section_header_fails_closed(self):
         self.assertFlagged('\n'.join([
@@ -265,6 +287,84 @@ class RelocationCheckMessageTest(unittest.TestCase):
         self.assertIn('app.elf', msg)
         self.assertIn('relocation-model=pic', msg)
         self.assertIn('.rel.text', msg)
+
+
+class DiscardArtifactsTest(unittest.TestCase):
+    """An unverified binary must never remain installable.
+
+    Covers the second half of the guardrail: whatever goes wrong, the .pbw
+    and per-platform .bin are removed before the error propagates.
+    """
+
+    def setUp(self):
+        self.ns = _load_wscript()
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.binaries = [{'platform': 'emery',
+                          'app_elf': 'emery/pebble-app.elf'}]
+        os.makedirs(os.path.join(self.tmp, 'emery'))
+        self.pbw = os.path.join(self.tmp, 'hello.pbw')
+        self.bin = os.path.join(self.tmp, 'emery', 'pebble-app.bin')
+        self.elf = os.path.join(self.tmp, 'emery', 'pebble-app.elf')
+        for p in (self.pbw, self.bin, self.elf):
+            with open(p, 'wb') as f:
+                f.write(b'x')
+
+    def _node(self, _rel):
+        return types.SimpleNamespace(abspath=lambda: self.elf)
+
+    def _stub_readelf(self, behaviour):
+        self.ns['subprocess'] = types.SimpleNamespace(
+            check_output=behaviour,
+            CalledProcessError=real_subprocess.CalledProcessError,
+        )
+
+    def assertArtifactsGone(self):
+        self.assertFalse(os.path.exists(self.pbw), '.pbw survived')
+        self.assertFalse(os.path.exists(self.bin), '.bin survived')
+
+    def test_artifacts_survive_a_clean_verification(self):
+        self._stub_readelf(lambda *a, **k: '\n'.join([
+            _header('.rel.text'), _entry('R_ARM_THM_CALL'),
+        ]).encode())
+        self.ns['_verify_binaries'](self.tmp, self.binaries, self._node)
+        self.assertTrue(os.path.exists(self.pbw), '.pbw wrongly removed')
+        self.assertTrue(os.path.exists(self.bin), '.bin wrongly removed')
+
+    def test_bad_relocation_discards_artifacts(self):
+        self._stub_readelf(lambda *a, **k: '\n'.join([
+            _header('.rel.text'), _entry('R_ARM_ABS32', '.text'),
+        ]).encode())
+        with self.assertRaises(_WafError):
+            self.ns['_verify_binaries'](self.tmp, self.binaries, self._node)
+        self.assertArtifactsGone()
+
+    def test_missing_readelf_discards_artifacts(self):
+        def boom(*a, **k):
+            raise OSError(2, 'No such file or directory')
+
+        self._stub_readelf(boom)
+        with self.assertRaises(_WafError):
+            self.ns['_verify_binaries'](self.tmp, self.binaries, self._node)
+        self.assertArtifactsGone()
+
+    def test_missing_elf_node_discards_artifacts(self):
+        self._stub_readelf(lambda *a, **k: b'')
+        with self.assertRaises(_WafError):
+            self.ns['_verify_binaries'](self.tmp, self.binaries,
+                                        lambda _rel: None)
+        self.assertArtifactsGone()
+
+    def test_unexpected_exception_still_discards_artifacts(self):
+        # The handler is deliberately broad: any failure to COMPLETE the
+        # check leaves the binary unverified.
+        def boom(*a, **k):
+            raise RuntimeError('something nobody anticipated')
+
+        self._stub_readelf(boom)
+        with self.assertRaises(RuntimeError):
+            self.ns['_verify_binaries'](self.tmp, self.binaries, self._node)
+        self.assertArtifactsGone()
 
 
 if __name__ == '__main__':

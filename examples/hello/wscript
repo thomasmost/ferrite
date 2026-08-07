@@ -88,7 +88,7 @@ RELATIVE_RELOC_TYPES = frozenset((
     'R_ARM_REL32', 'R_ARM_PREL31',
     'R_ARM_THM_PC8', 'R_ARM_THM_PC12',
     'R_ARM_GOT_BREL', 'R_ARM_GOT_PREL', 'R_ARM_GOTOFF32',
-    'R_ARM_BASE_PREL', 'R_ARM_GOTPC',
+    'R_ARM_BASE_PREL',
     'R_ARM_V4BX',
 ))
 
@@ -97,17 +97,21 @@ RELATIVE_RELOC_TYPES = frozenset((
 #   .rel.data / .got      inject_metadata.py emits load-time fixups for these
 #                         (see its get_relocate_entries: it prefix-matches
 #                         '.rel.data' and adds the whole .got range)
-#   .rel.ARM.exidx        PREL31 is self-relative, so nothing to fix up
 #   .rel.debug, .rel.comment, .rel.ARM.attributes
 #                         non-allocated; never loaded, so their absolute
 #                         entries are inert (there are ~1100 of them)
 #
 # These are the names readelf prints for the REL sections themselves, so each
 # is spelled '.rel.<target>' -- '.got' would never match anything.
+#
+# .rel.ARM.exidx is deliberately NOT exempt: readelf -S shows .ARM.exidx
+# carries AL (allocated), so it IS loaded and inject_metadata.py does not fix
+# it up. Its legitimate contents are R_ARM_PREL31/R_ARM_NONE, both of which
+# the type allow-list already accepts -- so exempting the section would only
+# have hidden a non-relative entry appearing there.
 RELOC_SECTIONS_EXEMPT = (
     '.rel.data',
     '.rel.got',
-    '.rel.ARM.exidx',
     '.rel.debug',
     '.rel.comment',
     '.rel.ARM.attributes',
@@ -158,9 +162,16 @@ def _check_relocations(elf, readelf):
         # Entry format: "000000e0  0000990a R_ARM_THM_CALL   00000df9   symbol"
         # Match the type column only -- a substring test would also hit symbol
         # names, and Rust v0 mangling can embed '_AB' in those.
+        #
+        # A relocation number readelf cannot name prints as "unrecognized: f8",
+        # which must also fail: an unnameable type is the least understood
+        # input there is, and skipping it would negate the fail-closed rule.
         parts = line.split()
-        if len(parts) >= 3 and parts[2].startswith('R_') \
-                and parts[2] not in RELATIVE_RELOC_TYPES:
+        if len(parts) < 3:
+            continue
+        reloc_type = parts[2]
+        is_type_column = reloc_type.startswith('R_') or reloc_type == 'unrecognized:'
+        if is_type_column and reloc_type not in RELATIVE_RELOC_TYPES:
             bad.append((section, line.strip()))
     if bad:
         shown = '\n'.join('  {}: {}'.format(s, l) for s, l in bad[:5])
@@ -174,6 +185,49 @@ def _check_relocations(elf, readelf):
             'RELATIVE_RELOC_TYPES.\n'
             'First offenders:\n{}'.format(
                 elf, len(bad), ' '.join(REQUIRED_RUSTFLAGS), shown))
+
+
+def _discard_artifacts(build_dir, binaries):
+    """Remove installable output so a failed check cannot ship a bad app.
+
+    pebble install does not re-verify; without this, a developer who misses
+    the error at the tail of the build output would install the bundle
+    produced moments earlier.
+    """
+    import glob
+    for pbw in glob.glob(os.path.join(build_dir, '*.pbw')):
+        os.remove(pbw)
+    for binary in binaries:
+        app_bin = os.path.join(
+            build_dir, os.path.dirname(binary['app_elf']), 'pebble-app.bin')
+        if os.path.exists(app_bin):
+            os.remove(app_bin)
+
+
+def _verify_binaries(build_dir, binaries, find_node,
+                     readelf='arm-none-eabi-readelf'):
+    """Check every built ELF, discarding artifacts unless all of them pass.
+
+    Module scope (rather than a closure inside build()) so it is reachable
+    from tests -- find_node is injected for the same reason.
+    """
+    from waflib import Errors
+    for binary in binaries:
+        node = find_node(binary['app_elf'])
+        if not node:
+            _discard_artifacts(build_dir, binaries)
+            raise Errors.WafError(
+                'relocation check could not find {} -- the BUILD_DIR layout '
+                'may have changed. Refusing to report success for an '
+                'unverified binary.'.format(binary['app_elf']))
+        try:
+            _check_relocations(node.abspath(), readelf)
+        except Exception:
+            # Deliberately broad: ANY failure to complete the check leaves the
+            # binary unverified, and an unverified binary must never remain
+            # installable.
+            _discard_artifacts(build_dir, binaries)
+            raise
 
 
 def build(ctx):
@@ -222,40 +276,8 @@ def build(ctx):
     # If verification fails, delete the .pbw and .bin artifacts so a developer
     # cannot accidentally install a broken app. The _verify function runs with
     # the actual build context, so the ELF files exist by then.
-    def _discard_artifacts(bld):
-        """Remove installable output so a failed check cannot ship a bad app.
-
-        pebble install does not re-verify; without this, a developer who
-        misses the error at the tail of the build output would install the
-        bundle produced moments earlier.
-        """
-        import glob
-        for pbw in glob.glob(os.path.join(bld.bldnode.abspath(), '*.pbw')):
-            os.remove(pbw)
-        for binary in binaries:
-            app_bin = os.path.join(
-                bld.bldnode.abspath(),
-                os.path.dirname(binary['app_elf']), 'pebble-app.bin')
-            if os.path.exists(app_bin):
-                os.remove(app_bin)
-
     def _verify(bld):
-        from waflib import Errors
-        for binary in binaries:
-            node = bld.bldnode.find_node(binary['app_elf'])
-            if not node:
-                _discard_artifacts(bld)
-                raise Errors.WafError(
-                    'relocation check could not find {} -- the BUILD_DIR '
-                    'layout may have changed. Refusing to report success for '
-                    'an unverified binary.'.format(binary['app_elf']))
-            try:
-                _check_relocations(node.abspath(), 'arm-none-eabi-readelf')
-            except Exception:
-                # Deliberately broad: ANY failure to complete the check leaves
-                # the binary unverified, and an unverified binary must never
-                # remain installable.
-                _discard_artifacts(bld)
-                raise
+        _verify_binaries(bld.bldnode.abspath(), binaries,
+                         lambda rel: bld.bldnode.find_node(rel))
 
     ctx.add_post_fun(_verify)

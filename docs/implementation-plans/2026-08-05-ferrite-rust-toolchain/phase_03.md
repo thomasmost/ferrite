@@ -426,6 +426,19 @@ git commit -m "feat(examples): heartbeat log exercising allocator and tick servi
 **Files:**
 - Create: `scripts/check.sh` (mode 755)
 
+**Added in Phase 1 — include these two suites in the script.** Phase 1 checked
+in tests that currently only run when a human types the command:
+
+```bash
+cargo test -p ferrite
+python3 -m unittest discover -s examples/hello/tests
+```
+
+The Python suite covers the wscript's relocation guardrail (the check that
+catches `-C relocation-model=pic` failing to reach rustc); the Rust tests
+cover `FixedBuf`'s UTF-8 truncation. Both guard logic that regressed more
+than once, so they need a runner.
+
 **Step 1: Write the script**
 
 `scripts/check.sh`:
