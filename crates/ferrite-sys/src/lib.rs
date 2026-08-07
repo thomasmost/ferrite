@@ -7,10 +7,10 @@
 #![no_std]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
-/// SDK version the committed bindings were generated from.
-pub const PEBBLE_SDK_VERSION: &str = "4.17";
-/// Platform the committed bindings were generated for.
-pub const PEBBLE_SDK_PLATFORM: &str = "emery";
+// PEBBLE_SDK_VERSION, PEBBLE_SDK_PLATFORM and the `time_t` alias are emitted
+// by `cargo xtask bindgen` into the generated module and re-exported below by
+// the glob. They are deliberately NOT restated here: the firmware jump table
+// is index-based, so a stale hand-copied version constant is worse than none.
 
 // Generated code is not hand-edited, so its lint findings are noise we cannot
 // act on. `unnecessary_transmutes` is a rustc lint (not clippy), so it needs
