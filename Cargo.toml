@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
-members = ["crates/ferrite-sys", "crates/ferrite"]
+members = ["crates/ferrite-sys", "crates/ferrite", "crates/xtask"]
 exclude = ["examples/hello"]
