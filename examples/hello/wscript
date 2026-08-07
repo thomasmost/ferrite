@@ -1,0 +1,71 @@
+#
+# Pebble app build script, customized for Ferrite: the app's code is Rust,
+# compiled by cargo into a static library that is linked into the app ELF
+# via the SDK's stlib mechanism. See the repo README.
+#
+import os
+import subprocess
+
+top = '.'
+out = 'build'
+
+CARGO_TARGET = 'thumbv7m-none-eabi'
+# Cargo crate name = staticlib name (libhello.a). Template users: change
+# this alongside [package] name in Cargo.toml.
+RUST_CRATE = 'hello'
+
+
+def options(ctx):
+    ctx.load('pebble_sdk')
+
+
+def configure(ctx):
+    ctx.load('pebble_sdk')
+
+
+def _cargo_path():
+    cargo = os.path.expanduser('~/.cargo/bin/cargo')
+    return cargo if os.path.exists(cargo) else 'cargo'
+
+
+def build(ctx):
+    ctx.load('pebble_sdk')
+
+    # Compile the Rust staticlib (target/thumbv7m-none-eabi/release/libhello.a).
+    subprocess.check_call(
+        [_cargo_path(), 'build', '--release', '--target', CARGO_TARGET],
+        cwd=ctx.path.abspath())
+    rust_lib_dir = os.path.join(
+        ctx.path.abspath(), 'target', CARGO_TARGET, 'release')
+    rust_lib = os.path.join(rust_lib_dir, 'lib{}.a'.format(RUST_CRATE))
+
+    binaries = []
+    cached_env = ctx.env
+    for platform in ctx.env.TARGET_PLATFORMS:
+        ctx.env = ctx.all_envs[platform]
+        ctx.set_group(ctx.env.PLATFORM_NAME)
+        app_elf = '{}/pebble-app.elf'.format(ctx.env.BUILD_DIR)
+        # source glob matches nothing: all app code is Rust. The SDK still
+        # appends its generated appinfo.auto.c / resource_ids.auto.c.
+        # -u main forces extraction of the Rust-provided entry point from
+        # the archive (nothing else references it).
+        ctx.pbl_build(source=ctx.path.ant_glob('src/c/**/*.c'),
+                      target=app_elf,
+                      bin_type='app',
+                      stlib=[RUST_CRATE],
+                      stlibpath=[rust_lib_dir],
+                      linkflags=['-Wl,-u,main'])
+        # waf only sees stlib as -L/-l flags, not as a link input: without
+        # this, editing Rust source can silently produce a stale .pbw.
+        ctx.add_manual_dependency(
+            ctx.path.find_or_declare(app_elf),
+            ctx.root.make_node(rust_lib))
+        binaries.append({'platform': platform, 'app_elf': app_elf})
+    ctx.env = cached_env
+
+    ctx.set_group('bundle')
+    ctx.pbl_bundle(binaries=binaries,
+                   js=ctx.path.ant_glob(['src/pkjs/**/*.js',
+                                         'src/pkjs/**/*.json',
+                                         'src/common/**/*.js']),
+                   js_entry_file='src/pkjs/index.js')
