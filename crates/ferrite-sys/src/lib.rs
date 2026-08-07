@@ -102,6 +102,7 @@ extern "C" {
     pub fn text_layer_destroy(text_layer: *mut TextLayer);
     pub fn text_layer_get_layer(text_layer: *mut TextLayer) -> *mut Layer;
     pub fn text_layer_set_text(text_layer: *mut TextLayer, text: *const c_char);
+    pub fn text_layer_set_text_color(text_layer: *mut TextLayer, color: GColor);
 
     // App
     pub fn app_event_loop();

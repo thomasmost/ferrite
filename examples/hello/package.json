@@ -1,6 +1,7 @@
 {
   "name": "hello",
   "version": "1.0.0",
+  "author": "Ferrite",
   "private": true,
   "keywords": ["pebble-app"],
   "dependencies": {},

@@ -24,6 +24,11 @@ impl TextLayer {
         unsafe { sys::text_layer_set_text(self.raw, text.as_ptr()) };
     }
 
+    /// Sets the text color.
+    pub fn set_text_color(&mut self, color: sys::GColor) {
+        unsafe { sys::text_layer_set_text_color(self.raw, color) };
+    }
+
     pub(crate) fn as_layer_ptr(&self) -> *mut sys::Layer {
         unsafe { sys::text_layer_get_layer(self.raw) }
     }
