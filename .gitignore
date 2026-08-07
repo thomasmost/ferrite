@@ -1,0 +1,5 @@
+/target
+/examples/hello/target
+/examples/hello/build
+.lock-waf_*_build
+.DS_Store
