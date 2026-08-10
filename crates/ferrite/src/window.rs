@@ -137,10 +137,7 @@ impl Window {
     /// must outlive its time in the window (keep both in your app state).
     pub fn add_child(&mut self, child: &impl crate::layer::AsLayer) {
         unsafe {
-            sys::layer_add_child(
-                sys::window_get_root_layer(self.raw),
-                child.as_layer_ptr(),
-            );
+            sys::layer_add_child(sys::window_get_root_layer(self.raw), child.as_layer_ptr());
         }
     }
 

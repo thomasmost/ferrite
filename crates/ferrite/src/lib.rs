@@ -8,21 +8,22 @@ extern crate alloc;
 pub use ferrite_sys as sys;
 
 mod fmt_buf;
+
+pub mod canvas;
+pub mod click;
+pub mod graphics;
 pub mod heap;
+pub mod layer;
 pub mod log;
 // Panic handler gated on target_os = "none" to avoid clashing with std's
 // panic handler during host testing. The handler uses FixedBuf for logging.
 #[cfg(target_os = "none")]
 mod panic;
-pub mod canvas;
-pub mod graphics;
-pub mod layer;
 pub mod text_layer;
+pub mod types;
 pub mod window;
 
-pub mod click;
 mod text_buf;
-pub mod types;
 
 /// Capability token proving the app runtime is initialized.
 ///

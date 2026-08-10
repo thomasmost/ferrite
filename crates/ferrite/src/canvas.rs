@@ -28,8 +28,10 @@ use crate::layer::AsLayer;
 use crate::sys;
 use crate::App;
 
+type DrawCallback = Box<dyn FnMut(&mut Graphics<'_>)>;
+
 struct CanvasState {
-    on_draw: Option<Box<dyn FnMut(&mut Graphics<'_>)>>,
+    on_draw: Option<DrawCallback>,
 }
 
 pub struct CanvasLayer {
@@ -41,8 +43,7 @@ impl CanvasLayer {
     /// Creates a canvas layer with the given frame. Panics if the SDK
     /// returns NULL (out of memory).
     pub fn new(_app: &mut App, frame: sys::GRect) -> CanvasLayer {
-        let raw =
-            unsafe { sys::layer_create_with_data(frame, size_of::<*mut CanvasState>()) };
+        let raw = unsafe { sys::layer_create_with_data(frame, size_of::<*mut CanvasState>()) };
         assert!(!raw.is_null(), "layer_create_with_data returned NULL");
         let state = Box::into_raw(Box::new(CanvasState { on_draw: None }));
         unsafe {
