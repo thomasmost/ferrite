@@ -11,7 +11,7 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": ["emery"],
-    "watchapp": { "watchface": true },
+    "watchapp": { "watchface": false },
     "messageKeys": [],
     "resources": { "media": [] },
     "capabilities": []
