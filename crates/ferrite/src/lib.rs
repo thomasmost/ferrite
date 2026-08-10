@@ -10,6 +10,7 @@ pub use ferrite_sys as sys;
 // `target_os = "none"` so it never clashes with std's.
 #[cfg(any(target_os = "none", test))]
 mod panic;
+pub mod heap;
 pub mod text_layer;
 pub mod window;
 
