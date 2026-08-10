@@ -32,8 +32,7 @@ impl TextBuf {
     /// the next `set_*` call. Interior NUL bytes are not representable in a
     /// C string; such input is replaced with a marker rather than panicking.
     pub(crate) fn set_owned(&mut self, s: &str) -> *const c_char {
-        let c = CString::new(s)
-            .unwrap_or_else(|_| CString::new("<text contained NUL>").unwrap());
+        let c = CString::new(s).unwrap_or_else(|_| CString::new("<text contained NUL>").unwrap());
         self.source = TextSource::Owned(c);
         self.as_ptr()
     }

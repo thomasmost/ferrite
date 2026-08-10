@@ -2,8 +2,8 @@
 //! their const constructors. They cross the FFI boundary untranslated.
 
 pub use crate::sys::{
-    GColor, GColor8, GColorClear, GColorBlack, GColorWhite, GColorFromHEX,
-    GColorFromRGB, GColorFromRGBA, GPoint, GRect, GSize,
+    GColor, GColor8, GColorBlack, GColorClear, GColorFromHEX, GColorFromRGB, GColorFromRGBA,
+    GColorWhite, GPoint, GRect, GSize,
 };
 
 #[cfg(test)]
