@@ -23,6 +23,7 @@ pub mod persist;
 #[cfg(target_os = "none")]
 mod panic;
 pub mod text_layer;
+pub mod tick;
 pub mod types;
 pub mod window;
 
