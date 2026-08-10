@@ -12,7 +12,7 @@
     "enableMultiJS": true,
     "targetPlatforms": ["emery"],
     "watchapp": { "watchface": false },
-    "messageKeys": [],
+    "messageKeys": ["PING"],
     "resources": { "media": [] },
     "capabilities": []
   }

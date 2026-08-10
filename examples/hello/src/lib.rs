@@ -5,23 +5,17 @@
 
 extern crate alloc;
 
-use core::sync::atomic::{AtomicU32, Ordering};
-
+use ferrite::app_message::AppMessage;
 use ferrite::canvas::CanvasLayer;
 use ferrite::menu_layer::MenuLayer;
 use ferrite::text_layer::{system_font, TextLayer};
 use ferrite::window::Window;
 use ferrite::{sys, App};
 
-static TICKS: AtomicU32 = AtomicU32::new(0);
-
-extern "C" fn on_tick(_tick_time: *mut sys::tm, _units_changed: sys::TimeUnits) {
-    let n = TICKS.fetch_add(1, Ordering::Relaxed) + 1;
-    let boxed = alloc::boxed::Box::new(n);
-    let boxed_8 = alloc::boxed::Box::new(n as u64);
-    let free = ferrite::heap::heap_bytes_free();
-    ferrite::info!("HEARTBEAT {} heap_free={} u64={}", *boxed, free, *boxed_8);
-}
+/// Must match the position of "PING" in package.json's messageKeys
+/// (values are assigned sequentially from 10000 in array order).
+const MESSAGE_KEY_PING: u32 = 10000;
+const PERSIST_KEY_LAUNCHES: u32 = 1;
 
 fn make_text_screen(app: &mut App) -> (Window, TextLayer) {
     let mut win = Window::new(app);
@@ -97,13 +91,43 @@ ferrite::app! {
         home.on_load(|| ferrite::log::info(c"home menu loaded"));
         home.push(true);
 
-        unsafe {
-            sys::tick_timer_service_subscribe(sys::TimeUnits::SECOND_UNIT, Some(on_tick));
-        }
+        // Persist: launch counter surviving relaunches.
+        let launches = ferrite::persist::read_int(PERSIST_KEY_LAUNCHES).unwrap_or(0) + 1;
+        let _ = ferrite::persist::write_int(PERSIST_KEY_LAUNCHES, launches);
+        ferrite::info!("LAUNCH {}", launches);
+
+        // AppMessage: log the PING sent by the PKJS stub.
+        let mut messages = AppMessage::open(app, 256, 64).expect("app_message_open failed");
+        messages.on_received(|dict| match dict.find(MESSAGE_KEY_PING) {
+            Some(t) => ferrite::info!("PING received: {:?}", t.value_i32()),
+            None => ferrite::log::warn(c"message without PING key"),
+        });
+        messages.on_dropped(|reason| ferrite::info!("inbox dropped: {}", reason.0));
+
+        // Health: log availability once (graceful on emulator).
+        let hr_ok = ferrite::health::metric_available(
+            ferrite::health::HealthMetric::HealthMetricHeartRateBPM,
+        );
+        ferrite::info!(
+            "hr available={} bpm={}",
+            hr_ok,
+            ferrite::health::peek(ferrite::health::HealthMetric::HealthMetricHeartRateBPM)
+        );
+
+        // Tick: heartbeat via the safe static-slot subscription.
+        let mut ticks: u32 = 0;
+        ferrite::tick::subscribe(app, ferrite::tick::TimeUnits::SECOND_UNIT, move |_t, _u| {
+            ticks += 1;
+            let boxed = alloc::boxed::Box::new(ticks);
+            let boxed_u64 = alloc::boxed::Box::new(ticks as u64);
+            let free = ferrite::heap::heap_bytes_free();
+            ferrite::info!("HEARTBEAT {} heap_free={} u64={}", *boxed, free, *boxed_u64);
+        });
 
         // Children before parents: text (child of text window), canvas (child of
-        // canvas window), menu (child of home window), then home.
+        // canvas window), menu (child of home window), then messages (service),
+        // then home.
         // The windows (text_win, canvas_win) live in menu's closure and drop with it.
-        (text, canvas, menu, home)
+        (text, canvas, menu, messages, home)
     }
 }
