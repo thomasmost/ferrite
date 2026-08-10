@@ -117,10 +117,15 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             # - Ferrite on_single_click (click.rs provider, text window):
             #   presses 2 and 3 each fire on_click -> window handler restored.
             #
+            # Also covered: the canvas screen (menu row 1) must load -- that
+            # is the only on-device exercise of layer_create_with_data, the
+            # data-slot round trip and canvas_update_proc (the host tests stub
+            # layer_get_data, so they cannot prove the real data path).
+            #
             # Not covered here: the provider's registration predicate (BACK
             # re-topmosting repairs a lost subscription e2e; unit-tested in
-            # click.rs provider_tests) and menu rows/draw closures (unit-tested
-            # in menu_layer.rs).
+            # click.rs provider_tests). Menu rows/draw closures are implicitly
+            # covered (the menu renders and its selects dispatch).
             echo "==> button navigation (menu select x2 and window on_click x2)"
             press() {
                 (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
@@ -158,14 +163,35 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             press back
             sleep 2
             press select
+            second_load_seen=0
             for _ in $(seq 1 15); do
                 if [[ $(grep -c "text screen loaded" "$LOG_FILE") -ge 2 ]]; then
-                    echo "PASS: menu select x2 and window on_click x2 (both handlers restored)"
+                    second_load_seen=1
+                    break
+                fi
+                sleep 1
+            done
+            if [[ "$second_load_seen" -ne 1 ]]; then
+                echo "FAIL: second menu SELECT did not load text screen -- menu handler lost. Tail:"
+                tail -10 "$LOG_FILE"
+                exit 1
+            fi
+            # Canvas screen: BACK to menu, DOWN to row 1, SELECT. The load
+            # marker is the only on-device proof of the layer-data path.
+            sleep 2
+            press back
+            sleep 2
+            press down
+            sleep 1
+            press select
+            for _ in $(seq 1 15); do
+                if grep -q "canvas screen loaded" "$LOG_FILE"; then
+                    echo "PASS: menu select x2, window on_click x2, canvas screen loaded"
                     exit 0
                 fi
                 sleep 1
             done
-            echo "FAIL: second menu SELECT did not load text screen -- menu handler lost. Tail:"
+            echo "FAIL: canvas screen never loaded (DOWN+SELECT on menu row 1). Tail:"
             tail -10 "$LOG_FILE"
             exit 1
         else

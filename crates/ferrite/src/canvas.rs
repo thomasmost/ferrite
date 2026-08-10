@@ -267,53 +267,10 @@ mod tests {
         unsafe { drop(Box::from_raw(state)) };
     }
 
-    #[test]
-    fn canvas_update_proc_through_trampoline_survives_two_calls() {
-        // This test verifies the restore logic in canvas_update_proc by:
-        // 1. Creating a state and setting a closure
-        // 2. Calling canvas_update_proc directly (simulating SDK's call)
-        // 3. Calling it again to verify the closure survived restore
-        // If restore were broken (unconditional overwrite), the second call would
-        // use the dropped first closure and panic or crash.
-
-        let call_count = Rc::new(Cell::new(0));
-        let state = Box::into_raw(Box::new(CanvasState {
-            on_draw: None,
-            callback_depth: 0,
-        }));
-
-        let c = call_count.clone();
-        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
-            c.set(c.get() + 1);
-        }));
-
-        // Set up the state storage so layer_get_data can find our state
-        STATE_STORAGE.with(|storage| storage.set(state));
-
-        let fake_layer = core::ptr::null_mut::<sys::Layer>();
-
-        // First call to trampoline
-        unsafe {
-            canvas_update_proc(fake_layer, core::ptr::null_mut());
-        }
-        assert_eq!(
-            call_count.get(),
-            1,
-            "first trampoline call should execute closure"
-        );
-
-        // Second call to trampoline (would fail if restore clobbered the closure)
-        unsafe {
-            canvas_update_proc(fake_layer, core::ptr::null_mut());
-        }
-        assert_eq!(
-            call_count.get(),
-            2,
-            "second trampoline call should also execute closure (restore works)"
-        );
-
-        unsafe {
-            drop(Box::from_raw(state));
-        }
-    }
+    // (A former canvas_update_proc_through_trampoline_survives_two_calls test
+    // was deleted: after the dispatch() helper landed it duplicated
+    // on_draw_closure_survives_two_dispatches exactly — same trampoline path,
+    // same mutants killed — and its comment claimed it caught the
+    // unconditional-restore mutant, which measurement disproved. The
+    // reentrant_on_draw_replacement_wins test is what kills that mutant.)
 }
