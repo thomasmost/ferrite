@@ -855,7 +855,21 @@ In `examples/hello/package.json`, change:
 
 **Step 2: Rewrite the example**
 
-`examples/hello/src/lib.rs`:
+> **CORRECTED during Phase 4 — two defects in the listing below; the notes
+> win over the code:**
+>
+> 1. **Drop order, again (third recurrence).** The listing returns
+>    `(window, text)` and captures `let mut screen2 = (win2, text2);` — both
+>    are parent-before-child, the exact use-after-free Phase 1 flagged as
+>    Critical. Children first in BOTH tuples: return `(text, window)` and
+>    capture `(text2, win2)` (push via `screen2.1`).
+> 2. **The heartbeat must keep the `u64` box and log field.** Phase 3's review
+>    added a `Box<u64>` round-trip (the only on-device exercise of the
+>    allocator's over-alignment shim) and `scripts/check.sh` now counts a
+>    heartbeat line as complete ONLY if it matches
+>    `heap_free=[0-9]+ u64=[0-9]+`. The listing's `on_tick` reverts to the
+>    old format, which would make check.sh time out. Keep Phase 3's on_tick
+>    body: both boxes, log line `"HEARTBEAT {} heap_free={} u64={}"`.
 ```rust
 //! Two-window demo: SELECT pushes the second window, BACK pops it
 //! (automatic for watchapps). Heartbeat log retained for scripts/check.sh.
