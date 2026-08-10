@@ -26,7 +26,9 @@
 //! `Rc`-into-own-closure gymnastics. As a backstop, every trampoline tracks
 //! `WindowState::callback_depth` and `Drop for Window` debug-asserts it is
 //! zero, turning the use-after-free into a deterministic panic in debug
-//! builds.
+//! builds. (Caveat: `pebble build` compiles `--release`, so today the assert
+//! is active only in host/debug builds -- it documents the contract and
+//! guards any future debug-on-device workflow, not the shipped `.pbw`.)
 
 use alloc::boxed::Box;
 use core::ffi::c_void;
@@ -246,6 +248,99 @@ unsafe extern "C" fn on_long_up(rec: sys::ClickRecognizerRef, context: *mut c_vo
             (*state).callback_depth -= 1;
             (*state).clicks.restore_long_up(b, f);
         }
+    }
+}
+
+/// Host tests for the provider trampoline itself: the three SDK symbols it
+/// (and the handler trampolines it references) need are stubbed with
+/// `#[no_mangle]` definitions, which the host linker uses to satisfy the
+/// bindgen `extern` declarations. This is the only place the coupling
+/// between the registration predicate and the provider is machine-checked.
+#[cfg(test)]
+mod provider_tests {
+    use super::*;
+    use std::cell::RefCell;
+
+    thread_local! {
+        static SUBSCRIBED_SINGLE: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+        static SUBSCRIBED_LONG: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    }
+
+    #[no_mangle]
+    extern "C" fn window_single_click_subscribe(button: sys::ButtonId, _h: sys::ClickHandler) {
+        SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().push(button.0));
+    }
+
+    #[no_mangle]
+    extern "C" fn window_long_click_subscribe(
+        button: sys::ButtonId,
+        _delay_ms: u16,
+        _down: sys::ClickHandler,
+        _up: sys::ClickHandler,
+    ) {
+        SUBSCRIBED_LONG.with(|s| s.borrow_mut().push(button.0));
+    }
+
+    #[no_mangle]
+    extern "C" fn click_recognizer_get_button_id(_r: sys::ClickRecognizerRef) -> sys::ButtonId {
+        sys::ButtonId(0)
+    }
+
+    fn fresh_state() -> WindowState {
+        WindowState {
+            on_load: None,
+            on_unload: None,
+            clicks: ClickHandlers::new(),
+            callback_depth: 0,
+        }
+    }
+
+    /// THE regression test for the cycle-2 Critical: the provider must
+    /// subscribe a button whose closure is momentarily taken out for
+    /// dispatch. The SDK clears all subscriptions before each provider run,
+    /// so if the provider's predicate saw the taken slot as unregistered, a
+    /// reentrant registration mid-dispatch would permanently unsubscribe
+    /// the running button (reproduced on the emulator: press 1 works,
+    /// press 2 dead).
+    #[test]
+    fn provider_subscribes_button_whose_handler_is_taken() {
+        let mut state = fresh_state();
+        state.clicks.set_single(Button::Select, Box::new(|| {}));
+
+        let taken = state
+            .clicks
+            .take_single(Button::Select)
+            .expect("registered");
+        SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().clear());
+        unsafe { click_config_provider(&mut state as *mut WindowState as *mut core::ffi::c_void) };
+        assert!(
+            SUBSCRIBED_SINGLE.with(|s| s.borrow().contains(&(Button::Select as u8))),
+            "provider must still subscribe a button whose handler is mid-dispatch"
+        );
+        state.clicks.restore_single(Button::Select, taken);
+    }
+
+    /// The provider mirrors registration exactly: registered buttons are
+    /// subscribed (single and long independently), unregistered ones are not.
+    #[test]
+    fn provider_subscribes_exactly_the_registered_buttons() {
+        let mut state = fresh_state();
+        state.clicks.set_single(Button::Up, Box::new(|| {}));
+        state.clicks.long[Button::Down as usize] = Some(LongClick {
+            delay_ms: 700,
+            down: Some(Box::new(|| {})),
+            up: None,
+        });
+
+        SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().clear());
+        SUBSCRIBED_LONG.with(|s| s.borrow_mut().clear());
+        unsafe { click_config_provider(&mut state as *mut WindowState as *mut core::ffi::c_void) };
+        SUBSCRIBED_SINGLE.with(|s| {
+            assert_eq!(*s.borrow(), vec![Button::Up as u8]);
+        });
+        SUBSCRIBED_LONG.with(|s| {
+            assert_eq!(*s.borrow(), vec![Button::Down as u8]);
+        });
     }
 }
 

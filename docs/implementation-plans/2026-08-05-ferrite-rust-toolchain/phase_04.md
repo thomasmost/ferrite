@@ -386,6 +386,21 @@ Expected: FAIL to compile — `Button`, `ClickHandlers`, `LongClick` undefined.
 
 **Step 3: Implement the module**
 
+> **CORRECTED during Phase 4 review — the listing below is superseded; the
+> shipped `click.rs` is the source of truth.** Two defects, both confirmed
+> empirically: (1) `dispatch_single` holds `&mut self` across the user
+> closure and every trampoline takes `&mut *(context as *mut WindowState)` —
+> Miri-confirmed UB under reentrancy (pebble.h:5213: installing a click
+> provider on a visible window runs it synchronously; user closures can
+> reenter the safe API). The shipped code takes the closure out of its slot,
+> runs it borrow-free, and restores only into an empty slot. (2) Because the
+> SDK clears all subscriptions before each provider run, registration must
+> be a structural fact that survives dispatch: `single` is
+> `Option<SingleClick { cb: Option<Callback> }>` (mirroring `LongClick`), the
+> provider reads the outer option, and take/restore touch only the inner one
+> — otherwise a reentrant registration permanently unsubscribes the running
+> button (reproduced on the emulator).
+
 Insert above the test module:
 ```rust
 use alloc::boxed::Box;

@@ -114,6 +114,11 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             # while it runs and restored afterwards, and the SDK re-subscribes
             # on each provider run -- a broken restore works exactly once and
             # is dead thereafter, which a single press cannot detect.
+            #
+            # Scope: this covers RESTORE, not the provider's registration
+            # predicate (BACK re-topmosting window 1 makes the SDK repair a
+            # lost subscription, masking that class here). The predicate is
+            # unit-tested in crates/ferrite/src/click.rs provider_tests.
             echo "==> button navigation (SELECT must load window 2, twice)"
             press() {
                 (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
@@ -129,6 +134,9 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
                 tail -10 "$LOG_FILE"
                 exit 1
             fi
+            # Symmetric settle: "window 2 loaded" fires at load, possibly
+            # mid-push-animation; give it the same beat BACK gets below.
+            sleep 1
             press back
             sleep 2
             press select
