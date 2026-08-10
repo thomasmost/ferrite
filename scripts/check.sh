@@ -107,47 +107,47 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             echo "PASS: heartbeat observed with stable heap_free:"
             grep -m 4 "$MARKER" "$LOG_FILE"
 
-            # Button-navigation gate: the Phase 4 RFC-2229 capture bug shipped
-            # with heartbeats green -- window 2 loaded but its text layer had
-            # been dropped. Drive SELECT and require the load handler to fire.
-            # TWICE, with a BACK between: the handler is taken out of its slot
-            # while it runs and restored afterwards, and the SDK re-subscribes
-            # on each provider run -- a broken restore works exactly once and
-            # is dead thereafter, which a single press cannot detect.
+            # Button-navigation gate: the Phase 5 menu demo navigates from home
+            # menu to text screen and back. Drive SELECT on row 0 and require
+            # the text screen's load handler to fire. TWICE, with a BACK between:
+            # the handler is taken out of its slot while it runs and restored
+            # afterwards, and the SDK re-subscribes on each provider run -- a
+            # broken restore works exactly once and is dead thereafter, which a
+            # single press cannot detect.
             #
             # Scope: this covers RESTORE, not the provider's registration
-            # predicate (BACK re-topmosting window 1 makes the SDK repair a
+            # predicate (BACK re-topmosting the menu makes the SDK repair a
             # lost subscription, masking that class here). The predicate is
             # unit-tested in crates/ferrite/src/click.rs provider_tests.
-            echo "==> button navigation (SELECT must load window 2, twice)"
+            echo "==> button navigation (SELECT must load text screen, twice)"
             press() {
                 (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
                     || { echo "FAIL: emu-button $1 failed"; exit 1; }
             }
             press select
             for _ in $(seq 1 15); do
-                grep -q "window 2 loaded" "$LOG_FILE" && break
+                grep -q "text screen loaded" "$LOG_FILE" && break
                 sleep 1
             done
-            if ! grep -q "window 2 loaded" "$LOG_FILE"; then
-                echo "FAIL: SELECT sent but 'window 2 loaded' never appeared. Tail:"
+            if ! grep -q "text screen loaded" "$LOG_FILE"; then
+                echo "FAIL: SELECT sent but 'text screen loaded' never appeared. Tail:"
                 tail -10 "$LOG_FILE"
                 exit 1
             fi
-            # Symmetric settle: "window 2 loaded" fires at load, possibly
+            # Symmetric settle: "text screen loaded" fires at load, possibly
             # mid-push-animation; give it the same beat BACK gets below.
             sleep 1
             press back
             sleep 2
             press select
             for _ in $(seq 1 15); do
-                if [[ $(grep -c "window 2 loaded" "$LOG_FILE") -ge 2 ]]; then
-                    echo "PASS: SELECT navigation loaded window 2 twice (handler restored)"
+                if [[ $(grep -c "text screen loaded" "$LOG_FILE") -ge 2 ]]; then
+                    echo "PASS: SELECT navigation loaded text screen twice (handler restored)"
                     exit 0
                 fi
                 sleep 1
             done
-            echo "FAIL: second SELECT did not load window 2 -- handler lost after first dispatch. Tail:"
+            echo "FAIL: second SELECT did not load text screen -- handler lost after first dispatch. Tail:"
             tail -10 "$LOG_FILE"
             exit 1
         else
