@@ -3,6 +3,8 @@
 // `no_std` except under `cargo test`, where the host test harness needs std.
 #![cfg_attr(not(test), no_std)]
 
+extern crate alloc;
+
 pub use ferrite_sys as sys;
 
 mod fmt_buf;
@@ -14,6 +16,10 @@ pub mod log;
 mod panic;
 pub mod text_layer;
 pub mod window;
+
+pub mod click;
+mod text_buf;
+pub mod types;
 
 /// Capability token proving the app runtime is initialized.
 ///
