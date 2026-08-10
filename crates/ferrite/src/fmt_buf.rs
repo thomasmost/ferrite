@@ -111,10 +111,29 @@ mod tests {
         }
         // One byte is reserved so the caller can always NUL-terminate.
         assert!(b.len < b.buf.len(), "len {} overran", b.len);
-        // Call as_cstr_ptr() to verify the NUL-termination and pointer behavior.
+        // The slot starts as 0 from the array initializer, which would make a
+        // bare byte assertion vacuous -- dirty it first so the test can only
+        // pass if as_cstr_ptr actually writes the NUL.
+        b.buf[b.len] = 0xFF;
         let cstr_ptr = b.as_cstr_ptr();
-        assert_eq!(b.buf[b.len], 0, "NUL byte not at expected position");
-        assert_eq!(cstr_ptr, b.buf.as_ptr().cast(), "returned pointer mismatch");
+        assert_eq!(b.buf[b.len], 0, "as_cstr_ptr did not write the NUL");
+        // Read back through the returned pointer as C would: the string must
+        // terminate exactly at len.
+        let s = unsafe { core::ffi::CStr::from_ptr(cstr_ptr) };
+        assert_eq!(s.to_bytes().len(), b.len, "C string length != len");
+    }
+
+    /// as_cstr_ptr must terminate at `len` even when earlier bytes beyond a
+    /// shrunken logical length still hold old data (nonzero garbage after the
+    /// terminator must not leak into the C string).
+    #[test]
+    fn as_cstr_ptr_terminates_at_len_not_at_first_zero() {
+        let mut b = new();
+        b.write_str("abcdef").unwrap();
+        b.len = 3; // logically truncate; bytes 3..6 still hold "def"
+        b.buf[3] = b'X'; // ensure the slot is dirty
+        let s = unsafe { core::ffi::CStr::from_ptr(b.as_cstr_ptr()) };
+        assert_eq!(s.to_bytes(), b"abc");
     }
 
     #[test]

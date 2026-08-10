@@ -25,24 +25,41 @@ echo "==> unit tests"
 (cd "$REPO_ROOT" && python3 -m unittest discover -s examples/hello/tests)
 
 echo "==> pebble build"
-# Timeout after 5 minutes in case the build hangs.
+# A stale bundle must never be installable: pebble install just reads
+# build/<name>.pbw off disk, so if the build failed and we kept going, an old
+# binary would pass the heartbeat check and mask the failure.
+rm -f "$HELLO_DIR"/build/*.pbw
+
+# Timeout after 5 minutes in case the build hangs. Build failures are FATAL --
+# never swallow the exit status.
+cd "$HELLO_DIR"
 if command -v timeout >/dev/null 2>&1; then
-    timeout 300 bash -c "(cd \"$HELLO_DIR\" && pebble build)" || true
+    timeout 300 pebble build
 else
-    (cd "$HELLO_DIR" && pebble build &
+    # macOS has no coreutils timeout by default: bash-native watchdog.
+    # No subshell around the command -- $! must be pebble itself, or the
+    # watchdog would kill a wrapper and orphan the real build.
+    pebble build &
     BUILD_PID=$!
     for _ in $(seq 1 300); do
-        if ! kill -0 "$BUILD_PID" 2>/dev/null; then
-            wait "$BUILD_PID"
-            break
-        fi
+        kill -0 "$BUILD_PID" 2>/dev/null || break
         sleep 1
     done
     if kill -0 "$BUILD_PID" 2>/dev/null; then
         kill "$BUILD_PID" 2>/dev/null || true
         wait "$BUILD_PID" 2>/dev/null || true
-        echo "WARNING: pebble build timed out"
-    fi)
+        echo "FAIL: pebble build timed out after 300s"
+        exit 1
+    fi
+    # Propagate the build's real exit status (set -e aborts here on failure).
+    wait "$BUILD_PID"
+fi
+cd "$REPO_ROOT"
+
+# Belt and braces: the build must have produced a fresh bundle.
+if [[ ! -f "$HELLO_DIR/build/hello.pbw" ]]; then
+    echo "FAIL: pebble build produced no bundle"
+    exit 1
 fi
 
 echo "==> install to emery emulator and watch logs (up to ${TIMEOUT_SECS}s)"
@@ -70,16 +87,22 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
         grep "panicked" "$LOG_FILE"
         exit 1
     fi
-    if [[ $(grep -c "$MARKER" "$LOG_FILE") -ge 3 ]]; then
-        # Verify heap_free is stable (≥3 heartbeats with identical or non-decreasing values).
-        vals=$(grep -o 'heap_free=[0-9]*' "$LOG_FILE" | head -3 | cut -d= -f2 | sort -u | wc -l)
+    # A heartbeat line only counts when COMPLETE: the trailing u64= field
+    # proves the heap_free number is fully flushed, so a partially-written
+    # line can neither fail the stability check nor silently shrink the
+    # sample. Heartbeat 1 is excluded as warm-up (a first SDK log call could
+    # legitimately allocate persistently); leak detection compares 2-4.
+    complete='heap_free=[0-9]+ u64=[0-9]+'
+    if [[ $(grep -cE "$complete" "$LOG_FILE") -ge 4 ]]; then
+        vals=$( (grep -oE "$complete" "$LOG_FILE" | sed -n '2,4p' \
+                 | sed -E 's/heap_free=([0-9]+).*/\1/' | sort -u | wc -l) || true )
         if [[ "$vals" -eq 1 ]]; then
             echo "PASS: heartbeat observed with stable heap_free:"
-            grep -m 3 "$MARKER" "$LOG_FILE"
+            grep -m 4 "$MARKER" "$LOG_FILE"
             exit 0
         else
-            echo "FAIL: heap_free is not stable — allocator leak detected"
-            grep "$MARKER" "$LOG_FILE" | head -3
+            echo "FAIL: heap_free is not stable across heartbeats 2-4 — allocator leak"
+            grep "$MARKER" "$LOG_FILE" | head -4
             exit 1
         fi
     fi
