@@ -1,5 +1,9 @@
 //! Fixed-size, NUL-terminated format buffer — the no-allocation path for
 //! turning `format_args!` into a C string for `app_log`.
+//!
+//! The 128-byte buffer costs ~160 bytes of stack in callers' frames (measured
+//! on-target) and is shared with the panic handler, which may run from a deep
+//! stack. Growing the buffer is a deliberate decision requiring measurement.
 
 pub(crate) struct FixedBuf {
     buf: [u8; 128],
@@ -107,8 +111,10 @@ mod tests {
         }
         // One byte is reserved so the caller can always NUL-terminate.
         assert!(b.len < b.buf.len(), "len {} overran", b.len);
-        b.buf[b.len] = 0; // must be in bounds, exactly as the handler does it
-        assert_eq!(b.buf[b.len], 0);
+        // Call as_cstr_ptr() to verify the NUL-termination and pointer behavior.
+        let cstr_ptr = b.as_cstr_ptr();
+        assert_eq!(b.buf[b.len], 0, "NUL byte not at expected position");
+        assert_eq!(cstr_ptr, b.buf.as_ptr().cast(), "returned pointer mismatch");
     }
 
     #[test]

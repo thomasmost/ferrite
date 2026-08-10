@@ -5,13 +5,12 @@
 
 pub use ferrite_sys as sys;
 
-// Compiled on the host only under `cfg(test)`, so `FixedBuf`'s truncation
-// arithmetic is unit-testable. The `#[panic_handler]` itself stays gated on
-// `target_os = "none"` so it never clashes with std's.
 mod fmt_buf;
 pub mod heap;
 pub mod log;
-#[cfg(any(target_os = "none", test))]
+// Panic handler gated on target_os = "none" to avoid clashing with std's
+// panic handler during host testing. The handler uses FixedBuf for logging.
+#[cfg(target_os = "none")]
 mod panic;
 pub mod text_layer;
 pub mod window;
@@ -63,9 +62,10 @@ impl App {
 /// ```
 ///
 /// Cleanup: when the event loop returns (user exits the app), the kept
-/// state is dropped in reverse declaration order, running every wrapper's
-/// `Drop` (windows destroy their SDK objects, services unsubscribe).
-/// This is the finalized lifecycle — apps never manage teardown manually.
+/// state is dropped in tuple order — children first, exactly as listed in
+/// the example above — running every wrapper's `Drop` (windows destroy their
+/// SDK objects, services unsubscribe). This is the finalized lifecycle — apps
+/// never manage teardown manually.
 #[macro_export]
 macro_rules! app {
     (fn main($app:ident: &mut App) $body:block) => {

@@ -31,6 +31,13 @@ fn aligned_start(raw: usize, align: usize) -> usize {
     (raw + size_of::<usize>() + align - 1) & !(align - 1)
 }
 
+/// Compute the total allocation size needed for an over-aligned block.
+/// Used by both alloc and tests to verify correctness.
+#[allow(dead_code)]
+fn total_size(size: usize, align: usize) -> usize {
+    size + align + size_of::<usize>()
+}
+
 unsafe impl GlobalAlloc for PebbleHeap {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let align = layout.align();
@@ -38,7 +45,7 @@ unsafe impl GlobalAlloc for PebbleHeap {
             return malloc(layout.size()).cast();
         }
         // [ raw ... | original ptr | aligned block ... ]
-        let total = layout.size() + align + size_of::<usize>();
+        let total = total_size(layout.size(), align);
         let raw = malloc(total) as usize;
         if raw == 0 {
             return core::ptr::null_mut();
@@ -83,6 +90,9 @@ mod tests {
         // For a raw allocation at 0x1000 (4096 decimal), align to 8 bytes:
         // pointer slot at 4096 (8 bytes on 64-bit)
         // aligned block should start at: (4096 + 8 + 8 - 1) & ~7 = 4111 & ~7 = 4104
+        // Verify we're on 64-bit host where these constants hold.
+        assert_eq!(size_of::<usize>(), 8, "test constants assume 64-bit host");
+
         let raw = 0x1000usize; // 4096
         let aligned = aligned_start(raw, 8);
         assert_eq!(aligned, 4104); // (4096 + 8 + 8 - 1) & ~7
@@ -101,6 +111,76 @@ mod tests {
     }
 
     #[test]
+    fn total_size_accommodates_all_allocations() {
+        // Exhaustive property test: verify that total_size computes enough
+        // space for any allocation. For all alignment and size combinations,
+        // verify that:
+        // 1. The stash (pointer slot) fits: aligned >= raw + sizeof(usize)
+        // 2. The block is properly aligned: aligned % align == 0
+        // 3. The stash pointer is aligned: (aligned - sizeof(usize)) % sizeof(usize) == 0
+        // 4. The block fits within the allocation: aligned + size <= raw + total
+        assert_eq!(size_of::<usize>(), 8, "property test assumes 64-bit host");
+
+        for &align in &[8, 16, 32, 64, 128] {
+            for &size in &[1, 4, 7, 32, 64] {
+                for off in 0..align {
+                    let raw = 0x1000 + off;
+                    let total = total_size(size, align);
+                    let aligned = aligned_start(raw, align);
+
+                    // Stash must be in bounds
+                    assert!(
+                        aligned >= raw + size_of::<usize>(),
+                        "stash out of bounds: align={}, size={}, off={}, raw={:#x}, aligned={:#x}",
+                        align,
+                        size,
+                        off,
+                        raw,
+                        aligned
+                    );
+
+                    // Block must be aligned
+                    assert_eq!(
+                        aligned % align,
+                        0,
+                        "block not aligned: align={}, size={}, off={}, aligned={:#x}",
+                        align,
+                        size,
+                        off,
+                        aligned
+                    );
+
+                    // Stash must be properly aligned (every usize is at a usize-aligned address)
+                    assert_eq!(
+                        (aligned - size_of::<usize>()) % size_of::<usize>(),
+                        0,
+                        "stash not aligned: align={}, size={}, off={}, aligned={:#x}",
+                        align,
+                        size,
+                        off,
+                        aligned
+                    );
+
+                    // Block must fit within the allocation
+                    assert!(
+                        aligned + size <= raw + total,
+                        "block exceeds allocation: align={}, size={}, off={}, raw={:#x}, \
+                         total={}, aligned={:#x}, aligned+size={:#x}, raw+total={:#x}",
+                        align,
+                        size,
+                        off,
+                        raw,
+                        total,
+                        aligned,
+                        aligned + size,
+                        raw + total
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn allocator_returns_aligned_pointers_for_small_align() {
         // Allocations with align <= 4 should go directly through malloc.
         // We can't test malloc's actual behavior on host (it's the real libc
@@ -108,10 +188,9 @@ mod tests {
         // for small alignments.
         let layout = Layout::from_size_align(64, 4).unwrap();
         let ptr = unsafe { PebbleHeap.alloc(layout) };
-        if !ptr.is_null() {
-            unsafe {
-                PebbleHeap.dealloc(ptr, layout);
-            }
+        assert!(!ptr.is_null(), "alloc returned null");
+        unsafe {
+            PebbleHeap.dealloc(ptr, layout);
         }
         // Test passes if alloc/dealloc don't crash.
     }
@@ -121,12 +200,11 @@ mod tests {
         // Allocations with align > 4 use the over-allocate-and-shim path.
         let layout = Layout::from_size_align(64, 8).unwrap();
         let ptr = unsafe { PebbleHeap.alloc(layout) };
-        if !ptr.is_null() {
-            // Verify the returned pointer is actually 8-byte aligned.
-            assert_eq!(ptr as usize % 8, 0, "pointer not properly aligned");
-            unsafe {
-                PebbleHeap.dealloc(ptr, layout);
-            }
+        assert!(!ptr.is_null(), "alloc returned null");
+        // Verify the returned pointer is actually 8-byte aligned.
+        assert_eq!(ptr as usize % 8, 0, "pointer not properly aligned");
+        unsafe {
+            PebbleHeap.dealloc(ptr, layout);
         }
     }
 
@@ -134,11 +212,10 @@ mod tests {
     fn allocator_returns_aligned_pointers_for_16_byte_align() {
         let layout = Layout::from_size_align(64, 16).unwrap();
         let ptr = unsafe { PebbleHeap.alloc(layout) };
-        if !ptr.is_null() {
-            assert_eq!(ptr as usize % 16, 0, "pointer not properly aligned");
-            unsafe {
-                PebbleHeap.dealloc(ptr, layout);
-            }
+        assert!(!ptr.is_null(), "alloc returned null");
+        assert_eq!(ptr as usize % 16, 0, "pointer not properly aligned");
+        unsafe {
+            PebbleHeap.dealloc(ptr, layout);
         }
     }
 
@@ -146,11 +223,10 @@ mod tests {
     fn allocator_returns_aligned_pointers_for_64_byte_align() {
         let layout = Layout::from_size_align(64, 64).unwrap();
         let ptr = unsafe { PebbleHeap.alloc(layout) };
-        if !ptr.is_null() {
-            assert_eq!(ptr as usize % 64, 0, "pointer not properly aligned");
-            unsafe {
-                PebbleHeap.dealloc(ptr, layout);
-            }
+        assert!(!ptr.is_null(), "alloc returned null");
+        assert_eq!(ptr as usize % 64, 0, "pointer not properly aligned");
+        unsafe {
+            PebbleHeap.dealloc(ptr, layout);
         }
     }
 
@@ -160,10 +236,9 @@ mod tests {
         for _ in 0..10 {
             let layout = Layout::from_size_align(32, 4).unwrap();
             let ptr = unsafe { PebbleHeap.alloc(layout) };
-            if !ptr.is_null() {
-                unsafe {
-                    PebbleHeap.dealloc(ptr, layout);
-                }
+            assert!(!ptr.is_null(), "alloc returned null");
+            unsafe {
+                PebbleHeap.dealloc(ptr, layout);
             }
         }
     }
@@ -174,11 +249,10 @@ mod tests {
         for _ in 0..10 {
             let layout = Layout::from_size_align(32, 16).unwrap();
             let ptr = unsafe { PebbleHeap.alloc(layout) };
-            if !ptr.is_null() {
-                assert_eq!(ptr as usize % 16, 0);
-                unsafe {
-                    PebbleHeap.dealloc(ptr, layout);
-                }
+            assert!(!ptr.is_null(), "alloc returned null");
+            assert_eq!(ptr as usize % 16, 0);
+            unsafe {
+                PebbleHeap.dealloc(ptr, layout);
             }
         }
     }

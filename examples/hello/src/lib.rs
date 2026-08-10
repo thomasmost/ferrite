@@ -9,17 +9,19 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 use ferrite::text_layer::TextLayer;
 use ferrite::window::Window;
-use ferrite::{sys, App};
+use ferrite::sys;
 
 static TICKS: AtomicU32 = AtomicU32::new(0);
 
 extern "C" fn on_tick(_tick_time: *mut sys::tm, _units_changed: sys::TimeUnits) {
     let n = TICKS.fetch_add(1, Ordering::Relaxed) + 1;
     // Round-trip through the SDK heap so the smoke test exercises the
-    // allocator on every heartbeat.
+    // allocator on every heartbeat. Use both a 4-byte aligned box (fast path)
+    // and an 8-byte aligned box to exercise the over-alignment shim on device.
     let boxed = alloc::boxed::Box::new(n);
+    let boxed_8 = alloc::boxed::Box::new(n as u64);
     let free = ferrite::heap::heap_bytes_free();
-    ferrite::info!("HEARTBEAT {} heap_free={}", *boxed, free);
+    ferrite::info!("HEARTBEAT {} heap_free={} u64={}", *boxed, free, *boxed_8);
 }
 
 ferrite::app! {
