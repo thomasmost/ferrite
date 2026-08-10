@@ -28,6 +28,37 @@
   layer every tick, would then require a handle API). Do not silently keep the
   status quo — decide and document.
 
+- **CORRECTED during Phase 5 (before execution) — the listings below predate
+  the Phase 4 review fixes and reintroduce three known bug classes. The notes
+  win over the code:**
+  1. **Trampoline discipline (Tasks 3 and 4).** `canvas_update_proc`,
+     `cb_get_num_rows`, `cb_draw_row` and `cb_select_click` as listed hold
+     `&mut CanvasState`/`&mut MenuState` across user-closure calls — the
+     exact shape Phase 4's review proved UB under Miri (user closures can
+     reenter the safe API via `Rc<RefCell<...>>`, e.g. calling `reload()` or
+     replacing the executing closure). Apply the take/call/restore
+     discipline from `click.rs`/`window.rs`: take the closure out (statement-
+     scoped borrow), run it borrow-free, restore only into an empty slot.
+     For `cb_get_num_rows` (returns a value) the same take/call/restore
+     shape applies around the call.
+  2. **RFC-2229 disjoint capture (Task 5).** `let mut screens =
+     (text_screen, canvas_screen); menu.on_select(move |row| ...
+     screens.0.0.push(..))` captures ONLY the two window fields — both
+     LAYERS are dropped at end of setup, exactly Phase 4's blank-window bug.
+     Destructure instead: move the two windows (whole variables) into the
+     closure, return the layers in the app state:
+     `(text, canvas, menu, home)` — children before parents throughout
+     (menu before home; layers before their windows, which live in the
+     closure inside menu's state and drop with menu).
+  3. **Heartbeat format (Task 5).** Keep Phase 3's on_tick body: both boxes
+     and `"HEARTBEAT {} heap_free={} u64={}"` — check.sh requires the
+     `u64=` field and the Box<u64> is the only on-device shim exercise.
+  Also: check.sh's navigation gate greps for "window 2 loaded", which this
+  example no longer logs. Task 5 must keep gate-compatible log lines: have
+  the text screen's on_load log `c"window 2 loaded"` (with a comment tying
+  it to scripts/check.sh) or update check.sh in the same commit — either
+  way, ./scripts/check.sh must pass at the end of Task 5, not just Task 6.
+
 - **Two context mechanisms, per the design.** Canvas layers have no SDK context parameter on the update proc — but `layer_create_with_data` gives us per-layer storage, where we keep a pointer to the boxed closure state. Menus DO have an SDK context (`callback_context`) — we pass the boxed state pointer there. No globals either way.
 - **`Graphics<'_>` is lifetime-bound on purpose.** The raw `GContext*` is only valid during the update proc. The lifetime parameter stops safe code from smuggling it out of the closure. Don't remove it.
 - **Menu simplification (deliberate, matches Fitter's usage):** single section, `u16` row indices. `get_num_sections: None` defaults to 1 section in the SDK. Multi-section support is future surface (design: "grows on demand").
