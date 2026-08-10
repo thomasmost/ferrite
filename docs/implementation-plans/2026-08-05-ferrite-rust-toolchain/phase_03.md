@@ -148,7 +148,18 @@ git commit -m "feat(ferrite): global allocator over SDK heap"
 
 **Step 1: Extract the fixed-size formatter**
 
-`crates/ferrite/src/fmt_buf.rs`:
+> **CORRECTED during Phase 3 — the listings below predate Phase 1's review
+> fixes and must not be copied verbatim:**
+>
+> 1. This `fmt_buf.rs` listing's `write_str` is the ORIGINAL truncation logic,
+>    which splits multi-byte UTF-8 sequences. Phase 1 fixed that (test on the
+>    first byte NOT copied, guarded by `n < s.len()`) and added 4 regression
+>    tests. Carry the corrected logic AND the tests into `fmt_buf.rs`.
+> 2. The `panic.rs` listing drops the `#[cfg(target_os = "none")]` gate on
+>    `#[panic_handler]` (which host `cargo test` requires) and the
+>    `options(nomem, nostack)` on the `udf` asm. Keep both. Once `FixedBuf`
+>    moves out, `panic.rs` can be gated `#[cfg(target_os = "none")]` at the
+>    module level again; the tests live in `fmt_buf.rs`, which is ungated.
 ```rust
 //! Fixed-size, NUL-terminated format buffer — the no-allocation path for
 //! turning `format_args!` into a C string for `app_log`.
@@ -404,7 +415,11 @@ ferrite::app! {
             sys::tick_timer_service_subscribe(sys::TimeUnits::SECOND_UNIT, Some(on_tick));
         }
 
-        (window, text)
+        // CORRECTED during Phase 3: the original listing here said
+        // `(window, text)`, which is the exact use-after-free drop order
+        // Phase 1's review flagged as Critical (parent window destroyed
+        // before its child text layer). Children before parents:
+        (text, window)
     }
 }
 ```
