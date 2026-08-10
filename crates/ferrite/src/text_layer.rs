@@ -3,10 +3,28 @@
 use core::ffi::CStr;
 
 use crate::sys;
+use crate::text_buf::TextBuf;
 use crate::App;
+
+/// A system font handle (Copy; fonts are owned by the system).
+#[derive(Clone, Copy)]
+pub struct Font(pub(crate) sys::GFont);
+
+/// Looks up a system font by key. Pass one of the `sys::FONT_KEY_*` byte
+/// strings (they are NUL-terminated).
+///
+/// Panics if `key` is not NUL-terminated.
+pub fn system_font(key: &'static [u8]) -> Font {
+    assert!(
+        matches!(key.last(), Some(0)),
+        "font key must be a NUL-terminated sys::FONT_KEY_* constant"
+    );
+    Font(unsafe { sys::fonts_get_system_font(key.as_ptr().cast()) })
+}
 
 pub struct TextLayer {
     raw: *mut sys::TextLayer,
+    text: TextBuf,
 }
 
 impl TextLayer {
@@ -15,18 +33,39 @@ impl TextLayer {
     pub fn new(_app: &mut App, frame: sys::GRect) -> TextLayer {
         let raw = unsafe { sys::text_layer_create(frame) };
         assert!(!raw.is_null(), "text_layer_create returned NULL");
-        TextLayer { raw }
+        TextLayer {
+            raw,
+            text: TextBuf::new(),
+        }
     }
 
-    /// Sets the displayed text. `&'static` because the SDK stores the pointer
-    /// without copying; `c"..."` literals satisfy this.
+    /// Sets static text (no copy; the SDK stores the pointer).
     pub fn set_text(&mut self, text: &'static CStr) {
-        unsafe { sys::text_layer_set_text(self.raw, text.as_ptr()) };
+        let ptr = self.text.set_static(text);
+        unsafe { sys::text_layer_set_text(self.raw, ptr) };
     }
 
-    /// Sets the text color.
-    pub fn set_text_color(&mut self, color: sys::GColor) {
+    /// Sets dynamic text: copied into a buffer owned by this wrapper, so the
+    /// SDK's stored pointer stays valid for the layer's lifetime.
+    pub fn set_text_owned(&mut self, text: &str) {
+        let ptr = self.text.set_owned(text);
+        unsafe { sys::text_layer_set_text(self.raw, ptr) };
+    }
+
+    pub fn set_text_color(&mut self, color: sys::GColor8) {
         unsafe { sys::text_layer_set_text_color(self.raw, color) };
+    }
+
+    pub fn set_background_color(&mut self, color: sys::GColor8) {
+        unsafe { sys::text_layer_set_background_color(self.raw, color) };
+    }
+
+    pub fn set_alignment(&mut self, alignment: sys::GTextAlignment) {
+        unsafe { sys::text_layer_set_text_alignment(self.raw, alignment) };
+    }
+
+    pub fn set_font(&mut self, font: Font) {
+        unsafe { sys::text_layer_set_font(self.raw, font.0) };
     }
 
     pub(crate) fn as_layer_ptr(&self) -> *mut sys::Layer {
