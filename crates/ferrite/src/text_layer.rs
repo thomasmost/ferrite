@@ -13,7 +13,13 @@ pub struct Font(pub(crate) sys::GFont);
 /// Looks up a system font by key. Pass one of the `sys::FONT_KEY_*` byte
 /// strings (they are NUL-terminated).
 ///
-/// Panics if `key` is not NUL-terminated.
+/// Panics if `key` is not NUL-terminated. With the intended inputs -- the
+/// bindgen-generated `sys::FONT_KEY_*` constants, which always carry the
+/// trailing NUL -- the panic is unreachable; it exists to catch hand-built
+/// keys. (The parameter is `&'static [u8]` rather than `&CStr` because that
+/// is the type bindgen emits for the `#define` string constants; a
+/// compile-time check would require wrapping every constant in a macro or
+/// post-processing the generated bindings, which is not worth the surface.)
 pub fn system_font(key: &'static [u8]) -> Font {
     assert!(
         matches!(key.last(), Some(0)),

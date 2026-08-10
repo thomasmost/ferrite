@@ -14,8 +14,15 @@ TIMEOUT_SECS=120   # first emulator boot can be slow
 echo "==> cargo checks"
 (cd "$REPO_ROOT" && cargo check --target thumbv7m-none-eabi -p ferrite-sys -p ferrite)
 
-echo "==> cargo fmt"
+echo "==> cargo fmt + clippy"
+# examples/hello is EXCLUDED from the workspace (it needs its own release
+# profile and .cargo config), so --all does not reach it -- every gate below
+# runs a second time inside the example or it is silently unchecked.
 (cd "$REPO_ROOT" && cargo fmt --all --check)
+(cd "$HELLO_DIR" && cargo fmt -- --check)
+(cd "$REPO_ROOT" && cargo clippy --all-targets -- -D warnings)
+(cd "$REPO_ROOT" && cargo clippy --target thumbv7m-none-eabi -p ferrite-sys -p ferrite -- -D warnings)
+(cd "$HELLO_DIR" && cargo clippy --target thumbv7m-none-eabi -- -D warnings)
 
 echo "==> unit tests"
 # Added in Phase 1. These guard logic that regressed more than once: the
@@ -99,7 +106,23 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
         if [[ "$vals" -eq 1 ]]; then
             echo "PASS: heartbeat observed with stable heap_free:"
             grep -m 4 "$MARKER" "$LOG_FILE"
-            exit 0
+
+            # Button-navigation gate: the Phase 4 RFC-2229 capture bug shipped
+            # with heartbeats green -- window 2 loaded but its text layer had
+            # been dropped. Drive SELECT and require the load handler to fire
+            # so click dispatch and window push are covered, not just ticks.
+            echo "==> button navigation (SELECT must load window 2)"
+            (cd "$HELLO_DIR" && pebble emu-button --emulator emery click select)
+            for _ in $(seq 1 15); do
+                if grep -q "window 2 loaded" "$LOG_FILE"; then
+                    echo "PASS: SELECT navigation loaded window 2"
+                    exit 0
+                fi
+                sleep 1
+            done
+            echo "FAIL: SELECT sent but 'window 2 loaded' never appeared. Tail:"
+            tail -10 "$LOG_FILE"
+            exit 1
         else
             echo "FAIL: heap_free is not stable across heartbeats 2-4 — allocator leak"
             grep "$MARKER" "$LOG_FILE" | head -4

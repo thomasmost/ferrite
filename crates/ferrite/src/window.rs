@@ -2,8 +2,17 @@
 //!
 //! Each window owns a boxed `WindowState` attached via
 //! `window_set_user_data`; `extern "C"` trampolines recover it from the
-//! window pointer (load/unload) or the click context. Sound because the
-//! platform is single-threaded and the SDK never nests these callbacks.
+//! window pointer (load/unload) or the click context.
+//!
+//! Soundness: the platform is single-threaded, but that alone is NOT the
+//! justification -- the SDK does reenter (pebble.h:5213: installing a click
+//! provider on a visible window invokes it synchronously), and user closures
+//! can reach back into this API. The rule that actually holds is the one the
+//! trampolines follow: never hold a borrow of `WindowState` across a
+//! user-closure call. Closures are taken out of their slot, run borrow-free,
+//! and restored only if the slot is still empty. See `click.rs`'s module doc
+//! for the full contract, including the one unsupported case (dropping a
+//! `Window` from inside its own callback).
 
 use alloc::boxed::Box;
 
@@ -62,6 +71,11 @@ impl Window {
     }
 
     /// Registers a single-click handler for a button.
+    ///
+    /// Takes effect immediately even if the window is already on-screen: the
+    /// SDK re-runs the click config provider synchronously when it is
+    /// (re)installed on a visible window (pebble.h:5213), which is why this
+    /// method re-installs it on every registration.
     pub fn on_click(&mut self, button: Button, f: impl FnMut() + 'static) {
         self.state_mut().clicks.single[button as usize] = Some(Box::new(f));
         self.install_click_provider();
@@ -127,6 +141,9 @@ impl Window {
     }
 
     /// Removes this window from the stack (visible or not).
+    ///
+    /// Note (pebble.h:5730): if this leaves no windows on the stack, the
+    /// system kills the app shortly afterwards.
     pub fn remove_from_stack(&mut self, animated: bool) -> bool {
         unsafe { sys::window_stack_remove(self.raw, animated) }
     }
@@ -146,25 +163,42 @@ impl Drop for Window {
     }
 }
 
-/// Pops the topmost window off the stack.
-pub fn stack_pop(animated: bool) {
-    unsafe {
-        sys::window_stack_pop(animated);
-    }
+/// Pops the topmost window off the stack. Returns `false` if the stack was
+/// empty (nothing to pop).
+///
+/// Note (pebble.h:5730): if this leaves no windows on the stack, the system
+/// kills the app shortly afterwards.
+pub fn stack_pop(animated: bool) -> bool {
+    !unsafe { sys::window_stack_pop(animated) }.is_null()
 }
 
 // --- Window handler trampolines (state via window_get_user_data) ---
+//
+// Same take/call/restore discipline as the click trampolines (click.rs
+// module doc): no borrow of WindowState is live while the user closure runs,
+// so a load/unload closure may reenter the safe API without aliasing UB, and
+// a replaced closure cannot be freed out from under itself.
 
 unsafe extern "C" fn on_window_load(window: *mut sys::Window) {
     let state = sys::window_get_user_data(window) as *mut WindowState;
-    if let Some(f) = (*state).on_load.as_mut() {
+    let taken = (*state).on_load.take();
+    if let Some(mut f) = taken {
         f();
+        let slot = &mut (*state).on_load;
+        if slot.is_none() {
+            *slot = Some(f);
+        }
     }
 }
 
 unsafe extern "C" fn on_window_unload(window: *mut sys::Window) {
     let state = sys::window_get_user_data(window) as *mut WindowState;
-    if let Some(f) = (*state).on_unload.as_mut() {
+    let taken = (*state).on_unload.take();
+    if let Some(mut f) = taken {
         f();
+        let slot = &mut (*state).on_unload;
+        if slot.is_none() {
+            *slot = Some(f);
+        }
     }
 }

@@ -14,6 +14,20 @@
 
 ## Context for the implementing engineer (read first)
 
+- **Docketed from the Phase 4 review (design item, decide during this phase's
+  layer work):** parent/child layer lifetime is currently a doc-only contract
+  ("list children before parents in the returned tuple") that has failed three
+  times in four phases — twice via tuple ordering, once via RFC-2229 disjoint
+  capture, where no ordering fixes it. The Phase 4 reviewer's proposal: make
+  `Window` own its children (`add_child` taking the layer by value into
+  `WindowState`, `Drop` destroying children before `window_destroy`), which
+  makes the ordering structurally impossible to get wrong. This phase adds the
+  `AsLayer` trait and two new layer types, so it is the natural place to
+  decide: either adopt ownership as part of the `AsLayer` design, or record
+  why borrowing is kept (e.g. post-add mutation needs, like updating a text
+  layer every tick, would then require a handle API). Do not silently keep the
+  status quo — decide and document.
+
 - **Two context mechanisms, per the design.** Canvas layers have no SDK context parameter on the update proc — but `layer_create_with_data` gives us per-layer storage, where we keep a pointer to the boxed closure state. Menus DO have an SDK context (`callback_context`) — we pass the boxed state pointer there. No globals either way.
 - **`Graphics<'_>` is lifetime-bound on purpose.** The raw `GContext*` is only valid during the update proc. The lifetime parameter stops safe code from smuggling it out of the closure. Don't remove it.
 - **Menu simplification (deliberate, matches Fitter's usage):** single section, `u16` row indices. `get_num_sections: None` defaults to 1 section in the SDK. Multi-section support is future surface (design: "grows on demand").

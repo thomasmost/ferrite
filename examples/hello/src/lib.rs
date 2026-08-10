@@ -8,9 +8,9 @@ extern crate alloc;
 use core::sync::atomic::{AtomicU32, Ordering};
 
 use ferrite::click::Button;
+use ferrite::sys;
 use ferrite::text_layer::{system_font, TextLayer};
 use ferrite::window::Window;
-use ferrite::sys;
 
 static TICKS: AtomicU32 = AtomicU32::new(0);
 
