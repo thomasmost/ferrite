@@ -262,23 +262,29 @@ mod provider_tests {
     use std::cell::RefCell;
 
     thread_local! {
-        static SUBSCRIBED_SINGLE: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
-        static SUBSCRIBED_LONG: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+        // (button, handler present)
+        static SUBSCRIBED_SINGLE: RefCell<Vec<(u8, bool)>> = const { RefCell::new(Vec::new()) };
+        // (button, delay_ms, down present, up present)
+        static SUBSCRIBED_LONG: RefCell<Vec<(u8, u16, bool, bool)>> =
+            const { RefCell::new(Vec::new()) };
     }
 
     #[no_mangle]
-    extern "C" fn window_single_click_subscribe(button: sys::ButtonId, _h: sys::ClickHandler) {
-        SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().push(button.0));
+    extern "C" fn window_single_click_subscribe(button: sys::ButtonId, h: sys::ClickHandler) {
+        SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().push((button.0, h.is_some())));
     }
 
     #[no_mangle]
     extern "C" fn window_long_click_subscribe(
         button: sys::ButtonId,
-        _delay_ms: u16,
-        _down: sys::ClickHandler,
-        _up: sys::ClickHandler,
+        delay_ms: u16,
+        down: sys::ClickHandler,
+        up: sys::ClickHandler,
     ) {
-        SUBSCRIBED_LONG.with(|s| s.borrow_mut().push(button.0));
+        SUBSCRIBED_LONG.with(|s| {
+            s.borrow_mut()
+                .push((button.0, delay_ms, down.is_some(), up.is_some()))
+        });
     }
 
     #[no_mangle]
@@ -314,8 +320,9 @@ mod provider_tests {
         SUBSCRIBED_SINGLE.with(|s| s.borrow_mut().clear());
         unsafe { click_config_provider(&mut state as *mut WindowState as *mut core::ffi::c_void) };
         assert!(
-            SUBSCRIBED_SINGLE.with(|s| s.borrow().contains(&(Button::Select as u8))),
-            "provider must still subscribe a button whose handler is mid-dispatch"
+            SUBSCRIBED_SINGLE.with(|s| s.borrow().contains(&(Button::Select as u8, true))),
+            "provider must still subscribe a button whose handler is mid-dispatch, \
+             with a non-null trampoline"
         );
         state.clicks.restore_single(Button::Select, taken);
     }
@@ -336,10 +343,13 @@ mod provider_tests {
         SUBSCRIBED_LONG.with(|s| s.borrow_mut().clear());
         unsafe { click_config_provider(&mut state as *mut WindowState as *mut core::ffi::c_void) };
         SUBSCRIBED_SINGLE.with(|s| {
-            assert_eq!(*s.borrow(), vec![Button::Up as u8]);
+            assert_eq!(*s.borrow(), vec![(Button::Up as u8, true)]);
         });
+        // The registered delay must propagate, and BOTH trampolines must be
+        // non-null (the SDK takes them as a pair; up-dispatch is a no-op for
+        // an up-less registration via take_long_up returning None).
         SUBSCRIBED_LONG.with(|s| {
-            assert_eq!(*s.borrow(), vec![Button::Down as u8]);
+            assert_eq!(*s.borrow(), vec![(Button::Down as u8, 700, true, true)]);
         });
     }
 }
