@@ -32,7 +32,13 @@ impl Level {
 /// Log a fixed C-string message at the given level.
 pub fn log(level: Level, msg: &CStr) {
     unsafe {
-        sys::app_log(level.raw(), c"rust".as_ptr(), 0, c"%s".as_ptr(), msg.as_ptr());
+        sys::app_log(
+            level.raw(),
+            c"rust".as_ptr(),
+            0,
+            c"%s".as_ptr(),
+            msg.as_ptr(),
+        );
     }
 }
 

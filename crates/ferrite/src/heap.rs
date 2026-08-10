@@ -80,27 +80,24 @@ mod tests {
 
     #[test]
     fn aligned_start_computation_is_correct() {
-        // For a raw allocation at 0x1000, align to 8 bytes:
-        // pointer slot at 0x1000 (4 bytes)
-        // aligned block should start at next 8-byte boundary after 0x1004
-        // = 0x1008
-        let raw = 0x1000usize;
+        // For a raw allocation at 0x1000 (4096 decimal), align to 8 bytes:
+        // pointer slot at 4096 (8 bytes on 64-bit)
+        // aligned block should start at: (4096 + 8 + 8 - 1) & ~7 = 4111 & ~7 = 4104
+        let raw = 0x1000usize; // 4096
         let aligned = aligned_start(raw, 8);
-        assert_eq!(aligned, 0x1008);
+        assert_eq!(aligned, 4104); // (4096 + 8 + 8 - 1) & ~7
 
-        // Raw at 0x1001, align to 8:
-        // pointer slot at 0x1001 (4 bytes → 0x1005)
-        // next 8-byte boundary is 0x1008
-        let raw = 0x1001usize;
+        // Raw at 4097, align to 8:
+        // (4097 + 8 + 8 - 1) & ~7 = 4112 & ~7 = 4112
+        let raw = 0x1001usize; // 4097
         let aligned = aligned_start(raw, 8);
-        assert_eq!(aligned, 0x1008);
+        assert_eq!(aligned, 4112); // (4097 + 8 + 8 - 1) & ~7
 
-        // Raw at 0x1000, align to 16:
-        // pointer slot at 0x1000 (4 bytes → 0x1004)
-        // next 16-byte boundary is 0x1010
-        let raw = 0x1000usize;
+        // Raw at 4096, align to 16:
+        // (4096 + 8 + 16 - 1) & ~15 = 4119 & ~15 = 4112
+        let raw = 0x1000usize; // 4096
         let aligned = aligned_start(raw, 16);
-        assert_eq!(aligned, 0x1010);
+        assert_eq!(aligned, 4112); // (4096 + 8 + 16 - 1) & ~15
     }
 
     #[test]

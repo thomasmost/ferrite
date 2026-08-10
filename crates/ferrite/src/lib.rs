@@ -8,11 +8,11 @@ pub use ferrite_sys as sys;
 // Compiled on the host only under `cfg(test)`, so `FixedBuf`'s truncation
 // arithmetic is unit-testable. The `#[panic_handler]` itself stays gated on
 // `target_os = "none"` so it never clashes with std's.
-#[cfg(any(target_os = "none", test))]
-mod panic;
 mod fmt_buf;
 pub mod heap;
 pub mod log;
+#[cfg(any(target_os = "none", test))]
+mod panic;
 pub mod text_layer;
 pub mod window;
 
