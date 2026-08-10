@@ -107,24 +107,21 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             echo "PASS: heartbeat observed with stable heap_free:"
             grep -m 4 "$MARKER" "$LOG_FILE"
 
-            # Button-navigation gate: the Phase 5 menu demo navigates from home
-            # menu to text screen and back. Drive SELECT on row 0 and require
-            # the text screen's load handler to fire. TWICE, with a BACK between:
-            # the handler is taken out of its slot while it runs and restored
-            # afterwards, and the SDK re-subscribes on each provider run -- a
-            # broken restore works exactly once and is dead thereafter, which a
-            # single press cannot detect.
+            # Button-navigation gate. Two DIFFERENT handlers on two different
+            # windows are exercised, each through its own provider, and EACH is
+            # dispatched twice (a broken restore works exactly once and is dead
+            # thereafter, which a single press cannot detect):
             #
-            # Scope:
-            # - Restore (window select via ferrite provider): first SELECT loads
-            #   text screen, second SELECT (while on text screen) fires on_click,
-            #   third SELECT (after BACK to menu and SELECT again) loads screen
-            #   again, all on the same handler. Tests that the handler survives
-            #   two consecutive dispatches on the same window.
-            # - The provider's registration predicate is unit-tested in
-            #   crates/ferrite/src/click.rs provider_tests.
-            # - Menu select/draw/rows closures are tested in menu_layer.rs tests.
-            echo "==> button navigation (SELECT must load text screen twice, with on_click in between)"
+            # - Menu cb_select_click (SDK menu provider, home window): presses
+            #   1 and 4 each load the text screen -> menu handler restored.
+            # - Ferrite on_single_click (click.rs provider, text window):
+            #   presses 2 and 3 each fire on_click -> window handler restored.
+            #
+            # Not covered here: the provider's registration predicate (BACK
+            # re-topmosting repairs a lost subscription e2e; unit-tested in
+            # click.rs provider_tests) and menu rows/draw closures (unit-tested
+            # in menu_layer.rs).
+            echo "==> button navigation (menu select x2 and window on_click x2)"
             press() {
                 (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
                     || { echo "FAIL: emu-button $1 failed"; exit 1; }
@@ -139,32 +136,36 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
                 tail -10 "$LOG_FILE"
                 exit 1
             fi
-            # Now press SELECT again while still on the text screen;
-            # this should trigger the text window's on_click handler.
-            sleep 1
+            # Two SELECT presses ON the text screen: ferrite's on_single_click
+            # must fire both times (dispatch + restore + dispatch). sleep 2 so
+            # the press cannot land mid-push-animation on the menu instead.
+            sleep 2
+            press select
+            sleep 2
             press select
             for _ in $(seq 1 15); do
-                grep -q "text screen select" "$LOG_FILE" && break
+                [[ $(grep -c "text screen select" "$LOG_FILE") -ge 2 ]] && break
                 sleep 1
             done
-            if ! grep -q "text screen select" "$LOG_FILE"; then
-                echo "FAIL: second SELECT on text screen did not trigger on_click handler. Tail:"
+            if [[ $(grep -c "text screen select" "$LOG_FILE") -lt 2 ]]; then
+                echo "FAIL: on_click did not fire twice on the text screen (window handler lost"
+                echo "      after first dispatch, or a press mis-routed mid-animation). Tail:"
                 tail -10 "$LOG_FILE"
                 exit 1
             fi
-            # Return to menu and re-enter text screen to verify handler restored.
+            # BACK to the menu, SELECT again: menu handler's second dispatch.
             sleep 1
             press back
             sleep 2
             press select
             for _ in $(seq 1 15); do
                 if [[ $(grep -c "text screen loaded" "$LOG_FILE") -ge 2 ]]; then
-                    echo "PASS: text screen loaded twice, on_click fired once (handler restored across two dispatches)"
+                    echo "PASS: menu select x2 and window on_click x2 (both handlers restored)"
                     exit 0
                 fi
                 sleep 1
             done
-            echo "FAIL: third SELECT did not load text screen -- handler lost after dispatch. Tail:"
+            echo "FAIL: second menu SELECT did not load text screen -- menu handler lost. Tail:"
             tail -10 "$LOG_FILE"
             exit 1
         else

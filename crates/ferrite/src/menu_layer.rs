@@ -379,13 +379,15 @@ mod tests {
         }
     }
 
+    /// THE invariant the module doc promises: a closure that re-registers a
+    /// replacement during its own dispatch must WIN -- restore must not
+    /// clobber it with the finished closure. (Mirror of
+    /// click.rs::restore_does_not_clobber_a_reregistered_handler; supersedes
+    /// a duplicate survives-two-calls test that added no coverage.)
     #[test]
-    fn cb_select_click_restore_mutation_detection() {
-        // This test detects if restore logic is broken (e.g., closure is dropped
-        // instead of restored). If restore is broken, the second call will have
-        // no closure and won't call the handler.
-
-        let call_count = Rc::new(Cell::new(0));
+    fn reentrant_on_select_replacement_wins() {
+        let first = Rc::new(Cell::new(0));
+        let second = Rc::new(Cell::new(0));
         let state = Box::into_raw(Box::new(MenuState {
             num_rows: None,
             draw_row: None,
@@ -393,27 +395,25 @@ mod tests {
             callback_depth: 0,
         }));
 
-        let c = call_count.clone();
-        unsafe { &mut *state }.on_select = Some(Box::new(move |_row: u16| {
-            c.set(c.get() + 1);
+        let f1 = first.clone();
+        let s2 = second.clone();
+        unsafe { &mut *state }.on_select = Some(Box::new(move |_row| {
+            f1.set(f1.get() + 1);
+            // Reentrant replacement: our slot is empty (taken) right now, so
+            // this lands in the slot and restore must NOT overwrite it.
+            let s2 = s2.clone();
+            unsafe { &mut *state }.on_select = Some(Box::new(move |_row| s2.set(s2.get() + 1)));
         }));
 
-        // First call
-        let mut cell_index = sys::MenuIndex { section: 0, row: 5 };
+        let mut cell_index = sys::MenuIndex { section: 0, row: 0 };
         unsafe {
             cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
-        }
-        assert_eq!(call_count.get(), 1, "first call should invoke handler");
-
-        // Second call - if restore is broken, this won't invoke the handler
-        cell_index.row = 6;
-        unsafe {
             cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
         }
         assert_eq!(
-            call_count.get(),
-            2,
-            "second call should also invoke handler (restore works)"
+            (first.get(), second.get()),
+            (1, 1),
+            "the reentrantly-registered closure must win over the restore"
         );
 
         unsafe {

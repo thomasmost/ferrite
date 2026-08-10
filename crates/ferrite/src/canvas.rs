@@ -17,16 +17,19 @@
 //! executing closure. `Drop` debug-asserts that `callback_depth` is zero,
 //! making this a deterministic panic in debug builds.
 //!
-//! **RFC-2229 hazard:** When destructuring in closures (e.g. with `move`),
-//! capture whole variables, not disjoint fields. Example: `let screens =
-//! (text_window, canvas_window); closure.on_select(move |row|
-//! screens.0.push(...))` captures only the two windows, NOT the layers (text,
-//! canvas) inside them. The sibling layers drop early and destroy their SDK
-//! resources while the window is still visible, causing use-after-free. Fix:
-//! destructure outside the closure (`let (text_win, text) = ...; let
-//! (canvas_win, canvas) = ...; closure.on_select(move |row| text_win.push(
-//! ...))`) and move the windows into the closure. Return children before
-//! parents in the app state tuple to ensure drop order.
+//! **RFC-2229 hazard:** edition-2021 `move` closures capture only the PATHS
+//! they use, not whole variables. With screen tuples like
+//! `let screens = (text_screen, canvas_screen);` — where each element is a
+//! `(Window, Layer)` pair — a closure body using `screens.0 .0.push(true)`
+//! captures ONLY that window field. The uncaptured siblings (the layers at
+//! `screens.0 .1` / `screens.1 .1`) are dropped at the end of the enclosing
+//! block, destroying their SDK objects while the windows still list them as
+//! children — the screen then renders blank (observed on the emulator in
+//! Phase 4). Fix: destructure first (`let (mut text_win, text) = ...;`),
+//! have the closure use the WINDOW as a whole variable
+//! (`move |row| text_win.push(true)` — a bare path captures completely),
+//! and keep the layers alive in the app-state tuple, children before
+//! parents.
 
 use alloc::boxed::Box;
 use core::mem::size_of;
@@ -184,6 +187,14 @@ mod tests {
     ) {
     }
 
+    /// Drive the REAL trampoline (not a copy of its body): set up
+    /// STATE_STORAGE so the layer_get_data stub hands canvas_update_proc our
+    /// state, then call the extern "C" symbol itself.
+    fn dispatch(state: *mut CanvasState) {
+        STATE_STORAGE.with(|storage| storage.set(state));
+        unsafe { canvas_update_proc(core::ptr::null_mut(), core::ptr::null_mut()) };
+    }
+
     #[test]
     fn on_draw_closure_survives_two_dispatches() {
         let call_count = Rc::new(Cell::new(0));
@@ -191,102 +202,69 @@ mod tests {
             on_draw: None,
             callback_depth: 0,
         }));
-
         let c = call_count.clone();
-        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
-            c.set(c.get() + 1);
-        }));
+        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| c.set(c.get() + 1)));
 
-        // First dispatch
-        unsafe {
-            let bounds = sys::GRect(0, 0, 180, 180);
-            let g_ctx = core::ptr::null_mut();
-            let taken = (*state).on_draw.take();
-            if let Some(mut f) = taken {
-                (*state).callback_depth += 1;
-                let mut g = Graphics::new(g_ctx, bounds);
-                f(&mut g);
-                (*state).callback_depth -= 1;
-                let slot = &mut (*state).on_draw;
-                if slot.is_none() {
-                    *slot = Some(f);
-                }
-            }
-        }
+        dispatch(state);
+        assert_eq!(call_count.get(), 1);
+        dispatch(state);
+        assert_eq!(call_count.get(), 2, "restore must keep the closure");
 
-        assert_eq!(call_count.get(), 1, "first dispatch should call closure");
-
-        // Second dispatch: restore must have kept the closure
-        unsafe {
-            let bounds = sys::GRect(0, 0, 180, 180);
-            let g_ctx = core::ptr::null_mut();
-            let taken = (*state).on_draw.take();
-            if let Some(mut f) = taken {
-                (*state).callback_depth += 1;
-                let mut g = Graphics::new(g_ctx, bounds);
-                f(&mut g);
-                (*state).callback_depth -= 1;
-                let slot = &mut (*state).on_draw;
-                if slot.is_none() {
-                    *slot = Some(f);
-                }
-            }
-        }
-
-        assert_eq!(
-            call_count.get(),
-            2,
-            "second dispatch should also call closure (restore works)"
-        );
-
-        unsafe {
-            drop(Box::from_raw(state));
-        }
+        unsafe { drop(Box::from_raw(state)) };
     }
 
+    /// The draw closure may reenter the safe API mid-dispatch (its slot is
+    /// empty at that point). mark_dirty is the realistic reentry; the
+    /// trampoline must not hold any borrow of CanvasState across the call.
     #[test]
     fn on_draw_can_reenter_via_mark_dirty() {
         let state = Box::into_raw(Box::new(CanvasState {
             on_draw: None,
             callback_depth: 0,
         }));
-        let raw_layer = state as *mut sys::Layer; // Dummy, won't be dereferenced
-
         unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
-            // Simulate reentrancy: call mark_dirty from within the closure
-            unsafe { sys::layer_mark_dirty(raw_layer) };
+            unsafe { sys::layer_mark_dirty(core::ptr::null_mut()) };
         }));
 
         MARKED_DIRTY_COUNT.with(|c| c.set(0));
+        dispatch(state);
+        MARKED_DIRTY_COUNT.with(|c| assert_eq!(c.get(), 1));
 
-        // Dispatch the closure
-        unsafe {
-            let taken = (*state).on_draw.take();
-            if let Some(mut f) = taken {
-                (*state).callback_depth += 1;
-                let bounds = sys::GRect(0, 0, 180, 180);
-                let mut g = Graphics::new(core::ptr::null_mut(), bounds);
-                f(&mut g);
-                (*state).callback_depth -= 1;
-                let slot = &mut (*state).on_draw;
-                if slot.is_none() {
-                    *slot = Some(f);
-                }
-            }
-        }
+        unsafe { drop(Box::from_raw(state)) };
+    }
 
-        // Verify mark_dirty was called (no crash = reentrancy safe)
-        MARKED_DIRTY_COUNT.with(|c| {
-            assert_eq!(
-                c.get(),
-                1,
-                "closure should have called mark_dirty reentrantly"
-            )
-        });
+    /// THE invariant the module doc promises: a closure that re-registers a
+    /// replacement during its own dispatch must WIN -- restore must not
+    /// clobber it with the finished closure. (Mirror of
+    /// click.rs::restore_does_not_clobber_a_reregistered_handler.)
+    #[test]
+    fn reentrant_on_draw_replacement_wins() {
+        let first = Rc::new(Cell::new(0));
+        let second = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(CanvasState {
+            on_draw: None,
+            callback_depth: 0,
+        }));
 
-        unsafe {
-            drop(Box::from_raw(state));
-        }
+        let f1 = first.clone();
+        let s2 = second.clone();
+        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
+            f1.set(f1.get() + 1);
+            // Reentrant replacement: our slot is empty (taken) right now, so
+            // this lands in the slot and restore must NOT overwrite it.
+            let s2 = s2.clone();
+            unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| s2.set(s2.get() + 1)));
+        }));
+
+        dispatch(state);
+        dispatch(state);
+        assert_eq!(
+            (first.get(), second.get()),
+            (1, 1),
+            "the reentrantly-registered closure must win over the restore"
+        );
+
+        unsafe { drop(Box::from_raw(state)) };
     }
 
     #[test]
