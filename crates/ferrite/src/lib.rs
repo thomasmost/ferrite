@@ -15,6 +15,7 @@ pub mod graphics;
 pub mod heap;
 pub mod layer;
 pub mod log;
+pub mod menu_layer;
 // Panic handler gated on target_os = "none" to avoid clashing with std's
 // panic handler during host testing. The handler uses FixedBuf for logging.
 #[cfg(target_os = "none")]
