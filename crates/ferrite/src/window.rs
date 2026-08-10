@@ -82,12 +82,22 @@ impl Window {
     /// SDK re-runs the click config provider synchronously when it is
     /// (re)installed on a visible window (pebble.h:5213), which is why this
     /// method re-installs it on every registration.
+    ///
+    /// **Mutually exclusive with `MenuLayer::attach_clicks`:** If this window
+    /// has a menu layer with `attach_clicks` wired to it, calling `on_click` or
+    /// `on_long_click` will re-install ferrite's click provider, silently
+    /// replacing the menu's UP/DOWN/SELECT navigation with ferrite's handlers.
+    /// Similarly, calling `attach_clicks` after `on_click` re-installs the
+    /// menu's provider. Use one or the other, not both on the same window.
     pub fn on_click(&mut self, button: Button, f: impl FnMut() + 'static) {
         self.state_mut().clicks.set_single(button, Box::new(f));
         self.install_click_provider();
     }
 
     /// Registers a long-press handler (fires on press after `delay_ms`).
+    ///
+    /// **Mutually exclusive with `MenuLayer::attach_clicks`:** see `on_click`'s
+    /// documentation for the clobbering behavior.
     pub fn on_long_click(&mut self, button: Button, delay_ms: u16, f: impl FnMut() + 'static) {
         let entry =
             self.state_mut().clicks.long[button as usize].get_or_insert_with(|| LongClick {
@@ -135,6 +145,13 @@ impl Window {
 
     /// Adds a layer wrapper as a child of the window's root layer. The child
     /// must outlive its time in the window (keep both in your app state).
+    ///
+    /// See `crate::layer` for why children are borrowed (not owned by the
+    /// window): post-add mutation (`set_text`, `mark_dirty`, `reload`) is
+    /// ubiquitous, and ownership would require a handle/index API. The borrow
+    /// contract is enforced by the app's return-tuple order (children before
+    /// parents, so Rust's tuple drop order maintains correctness) and the
+    /// trampoline discipline (take/call/restore).
     pub fn add_child(&mut self, child: &impl crate::layer::AsLayer) {
         unsafe {
             sys::layer_add_child(sys::window_get_root_layer(self.raw), child.as_layer_ptr());

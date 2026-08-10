@@ -115,11 +115,16 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
             # broken restore works exactly once and is dead thereafter, which a
             # single press cannot detect.
             #
-            # Scope: this covers RESTORE, not the provider's registration
-            # predicate (BACK re-topmosting the menu makes the SDK repair a
-            # lost subscription, masking that class here). The predicate is
-            # unit-tested in crates/ferrite/src/click.rs provider_tests.
-            echo "==> button navigation (SELECT must load text screen, twice)"
+            # Scope:
+            # - Restore (window select via ferrite provider): first SELECT loads
+            #   text screen, second SELECT (while on text screen) fires on_click,
+            #   third SELECT (after BACK to menu and SELECT again) loads screen
+            #   again, all on the same handler. Tests that the handler survives
+            #   two consecutive dispatches on the same window.
+            # - The provider's registration predicate is unit-tested in
+            #   crates/ferrite/src/click.rs provider_tests.
+            # - Menu select/draw/rows closures are tested in menu_layer.rs tests.
+            echo "==> button navigation (SELECT must load text screen twice, with on_click in between)"
             press() {
                 (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
                     || { echo "FAIL: emu-button $1 failed"; exit 1; }
@@ -130,24 +135,36 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
                 sleep 1
             done
             if ! grep -q "text screen loaded" "$LOG_FILE"; then
-                echo "FAIL: SELECT sent but 'text screen loaded' never appeared. Tail:"
+                echo "FAIL: first SELECT sent but 'text screen loaded' never appeared. Tail:"
                 tail -10 "$LOG_FILE"
                 exit 1
             fi
-            # Symmetric settle: "text screen loaded" fires at load, possibly
-            # mid-push-animation; give it the same beat BACK gets below.
+            # Now press SELECT again while still on the text screen;
+            # this should trigger the text window's on_click handler.
+            sleep 1
+            press select
+            for _ in $(seq 1 15); do
+                grep -q "text screen select" "$LOG_FILE" && break
+                sleep 1
+            done
+            if ! grep -q "text screen select" "$LOG_FILE"; then
+                echo "FAIL: second SELECT on text screen did not trigger on_click handler. Tail:"
+                tail -10 "$LOG_FILE"
+                exit 1
+            fi
+            # Return to menu and re-enter text screen to verify handler restored.
             sleep 1
             press back
             sleep 2
             press select
             for _ in $(seq 1 15); do
                 if [[ $(grep -c "text screen loaded" "$LOG_FILE") -ge 2 ]]; then
-                    echo "PASS: SELECT navigation loaded text screen twice (handler restored)"
+                    echo "PASS: text screen loaded twice, on_click fired once (handler restored across two dispatches)"
                     exit 0
                 fi
                 sleep 1
             done
-            echo "FAIL: second SELECT did not load text screen -- handler lost after first dispatch. Tail:"
+            echo "FAIL: third SELECT did not load text screen -- handler lost after dispatch. Tail:"
             tail -10 "$LOG_FILE"
             exit 1
         else

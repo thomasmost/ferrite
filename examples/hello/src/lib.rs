@@ -32,6 +32,12 @@ fn make_text_screen(app: &mut App) -> (Window, TextLayer) {
     text.set_font(system_font(sys::FONT_KEY_GOTHIC_24));
     win.add_child(&text);
     win.on_load(|| ferrite::log::info(c"text screen loaded"));
+    // Window's on_click handler (ferrite provider) — fires on SELECT button press
+    // on the text screen. This tests the window click trampoline's restore behavior
+    // (handler survives the dispatch and is available for the next press).
+    win.on_click(ferrite::click::Button::Select, || {
+        ferrite::log::info(c"text screen select");
+    });
     (win, text)
 }
 

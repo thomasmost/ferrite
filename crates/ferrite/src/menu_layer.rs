@@ -11,6 +11,12 @@
 //! only if empty (so a reentrant registration wins). For `cb_get_num_rows`
 //! which returns a value, we capture the return value before restoring.
 //! See `click.rs`'s module doc for the full contract.
+//!
+//! **Residual contract:** Dropping a `MenuLayer` from inside one of its own
+//! callbacks (select_click, rows, on_draw_row) is not supported — the state
+//! box would be freed under the executing closure. `Drop` debug-asserts that
+//! `callback_depth` is zero, making this a deterministic panic in debug
+//! builds.
 
 use alloc::boxed::Box;
 use core::ffi::c_void;
@@ -66,6 +72,11 @@ struct MenuState {
     num_rows: Option<GetNumRowsCallback>,
     draw_row: Option<DrawRowCallback>,
     on_select: Option<SelectClickCallback>,
+    /// Number of this menu's callbacks currently on the stack. Structural
+    /// backstop for the documented-unsupported case (dropping a `MenuLayer`
+    /// from inside its own callback): `Drop` debug-asserts this is zero, so
+    /// in debug builds the use-after-free becomes a deterministic panic.
+    callback_depth: u8,
 }
 
 pub struct MenuLayer {
@@ -75,6 +86,9 @@ pub struct MenuLayer {
 
 impl MenuLayer {
     /// Creates a menu layer. Panics if the SDK returns NULL (out of memory).
+    ///
+    /// Note: a menu without `rows()` and `on_draw_row()` set will render empty.
+    /// Set both closures before pushing the window containing this menu.
     pub fn new(_app: &mut App, frame: sys::GRect) -> MenuLayer {
         let raw = unsafe { sys::menu_layer_create(frame) };
         assert!(!raw.is_null(), "menu_layer_create returned NULL");
@@ -82,6 +96,7 @@ impl MenuLayer {
             num_rows: None,
             draw_row: None,
             on_select: None,
+            callback_depth: 0,
         }));
         unsafe {
             sys::menu_layer_set_callbacks(
@@ -119,6 +134,13 @@ impl MenuLayer {
 
     /// Binds UP/DOWN/SELECT on the window to this menu (the SDK's standard
     /// menu navigation — replaces any window click config).
+    ///
+    /// **Mutually exclusive with `Window::on_click` and `on_long_click`:**
+    /// If either has been called on this window, calling `attach_clicks` will
+    /// re-install the menu's provider, silently replacing ferrite's handlers
+    /// with menu navigation. Similarly, calling `on_click` or `on_long_click`
+    /// after `attach_clicks` re-installs ferrite's provider. Use one or the
+    /// other, not both on the same window.
     pub fn attach_clicks(&mut self, window: &mut Window) {
         unsafe {
             sys::menu_layer_set_click_config_onto_window(self.raw, window.as_window_ptr());
@@ -141,6 +163,13 @@ impl MenuLayer {
 
 impl Drop for MenuLayer {
     fn drop(&mut self) {
+        // Backstop for the documented-unsupported case: dropping a MenuLayer
+        // from inside one of its own callbacks would free the state box under
+        // the executing closure.
+        debug_assert!(
+            unsafe { (*self.state).callback_depth } == 0,
+            "MenuLayer dropped from inside its own callback (unsupported; see menu_layer.rs)"
+        );
         unsafe {
             sys::menu_layer_destroy(self.raw);
             drop(Box::from_raw(self.state));
@@ -169,7 +198,9 @@ unsafe extern "C" fn cb_get_num_rows(
     let state = context as *mut MenuState;
     let taken = (*state).num_rows.take();
     if let Some(mut f) = taken {
+        (*state).callback_depth += 1;
         let val = f();
+        (*state).callback_depth -= 1;
         // Restore only if empty (reentrancy-safe).
         let slot = &mut (*state).num_rows;
         if slot.is_none() {
@@ -196,7 +227,9 @@ unsafe extern "C" fn cb_draw_row(
             cell_layer,
             _lifetime: PhantomData,
         };
+        (*state).callback_depth += 1;
         f(&mut cell, row);
+        (*state).callback_depth -= 1;
         // Restore only if empty (reentrancy-safe).
         let slot = &mut (*state).draw_row;
         if slot.is_none() {
@@ -214,11 +247,177 @@ unsafe extern "C" fn cb_select_click(
     let row = (*cell_index).row;
     let taken = (*state).on_select.take();
     if let Some(mut f) = taken {
+        (*state).callback_depth += 1;
         f(row);
+        (*state).callback_depth -= 1;
         // Restore only if empty (reentrancy-safe).
         let slot = &mut (*state).on_select;
         if slot.is_none() {
             *slot = Some(f);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    #[test]
+    fn cb_get_num_rows_closure_survives_two_calls() {
+        let call_count = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(MenuState {
+            num_rows: None,
+            draw_row: None,
+            on_select: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        unsafe { &mut *state }.num_rows = Some(Box::new(move || {
+            c.set(c.get() + 1);
+            5
+        }));
+
+        // First call
+        let result1 = unsafe { cb_get_num_rows(core::ptr::null_mut(), 0, state as *mut c_void) };
+        assert_eq!(result1, 5);
+        assert_eq!(call_count.get(), 1);
+
+        // Second call: restore must have kept the closure
+        let result2 = unsafe { cb_get_num_rows(core::ptr::null_mut(), 0, state as *mut c_void) };
+        assert_eq!(result2, 5);
+        assert_eq!(call_count.get(), 2, "closure should survive restore");
+
+        unsafe {
+            drop(Box::from_raw(state));
+        }
+    }
+
+    #[test]
+    fn cb_select_click_closure_survives_two_calls() {
+        let call_count = Rc::new(Cell::new(0));
+        let last_row = Rc::new(Cell::new(0u16));
+
+        let state = Box::into_raw(Box::new(MenuState {
+            num_rows: None,
+            draw_row: None,
+            on_select: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        let r = last_row.clone();
+        unsafe { &mut *state }.on_select = Some(Box::new(move |row| {
+            c.set(c.get() + 1);
+            r.set(row);
+        }));
+
+        // First call
+        let mut cell_index = sys::MenuIndex { section: 0, row: 3 };
+        unsafe {
+            cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
+        }
+        assert_eq!(call_count.get(), 1);
+        assert_eq!(last_row.get(), 3);
+
+        // Second call: restore must have kept the closure
+        cell_index.row = 7;
+        unsafe {
+            cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
+        }
+        assert_eq!(call_count.get(), 2, "closure should survive restore");
+        assert_eq!(last_row.get(), 7);
+
+        unsafe {
+            drop(Box::from_raw(state));
+        }
+    }
+
+    #[test]
+    fn cb_draw_row_closure_survives_two_calls() {
+        let call_count = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(MenuState {
+            num_rows: None,
+            draw_row: None,
+            on_select: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        unsafe { &mut *state }.draw_row = Some(Box::new(move |_cell: &mut RowCell, _row: u16| {
+            c.set(c.get() + 1);
+        }));
+
+        // First call
+        let mut cell_index = sys::MenuIndex { section: 0, row: 2 };
+        unsafe {
+            cb_draw_row(
+                core::ptr::null_mut(),
+                core::ptr::null(),
+                &mut cell_index,
+                state as *mut c_void,
+            );
+        }
+        assert_eq!(call_count.get(), 1);
+
+        // Second call: restore must have kept the closure
+        cell_index.row = 3;
+        unsafe {
+            cb_draw_row(
+                core::ptr::null_mut(),
+                core::ptr::null(),
+                &mut cell_index,
+                state as *mut c_void,
+            );
+        }
+        assert_eq!(call_count.get(), 2, "closure should survive restore");
+
+        unsafe {
+            drop(Box::from_raw(state));
+        }
+    }
+
+    #[test]
+    fn cb_select_click_restore_mutation_detection() {
+        // This test detects if restore logic is broken (e.g., closure is dropped
+        // instead of restored). If restore is broken, the second call will have
+        // no closure and won't call the handler.
+
+        let call_count = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(MenuState {
+            num_rows: None,
+            draw_row: None,
+            on_select: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        unsafe { &mut *state }.on_select = Some(Box::new(move |_row: u16| {
+            c.set(c.get() + 1);
+        }));
+
+        // First call
+        let mut cell_index = sys::MenuIndex { section: 0, row: 5 };
+        unsafe {
+            cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
+        }
+        assert_eq!(call_count.get(), 1, "first call should invoke handler");
+
+        // Second call - if restore is broken, this won't invoke the handler
+        cell_index.row = 6;
+        unsafe {
+            cb_select_click(core::ptr::null_mut(), &mut cell_index, state as *mut c_void);
+        }
+        assert_eq!(
+            call_count.get(),
+            2,
+            "second call should also invoke handler (restore works)"
+        );
+
+        unsafe {
+            drop(Box::from_raw(state));
         }
     }
 }

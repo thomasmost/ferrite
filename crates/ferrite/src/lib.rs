@@ -72,6 +72,14 @@ impl App {
 /// }
 /// ```
 ///
+/// **Capture guidance (RFC-2229):** When moving windows/layers into closures
+/// (e.g. menu handlers), destructure and move entire variables, not tuple
+/// fields. Example: `let (window, layer) = ...; closure(move || window.push(
+/// ...))` captures the whole window. Do NOT do `let screens = (window,
+/// layer); closure(move || screens.0.push(...))` — the uncaptured layer
+/// (screens.1) drops early and destroys its SDK resources while the window
+/// is still visible. See `canvas.rs` for the full RFC-2229 hazard explanation.
+///
 /// Cleanup: when the event loop returns (user exits the app), the kept
 /// state is dropped in tuple order — children first, exactly as listed in
 /// the example above — running every wrapper's `Drop` (windows destroy their

@@ -12,13 +12,21 @@
 //! only if empty (so a reentrant registration wins). See `click.rs`'s module
 //! doc for the full contract.
 //!
-//! **RFC-2229 hazard:** When capturing state variables in closures (e.g. with
-//! `move`), be careful to capture whole variables, not disjoint fields. A
-//! closure that captures only `state.canvas` (via field-level capture) can
-//! outlive the window that holds the CanvasLayer, causing use-after-free when
-//! the closure later tries to access the layer. Destructure at the capture
-//! boundary and move entire variables into closures; return children before
-//! parents in the app state tuple.
+//! **Residual contract:** Dropping a `CanvasLayer` from inside its own
+//! `on_draw` closure is not supported — the state box would be freed under the
+//! executing closure. `Drop` debug-asserts that `callback_depth` is zero,
+//! making this a deterministic panic in debug builds.
+//!
+//! **RFC-2229 hazard:** When destructuring in closures (e.g. with `move`),
+//! capture whole variables, not disjoint fields. Example: `let screens =
+//! (text_window, canvas_window); closure.on_select(move |row|
+//! screens.0.push(...))` captures only the two windows, NOT the layers (text,
+//! canvas) inside them. The sibling layers drop early and destroy their SDK
+//! resources while the window is still visible, causing use-after-free. Fix:
+//! destructure outside the closure (`let (text_win, text) = ...; let
+//! (canvas_win, canvas) = ...; closure.on_select(move |row| text_win.push(
+//! ...))`) and move the windows into the closure. Return children before
+//! parents in the app state tuple to ensure drop order.
 
 use alloc::boxed::Box;
 use core::mem::size_of;
@@ -32,6 +40,11 @@ type DrawCallback = Box<dyn FnMut(&mut Graphics<'_>)>;
 
 struct CanvasState {
     on_draw: Option<DrawCallback>,
+    /// Number of this layer's callbacks currently on the stack. Structural
+    /// backstop for the documented-unsupported case (dropping a `CanvasLayer`
+    /// from inside its own callback): `Drop` debug-asserts this is zero, so
+    /// in debug builds the use-after-free becomes a deterministic panic.
+    callback_depth: u8,
 }
 
 pub struct CanvasLayer {
@@ -45,9 +58,21 @@ impl CanvasLayer {
     pub fn new(_app: &mut App, frame: sys::GRect) -> CanvasLayer {
         let raw = unsafe { sys::layer_create_with_data(frame, size_of::<*mut CanvasState>()) };
         assert!(!raw.is_null(), "layer_create_with_data returned NULL");
-        let state = Box::into_raw(Box::new(CanvasState { on_draw: None }));
+        let state = Box::into_raw(Box::new(CanvasState {
+            on_draw: None,
+            callback_depth: 0,
+        }));
         unsafe {
-            *(sys::layer_get_data(raw) as *mut *mut CanvasState) = state;
+            let data_ptr = sys::layer_get_data(raw) as *mut *mut CanvasState;
+            // The SDK allocates Layer+data from malloc, which guarantees
+            // pointer alignment. ARMv7-M (Pebble's target) tolerates unaligned
+            // word access anyway, but we assert for safety in debug builds.
+            debug_assert_eq!(
+                (data_ptr as usize) % core::mem::align_of::<*mut CanvasState>(),
+                0,
+                "layer data pointer not aligned for state storage"
+            );
+            *data_ptr = state;
             sys::layer_set_update_proc(raw, Some(canvas_update_proc));
         }
         CanvasLayer { raw, state }
@@ -75,6 +100,13 @@ impl CanvasLayer {
 
 impl Drop for CanvasLayer {
     fn drop(&mut self) {
+        // Backstop for the documented-unsupported case: dropping a CanvasLayer
+        // from inside its own callback would free the state box under the
+        // executing closure.
+        debug_assert!(
+            unsafe { (*self.state).callback_depth } == 0,
+            "CanvasLayer dropped from inside its own callback (unsupported; see canvas.rs)"
+        );
         unsafe {
             sys::layer_destroy(self.raw);
             drop(Box::from_raw(self.state));
@@ -101,11 +133,209 @@ unsafe extern "C" fn canvas_update_proc(layer: *mut sys::Layer, ctx: *mut sys::G
     let taken = (*state).on_draw.take();
     if let Some(mut f) = taken {
         let mut g = Graphics::new(ctx, bounds);
+        (*state).callback_depth += 1;
         f(&mut g);
+        (*state).callback_depth -= 1;
         // Restore only if empty (reentrancy-safe).
         let slot = &mut (*state).on_draw;
         if slot.is_none() {
             *slot = Some(f);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    thread_local! {
+        static LAYER_BOUNDS: Cell<sys::GRect> = const { Cell::new(sys::GRect(0, 0, 180, 180)) };
+        static MARKED_DIRTY_COUNT: Cell<usize> = const { Cell::new(0) };
+        static STATE_STORAGE: Cell<*mut CanvasState> = const { Cell::new(core::ptr::null_mut()) };
+    }
+
+    #[no_mangle]
+    extern "C" fn layer_get_data(_layer: *mut sys::Layer) -> *mut core::ffi::c_void {
+        // For tests: return a pointer to a thread-local slot holding the state pointer.
+        // Tests set the state pointer via STATE_STORAGE before calling the trampoline.
+        STATE_STORAGE
+            .with(|storage| storage as *const Cell<*mut CanvasState> as *mut core::ffi::c_void)
+    }
+
+    #[no_mangle]
+    extern "C" fn layer_get_bounds(_layer: *mut sys::Layer) -> sys::GRect {
+        LAYER_BOUNDS.with(|b| b.get())
+    }
+
+    #[no_mangle]
+    extern "C" fn layer_mark_dirty(_layer: *mut sys::Layer) {
+        MARKED_DIRTY_COUNT.with(|c| c.set(c.get() + 1));
+    }
+
+    #[no_mangle]
+    extern "C" fn layer_destroy(_layer: *mut sys::Layer) {}
+
+    #[no_mangle]
+    extern "C" fn layer_set_update_proc(
+        _layer: *mut sys::Layer,
+        _proc: Option<unsafe extern "C" fn(*mut sys::Layer, *mut sys::GContext)>,
+    ) {
+    }
+
+    #[test]
+    fn on_draw_closure_survives_two_dispatches() {
+        let call_count = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(CanvasState {
+            on_draw: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
+            c.set(c.get() + 1);
+        }));
+
+        // First dispatch
+        unsafe {
+            let bounds = sys::GRect(0, 0, 180, 180);
+            let g_ctx = core::ptr::null_mut();
+            let taken = (*state).on_draw.take();
+            if let Some(mut f) = taken {
+                (*state).callback_depth += 1;
+                let mut g = Graphics::new(g_ctx, bounds);
+                f(&mut g);
+                (*state).callback_depth -= 1;
+                let slot = &mut (*state).on_draw;
+                if slot.is_none() {
+                    *slot = Some(f);
+                }
+            }
+        }
+
+        assert_eq!(call_count.get(), 1, "first dispatch should call closure");
+
+        // Second dispatch: restore must have kept the closure
+        unsafe {
+            let bounds = sys::GRect(0, 0, 180, 180);
+            let g_ctx = core::ptr::null_mut();
+            let taken = (*state).on_draw.take();
+            if let Some(mut f) = taken {
+                (*state).callback_depth += 1;
+                let mut g = Graphics::new(g_ctx, bounds);
+                f(&mut g);
+                (*state).callback_depth -= 1;
+                let slot = &mut (*state).on_draw;
+                if slot.is_none() {
+                    *slot = Some(f);
+                }
+            }
+        }
+
+        assert_eq!(
+            call_count.get(),
+            2,
+            "second dispatch should also call closure (restore works)"
+        );
+
+        unsafe {
+            drop(Box::from_raw(state));
+        }
+    }
+
+    #[test]
+    fn on_draw_can_reenter_via_mark_dirty() {
+        let state = Box::into_raw(Box::new(CanvasState {
+            on_draw: None,
+            callback_depth: 0,
+        }));
+        let raw_layer = state as *mut sys::Layer; // Dummy, won't be dereferenced
+
+        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
+            // Simulate reentrancy: call mark_dirty from within the closure
+            unsafe { sys::layer_mark_dirty(raw_layer) };
+        }));
+
+        MARKED_DIRTY_COUNT.with(|c| c.set(0));
+
+        // Dispatch the closure
+        unsafe {
+            let taken = (*state).on_draw.take();
+            if let Some(mut f) = taken {
+                (*state).callback_depth += 1;
+                let bounds = sys::GRect(0, 0, 180, 180);
+                let mut g = Graphics::new(core::ptr::null_mut(), bounds);
+                f(&mut g);
+                (*state).callback_depth -= 1;
+                let slot = &mut (*state).on_draw;
+                if slot.is_none() {
+                    *slot = Some(f);
+                }
+            }
+        }
+
+        // Verify mark_dirty was called (no crash = reentrancy safe)
+        MARKED_DIRTY_COUNT.with(|c| {
+            assert_eq!(
+                c.get(),
+                1,
+                "closure should have called mark_dirty reentrantly"
+            )
+        });
+
+        unsafe {
+            drop(Box::from_raw(state));
+        }
+    }
+
+    #[test]
+    fn canvas_update_proc_through_trampoline_survives_two_calls() {
+        // This test verifies the restore logic in canvas_update_proc by:
+        // 1. Creating a state and setting a closure
+        // 2. Calling canvas_update_proc directly (simulating SDK's call)
+        // 3. Calling it again to verify the closure survived restore
+        // If restore were broken (unconditional overwrite), the second call would
+        // use the dropped first closure and panic or crash.
+
+        let call_count = Rc::new(Cell::new(0));
+        let state = Box::into_raw(Box::new(CanvasState {
+            on_draw: None,
+            callback_depth: 0,
+        }));
+
+        let c = call_count.clone();
+        unsafe { &mut *state }.on_draw = Some(Box::new(move |_g| {
+            c.set(c.get() + 1);
+        }));
+
+        // Set up the state storage so layer_get_data can find our state
+        STATE_STORAGE.with(|storage| storage.set(state));
+
+        let fake_layer = core::ptr::null_mut::<sys::Layer>();
+
+        // First call to trampoline
+        unsafe {
+            canvas_update_proc(fake_layer, core::ptr::null_mut());
+        }
+        assert_eq!(
+            call_count.get(),
+            1,
+            "first trampoline call should execute closure"
+        );
+
+        // Second call to trampoline (would fail if restore clobbered the closure)
+        unsafe {
+            canvas_update_proc(fake_layer, core::ptr::null_mut());
+        }
+        assert_eq!(
+            call_count.get(),
+            2,
+            "second trampoline call should also execute closure (restore works)"
+        );
+
+        unsafe {
+            drop(Box::from_raw(state));
         }
     }
 }
