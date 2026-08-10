@@ -173,11 +173,9 @@ mod tests {
                 // Reentrant replacement: our slot is empty (taken) right now, so
                 // this lands in the slot and restore must NOT overwrite it.
                 let s2 = s2.clone();
-                unsafe {
-                    *TICK_SLOT.0.get() = Some(Box::new(move |_t: &Time, _u: TimeUnits| {
-                        s2.set(s2.get() + 1);
-                    }));
-                }
+                *TICK_SLOT.0.get() = Some(Box::new(move |_t: &Time, _u: TimeUnits| {
+                    s2.set(s2.get() + 1);
+                }));
             }));
         }
 

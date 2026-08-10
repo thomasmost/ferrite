@@ -42,15 +42,13 @@ pub struct Health {
 impl Health {
     /// Subscribes to health events. Returns `None` if the SDK refuses
     /// (out of memory or health unsupported).
-    pub fn subscribe(
-        _app: &mut App,
-        f: impl FnMut(HealthEventType) + 'static,
-    ) -> Option<Health> {
+    pub fn subscribe(_app: &mut App, f: impl FnMut(HealthEventType) + 'static) -> Option<Health> {
         let state = Box::into_raw(Box::new(HealthState {
             on_event: Some(Box::new(f)),
             callback_depth: 0,
         }));
-        let ok = unsafe { sys::health_service_events_subscribe(Some(on_health_event), state.cast()) };
+        let ok =
+            unsafe { sys::health_service_events_subscribe(Some(on_health_event), state.cast()) };
         if ok {
             Some(Health { state })
         } else {
