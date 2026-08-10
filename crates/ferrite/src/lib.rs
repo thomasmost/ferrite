@@ -10,11 +10,11 @@ pub use ferrite_sys as sys;
 // `target_os = "none"` so it never clashes with std's.
 #[cfg(any(target_os = "none", test))]
 mod panic;
+mod fmt_buf;
 pub mod heap;
+pub mod log;
 pub mod text_layer;
 pub mod window;
-
-use core::ffi::CStr;
 
 /// Capability token proving the app runtime is initialized.
 ///
@@ -33,19 +33,6 @@ impl App {
     #[doc(hidden)]
     pub unsafe fn __new() -> App {
         App { _private: () }
-    }
-}
-
-/// Log a message at INFO level via the SDK's `app_log` (shows in `pebble logs`).
-pub fn log_info(msg: &CStr) {
-    unsafe {
-        sys::app_log(
-            sys::AppLogLevel::APP_LOG_LEVEL_INFO.0,
-            c"rust".as_ptr(),
-            0,
-            c"%s".as_ptr(),
-            msg.as_ptr(),
-        );
     }
 }
 
@@ -74,6 +61,11 @@ pub fn log_info(msg: &CStr) {
 ///     }
 /// }
 /// ```
+///
+/// Cleanup: when the event loop returns (user exits the app), the kept
+/// state is dropped in reverse declaration order, running every wrapper's
+/// `Drop` (windows destroy their SDK objects, services unsubscribe).
+/// This is the finalized lifecycle — apps never manage teardown manually.
 #[macro_export]
 macro_rules! app {
     (fn main($app:ident: &mut App) $body:block) => {
