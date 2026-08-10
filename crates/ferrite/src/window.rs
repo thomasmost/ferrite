@@ -133,12 +133,19 @@ impl Window {
         unsafe { sys::layer_get_bounds(sys::window_get_root_layer(self.raw)) }
     }
 
-    /// Adds a text layer as a child of the window's root layer. The child
+    /// Adds a layer wrapper as a child of the window's root layer. The child
     /// must outlive its time in the window (keep both in your app state).
-    pub fn add_child(&mut self, child: &crate::text_layer::TextLayer) {
+    pub fn add_child(&mut self, child: &impl crate::layer::AsLayer) {
         unsafe {
-            sys::layer_add_child(sys::window_get_root_layer(self.raw), child.as_layer_ptr());
+            sys::layer_add_child(
+                sys::window_get_root_layer(self.raw),
+                child.as_layer_ptr(),
+            );
         }
+    }
+
+    pub(crate) fn as_window_ptr(&mut self) -> *mut sys::Window {
+        self.raw
     }
 
     /// Pushes the window onto the window stack, making it visible.

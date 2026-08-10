@@ -73,14 +73,16 @@ impl TextLayer {
     pub fn set_font(&mut self, font: Font) {
         unsafe { sys::text_layer_set_font(self.raw, font.0) };
     }
-
-    pub(crate) fn as_layer_ptr(&self) -> *mut sys::Layer {
-        unsafe { sys::text_layer_get_layer(self.raw) }
-    }
 }
 
 impl Drop for TextLayer {
     fn drop(&mut self) {
         unsafe { sys::text_layer_destroy(self.raw) };
+    }
+}
+
+impl crate::layer::AsLayer for TextLayer {
+    fn as_layer_ptr(&self) -> *mut sys::Layer {
+        unsafe { sys::text_layer_get_layer(self.raw) }
     }
 }

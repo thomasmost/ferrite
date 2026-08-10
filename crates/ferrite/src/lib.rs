@@ -15,6 +15,7 @@ pub mod log;
 #[cfg(target_os = "none")]
 mod panic;
 pub mod graphics;
+pub mod layer;
 pub mod text_layer;
 pub mod window;
 
