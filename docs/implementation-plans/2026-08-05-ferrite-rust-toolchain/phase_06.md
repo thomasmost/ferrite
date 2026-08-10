@@ -14,6 +14,31 @@
 
 ## Context for the implementing engineer (read first)
 
+- **CORRECTED during Phase 6 (before execution) — the listings below predate
+  the Phase 4/5 review fixes. The notes win over the code:**
+  1. **Trampoline discipline (Tasks 1 and 4).** `on_inbox_received`,
+     `on_inbox_dropped` and `on_health_event` as listed hold
+     `&mut AppMessageState`/`&mut HealthState` across user-closure calls —
+     the Miri-proven-UB shape. Use take/call/restore (house pattern in
+     click.rs/canvas.rs/menu_layer.rs): take the closure out
+     (statement-scoped borrow), run borrow-free, restore only into an empty
+     slot. `HealthState.on_event` must become `Option<Box<...>>` for this.
+     Document the discipline + residual contract (dropping the service
+     wrapper from inside its own callback unsupported) as the other modules
+     do; a callback_depth backstop matches house style.
+  2. **Task 5's return tuple is wrong twice.** `(home, menu, messages)`
+     silently DROPS `text` and `canvas` (their screens go blank — the
+     Phase 4 bug class — and check.sh's navigation/canvas legs fail), and
+     orders `home` before `menu` (parent before child). Keep all Phase 5
+     state, children before parents, services anywhere before home:
+     `(text, canvas, menu, messages, home)`.
+  3. **Task 5's tick closure drops the u64 box and log field (third
+     recurrence).** check.sh counts a heartbeat line as complete only when
+     it matches `heap_free=[0-9]+ u64=[0-9]+`, and the Box<u64> is the only
+     on-device exercise of the allocator's over-alignment shim. The safe
+     tick closure must keep both boxes and the exact format
+     `"HEARTBEAT {} heap_free={} u64={}"`.
+
 - **AppMessage has ONE global context and four callback slots.** We register inbox received/dropped trampolines and set the context to a boxed `AppMessageState`. The wrapper's `Drop` deregisters and clears the context. Outbound messaging is out of scope (Fitter is inbound-only); the raw sys API remains available.
 - **Reading `Tuple` fields must respect packing.** The struct is `#[repr(C, packed)]` in the bindings; the `type` bitfield is read via the generated accessor (check its exact name — bindgen renames the C field `type` to `type_`), and `length`/`key` reads from a packed struct copy by value (allowed). The value bytes start at the flexible-array member; decode integers by copying bytes (no unaligned typed loads).
 - **Static slot pattern for tick** (design-mandated): a `static` `UnsafeCell<Option<Box<closure>>>` with a manual `Sync` impl, justified by the single-threaded platform. The trampoline *takes* the closure out, calls it, and restores it only if the slot is still empty — so a closure that resubscribes from inside itself can't free its own executing body.
