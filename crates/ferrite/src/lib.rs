@@ -14,6 +14,7 @@ pub mod log;
 // panic handler during host testing. The handler uses FixedBuf for logging.
 #[cfg(target_os = "none")]
 mod panic;
+pub mod canvas;
 pub mod graphics;
 pub mod layer;
 pub mod text_layer;
