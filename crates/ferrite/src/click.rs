@@ -38,8 +38,7 @@ impl Button {
         }
     }
 
-    const ALL: [Button; NUM_BUTTONS] =
-        [Button::Back, Button::Up, Button::Select, Button::Down];
+    const ALL: [Button; NUM_BUTTONS] = [Button::Back, Button::Up, Button::Select, Button::Down];
 }
 
 type Callback = Box<dyn FnMut() + 'static>;

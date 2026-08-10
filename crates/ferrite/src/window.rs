@@ -69,8 +69,8 @@ impl Window {
 
     /// Registers a long-press handler (fires on press after `delay_ms`).
     pub fn on_long_click(&mut self, button: Button, delay_ms: u16, f: impl FnMut() + 'static) {
-        let entry = self.state_mut().clicks.long[button as usize]
-            .get_or_insert_with(|| LongClick {
+        let entry =
+            self.state_mut().clicks.long[button as usize].get_or_insert_with(|| LongClick {
                 delay_ms,
                 down: None,
                 up: None,
@@ -83,8 +83,8 @@ impl Window {
     /// Registers a long-press release handler (fires when the button is
     /// released after a long press of `delay_ms`).
     pub fn on_long_click_up(&mut self, button: Button, delay_ms: u16, f: impl FnMut() + 'static) {
-        let entry = self.state_mut().clicks.long[button as usize]
-            .get_or_insert_with(|| LongClick {
+        let entry =
+            self.state_mut().clicks.long[button as usize].get_or_insert_with(|| LongClick {
                 delay_ms,
                 down: None,
                 up: None,
@@ -117,10 +117,7 @@ impl Window {
     /// must outlive its time in the window (keep both in your app state).
     pub fn add_child(&mut self, child: &crate::text_layer::TextLayer) {
         unsafe {
-            sys::layer_add_child(
-                sys::window_get_root_layer(self.raw),
-                child.as_layer_ptr(),
-            );
+            sys::layer_add_child(sys::window_get_root_layer(self.raw), child.as_layer_ptr());
         }
     }
 
