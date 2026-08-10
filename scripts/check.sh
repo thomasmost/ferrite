@@ -109,18 +109,37 @@ for _ in $(seq 1 "$TIMEOUT_SECS"); do
 
             # Button-navigation gate: the Phase 4 RFC-2229 capture bug shipped
             # with heartbeats green -- window 2 loaded but its text layer had
-            # been dropped. Drive SELECT and require the load handler to fire
-            # so click dispatch and window push are covered, not just ticks.
-            echo "==> button navigation (SELECT must load window 2)"
-            (cd "$HELLO_DIR" && pebble emu-button --emulator emery click select)
+            # been dropped. Drive SELECT and require the load handler to fire.
+            # TWICE, with a BACK between: the handler is taken out of its slot
+            # while it runs and restored afterwards, and the SDK re-subscribes
+            # on each provider run -- a broken restore works exactly once and
+            # is dead thereafter, which a single press cannot detect.
+            echo "==> button navigation (SELECT must load window 2, twice)"
+            press() {
+                (cd "$HELLO_DIR" && pebble emu-button --emulator emery click "$1") \
+                    || { echo "FAIL: emu-button $1 failed"; exit 1; }
+            }
+            press select
             for _ in $(seq 1 15); do
-                if grep -q "window 2 loaded" "$LOG_FILE"; then
-                    echo "PASS: SELECT navigation loaded window 2"
+                grep -q "window 2 loaded" "$LOG_FILE" && break
+                sleep 1
+            done
+            if ! grep -q "window 2 loaded" "$LOG_FILE"; then
+                echo "FAIL: SELECT sent but 'window 2 loaded' never appeared. Tail:"
+                tail -10 "$LOG_FILE"
+                exit 1
+            fi
+            press back
+            sleep 2
+            press select
+            for _ in $(seq 1 15); do
+                if [[ $(grep -c "window 2 loaded" "$LOG_FILE") -ge 2 ]]; then
+                    echo "PASS: SELECT navigation loaded window 2 twice (handler restored)"
                     exit 0
                 fi
                 sleep 1
             done
-            echo "FAIL: SELECT sent but 'window 2 loaded' never appeared. Tail:"
+            echo "FAIL: second SELECT did not load window 2 -- handler lost after first dispatch. Tail:"
             tail -10 "$LOG_FILE"
             exit 1
         else

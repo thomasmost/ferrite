@@ -23,7 +23,10 @@
 //! Residual contract: dropping a `Window` from inside one of its own
 //! callbacks is not supported -- the state box would be freed under the
 //! executing closure. This cannot be written without deliberate
-//! `Rc`-into-own-closure gymnastics; it is documented rather than defended.
+//! `Rc`-into-own-closure gymnastics. As a backstop, every trampoline tracks
+//! `WindowState::callback_depth` and `Drop for Window` debug-asserts it is
+//! zero, turning the use-after-free into a deterministic panic in debug
+//! builds.
 
 use alloc::boxed::Box;
 use core::ffi::c_void;
@@ -62,6 +65,20 @@ impl Button {
 
 type Callback = Box<dyn FnMut() + 'static>;
 
+/// A registered single-click handler.
+///
+/// The wrapper exists so REGISTRATION is a different fact from the closure
+/// being momentarily out of its slot: while a handler executes, `take_*` has
+/// emptied the inner `cb`, but the outer `Option<SingleClick>` stays `Some`.
+/// The provider reads the outer option, and the SDK clears every
+/// subscription before each provider run -- if presence were derived from
+/// the closure slot, a reentrant registration (which re-runs the provider
+/// synchronously, pebble.h:5213) would see the running button as
+/// unregistered and permanently unsubscribe it.
+pub(crate) struct SingleClick {
+    pub(crate) cb: Option<Callback>,
+}
+
 pub(crate) struct LongClick {
     pub(crate) delay_ms: u16,
     pub(crate) down: Option<Callback>,
@@ -69,7 +86,7 @@ pub(crate) struct LongClick {
 }
 
 pub(crate) struct ClickHandlers {
-    pub(crate) single: [Option<Callback>; NUM_BUTTONS],
+    pub(crate) single: [Option<SingleClick>; NUM_BUTTONS],
     pub(crate) long: [Option<LongClick>; NUM_BUTTONS],
 }
 
@@ -84,16 +101,23 @@ impl ClickHandlers {
     // take_*/restore_* are the reentrancy-safe dispatch primitives (see the
     // module doc). The trampolines call them in SEPARATE borrow scopes so no
     // &mut WindowState is live while the user closure runs; restore_* only
-    // writes into an empty slot so a reentrant re-registration wins.
+    // writes into an empty inner slot so a reentrant re-registration wins.
+    // Both tables keep their OUTER option occupied during dispatch, so the
+    // provider's registration predicate stays truthful throughout.
+
+    pub(crate) fn set_single(&mut self, button: Button, cb: Callback) {
+        self.single[button as usize] = Some(SingleClick { cb: Some(cb) });
+    }
 
     pub(crate) fn take_single(&mut self, button: Button) -> Option<Callback> {
-        self.single[button as usize].take()
+        self.single[button as usize].as_mut()?.cb.take()
     }
 
     pub(crate) fn restore_single(&mut self, button: Button, cb: Callback) {
-        let slot = &mut self.single[button as usize];
-        if slot.is_none() {
-            *slot = Some(cb);
+        if let Some(sc) = self.single[button as usize].as_mut() {
+            if sc.cb.is_none() {
+                sc.cb = Some(cb);
+            }
         }
     }
 
@@ -155,12 +179,13 @@ impl ClickHandlers {
 /// Registered via `window_set_click_config_provider_with_context`; the SDK
 /// calls it (with our context) whenever the window needs its click config --
 /// including synchronously from the install call itself when the window is
-/// already visible (pebble.h:5213).
+/// already visible (pebble.h:5213). The SDK clears all previous
+/// subscriptions before each run, so this must subscribe every button that
+/// is REGISTERED -- which is why registration is tracked by the outer
+/// options, not by whether a closure currently sits in its slot.
 ///
-/// Shared reference on purpose: this only READS the tables, and the
-/// synchronous-reentry path means a `&mut` here could overlap the `&mut`
-/// that `Window::on_click` just released -- shared access needs no such
-/// reasoning at all.
+/// Shared reference because this function only reads; it needs no
+/// exclusivity, so taking `&mut` here would claim more than it uses.
 pub(crate) unsafe extern "C" fn click_config_provider(context: *mut c_void) {
     let state = &*(context as *const WindowState);
     for button in Button::ALL {
@@ -190,7 +215,9 @@ unsafe extern "C" fn on_single_click(rec: sys::ClickRecognizerRef, context: *mut
     if let Some(b) = Button::from_raw(sys::click_recognizer_get_button_id(rec)) {
         let taken = (*state).clicks.take_single(b);
         if let Some(mut f) = taken {
+            (*state).callback_depth += 1;
             f();
+            (*state).callback_depth -= 1;
             (*state).clicks.restore_single(b, f);
         }
     }
@@ -201,7 +228,9 @@ unsafe extern "C" fn on_long_down(rec: sys::ClickRecognizerRef, context: *mut c_
     if let Some(b) = Button::from_raw(sys::click_recognizer_get_button_id(rec)) {
         let taken = (*state).clicks.take_long_down(b);
         if let Some(mut f) = taken {
+            (*state).callback_depth += 1;
             f();
+            (*state).callback_depth -= 1;
             (*state).clicks.restore_long_down(b, f);
         }
     }
@@ -212,7 +241,9 @@ unsafe extern "C" fn on_long_up(rec: sys::ClickRecognizerRef, context: *mut c_vo
     if let Some(b) = Button::from_raw(sys::click_recognizer_get_button_id(rec)) {
         let taken = (*state).clicks.take_long_up(b);
         if let Some(mut f) = taken {
+            (*state).callback_depth += 1;
             f();
+            (*state).callback_depth -= 1;
             (*state).clicks.restore_long_up(b, f);
         }
     }
@@ -260,9 +291,9 @@ mod tests {
         assert_eq!(downs.get(), 0);
     }
 
-    /// The reentrancy-safe primitives: take empties the slot, restore
-    /// refills an empty slot, and restore NEVER clobbers an occupied slot
-    /// (a reentrant re-registration must win over the finished closure).
+    /// The reentrancy-safe primitives: take empties the inner slot, restore
+    /// refills an empty inner slot, and restore NEVER clobbers an occupied
+    /// one (a reentrant re-registration must win over the finished closure).
     #[test]
     fn restore_does_not_clobber_a_reregistered_handler() {
         let first = Rc::new(Cell::new(0));
@@ -270,18 +301,14 @@ mod tests {
         let mut ch = ClickHandlers::new();
 
         let f1 = first.clone();
-        ch.single[Button::Select as usize] = Some(Box::new(move || f1.set(f1.get() + 1)));
+        ch.set_single(Button::Select, Box::new(move || f1.set(f1.get() + 1)));
 
         // Simulate the trampoline sequence with a reentrant registration
         // happening while the closure is out of its slot.
         let mut taken = ch.take_single(Button::Select).expect("registered");
-        assert!(
-            ch.single[Button::Select as usize].is_none(),
-            "take must empty"
-        );
         taken();
         let s2 = second.clone();
-        ch.single[Button::Select as usize] = Some(Box::new(move || s2.set(s2.get() + 1)));
+        ch.set_single(Button::Select, Box::new(move || s2.set(s2.get() + 1)));
         ch.restore_single(Button::Select, taken); // must NOT clobber
 
         ch.dispatch_single(Button::Select);
@@ -292,12 +319,75 @@ mod tests {
         );
     }
 
+    /// While a handler executes (taken out of its slot), the button must
+    /// still read as REGISTERED: the provider re-runs synchronously on any
+    /// reentrant registration, the SDK clears all subscriptions first, and
+    /// its predicate is the outer option. If take emptied the outer option,
+    /// a reentrant registration would permanently unsubscribe the running
+    /// button (observed on the emulator before this shape existed).
+    #[test]
+    fn registration_stays_visible_while_handler_is_taken() {
+        let mut ch = ClickHandlers::new();
+        ch.set_single(Button::Select, Box::new(|| {}));
+
+        let taken = ch.take_single(Button::Select).expect("registered");
+        assert!(
+            ch.single[Button::Select as usize].is_some(),
+            "provider's registration predicate went false during dispatch"
+        );
+        ch.restore_single(Button::Select, taken);
+        assert!(ch.single[Button::Select as usize]
+            .as_ref()
+            .is_some_and(|sc| sc.cb.is_some()));
+    }
+
+    /// The long-click clobber guards, mirror of the single-click test: a
+    /// reentrant re-registration while the down (or up) closure is out of
+    /// its slot must win over the restore.
+    #[test]
+    fn restore_long_does_not_clobber_reregistered_handlers() {
+        let first = Rc::new(Cell::new(0));
+        let second = Rc::new(Cell::new(0));
+        let mut ch = ClickHandlers::new();
+
+        let f1 = first.clone();
+        ch.long[Button::Select as usize] = Some(LongClick {
+            delay_ms: 500,
+            down: Some(Box::new(move || f1.set(f1.get() + 1))),
+            up: None,
+        });
+
+        let mut taken = ch.take_long_down(Button::Select).expect("registered");
+        taken();
+        let s2 = second.clone();
+        ch.long[Button::Select as usize].as_mut().unwrap().down =
+            Some(Box::new(move || s2.set(s2.get() + 1)));
+        ch.restore_long_down(Button::Select, taken); // must NOT clobber
+        ch.dispatch_long_down(Button::Select);
+        assert_eq!((first.get(), second.get()), (1, 1));
+
+        // Same for the up slot.
+        let third = Rc::new(Cell::new(0));
+        let fourth = Rc::new(Cell::new(0));
+        let t3 = third.clone();
+        ch.long[Button::Select as usize].as_mut().unwrap().up =
+            Some(Box::new(move || t3.set(t3.get() + 1)));
+        let mut taken_up = ch.take_long_up(Button::Select).expect("registered");
+        taken_up();
+        let f4 = fourth.clone();
+        ch.long[Button::Select as usize].as_mut().unwrap().up =
+            Some(Box::new(move || f4.set(f4.get() + 1)));
+        ch.restore_long_up(Button::Select, taken_up); // must NOT clobber
+        ch.dispatch_long_up(Button::Select);
+        assert_eq!((third.get(), fourth.get()), (1, 1));
+    }
+
     #[test]
     fn dispatch_runs_only_the_registered_button() {
         let hits = Rc::new(Cell::new(0));
         let h = hits.clone();
         let mut ch = ClickHandlers::new();
-        ch.single[Button::Select as usize] = Some(Box::new(move || h.set(h.get() + 1)));
+        ch.set_single(Button::Select, Box::new(move || h.set(h.get() + 1)));
 
         ch.dispatch_single(Button::Up); // unregistered: no-op
         assert_eq!(hits.get(), 0);

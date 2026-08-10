@@ -17,7 +17,19 @@
 - **Click context flow (verified in SDK docs):** one context pointer per window. We pass the `WindowState` pointer; the provider trampoline runs inside the SDK when the window becomes topmost and calls `window_single_click_subscribe`/`window_long_click_subscribe` for every button that has a registered closure; those handlers then receive the same `WindowState` pointer and dispatch by `click_recognizer_get_button_id`.
 - **Watchface → watchapp.** Watchfaces don't receive button clicks (the system owns the buttons). This phase flips `examples/hello`'s `package.json` to `"watchface": false`. On a watchapp, BACK on the root window exits the app and BACK on pushed windows pops them automatically — so two-window navigation needs only a SELECT handler.
 - **Host tests.** `ferrite` switches to `#![cfg_attr(not(test), no_std)]` so `cargo test -p ferrite` runs the unit tests on macOS with std's test harness (the panic handler and allocator are already gated on `target_os = "none"`, so they don't clash). Tests cover pure bookkeeping only (no SDK calls): color packing, text-buffer ownership, click dispatch tables.
-- **Reentrancy note (document, don't "fix"):** trampolines take `&mut WindowState` from a raw pointer. This is sound because the platform is single-threaded and the SDK never nests these callbacks; do not add locking.
+- **Reentrancy note — CORRECTED during Phase 4 review (this bullet was wrong,
+  and Miri confirmed the code it prescribed was UB):** the SDK DOES nest:
+  pebble.h:5213 documents that installing a click config provider on a
+  visible window invokes the provider synchronously, and user closures can
+  reach back into the safe API (re-registering handlers from inside a click
+  handler). Trampolines must NOT hold `&mut WindowState` across a
+  user-closure call. The shipped design: closures are taken out of their
+  slot (borrow ends), run borrow-free, and restored only if the slot is
+  still empty; single-click registration is tracked by an outer
+  `Option<SingleClick>` so the provider's predicate stays truthful while a
+  handler is out of its slot (the SDK clears all subscriptions before each
+  provider run). See `click.rs`'s module doc. Still no locking — but for the
+  right reason now.
 - **Drop order in `Window::drop`:** `window_destroy` first (it may fire the unload handler, which touches the state), then free the state box.
 - The `app!` state-keeping contract is unchanged: everything built in setup must be returned from the block (closures capturing windows keep them alive too, since the closure lives inside another window's state).
 
@@ -535,6 +547,14 @@ git commit -m "feat(ferrite): click module with per-button closures and trampoli
 **Step 1: Rewrite the module**
 
 `crates/ferrite/src/window.rs`:
+
+> **CORRECTED during Phase 4 review: the doc comment in this listing repeats
+> the false "never nests" invariant (see the corrected Reentrancy note in the
+> context section above), and the trampolines below hold `&mut WindowState`
+> across user-closure calls, which Miri confirms is UB under reentrancy. The
+> shipped `window.rs`/`click.rs` use the take/call/restore discipline instead
+> — the code is the source of truth, not this listing.**
+
 ```rust
 //! Owned wrapper over the SDK `Window`, with closure-based handlers.
 //!

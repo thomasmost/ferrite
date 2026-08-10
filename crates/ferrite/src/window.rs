@@ -24,6 +24,11 @@ pub(crate) struct WindowState {
     pub(crate) on_load: Option<Box<dyn FnMut()>>,
     pub(crate) on_unload: Option<Box<dyn FnMut()>>,
     pub(crate) clicks: ClickHandlers,
+    /// Number of this window's callbacks currently on the stack. Structural
+    /// backstop for the documented-unsupported case (dropping a `Window`
+    /// from inside its own callback): `Drop` debug-asserts this is zero, so
+    /// in debug builds the use-after-free becomes a deterministic panic.
+    pub(crate) callback_depth: u8,
 }
 
 pub struct Window {
@@ -40,6 +45,7 @@ impl Window {
             on_load: None,
             on_unload: None,
             clicks: ClickHandlers::new(),
+            callback_depth: 0,
         }));
         unsafe {
             sys::window_set_user_data(raw, state.cast());
@@ -77,7 +83,7 @@ impl Window {
     /// (re)installed on a visible window (pebble.h:5213), which is why this
     /// method re-installs it on every registration.
     pub fn on_click(&mut self, button: Button, f: impl FnMut() + 'static) {
-        self.state_mut().clicks.single[button as usize] = Some(Box::new(f));
+        self.state_mut().clicks.set_single(button, Box::new(f));
         self.install_click_provider();
     }
 
@@ -155,6 +161,14 @@ impl Window {
 
 impl Drop for Window {
     fn drop(&mut self) {
+        // Backstop for the documented-unsupported case: dropping a Window
+        // from inside one of its own callbacks would free the state box
+        // under the executing closure. Checked before window_destroy, which
+        // legitimately raises the depth itself when it fires unload.
+        debug_assert!(
+            unsafe { (*self.state).callback_depth } == 0,
+            "Window dropped from inside its own callback (unsupported; see click.rs)"
+        );
         unsafe {
             // Destroy first: it can fire the unload handler, which reads state.
             sys::window_destroy(self.raw);
@@ -183,7 +197,9 @@ unsafe extern "C" fn on_window_load(window: *mut sys::Window) {
     let state = sys::window_get_user_data(window) as *mut WindowState;
     let taken = (*state).on_load.take();
     if let Some(mut f) = taken {
+        (*state).callback_depth += 1;
         f();
+        (*state).callback_depth -= 1;
         let slot = &mut (*state).on_load;
         if slot.is_none() {
             *slot = Some(f);
@@ -195,7 +211,9 @@ unsafe extern "C" fn on_window_unload(window: *mut sys::Window) {
     let state = sys::window_get_user_data(window) as *mut WindowState;
     let taken = (*state).on_unload.take();
     if let Some(mut f) = taken {
+        (*state).callback_depth += 1;
         f();
+        (*state).callback_depth -= 1;
         let slot = &mut (*state).on_unload;
         if slot.is_none() {
             *slot = Some(f);
