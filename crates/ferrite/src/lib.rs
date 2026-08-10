@@ -9,6 +9,7 @@ pub use ferrite_sys as sys;
 
 mod fmt_buf;
 
+pub mod app_message;
 pub mod canvas;
 pub mod click;
 pub mod graphics;
