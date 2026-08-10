@@ -863,6 +863,15 @@ In `examples/hello/package.json`, change:
 >    are parent-before-child, the exact use-after-free Phase 1 flagged as
 >    Critical. Children first in BOTH tuples: return `(text, window)` and
 >    capture `(text2, win2)` (push via `screen2.1`).
+>    **Further corrected after emulator verification:** the tuple-in-closure
+>    pattern is broken EITHER way. Edition-2021 closures capture only the
+>    paths they use (RFC 2229), so `move || screen2.1.push(..)` moves in just
+>    the window and silently DROPS the tuple's other field at the end of the
+>    setup block — destroying the second window's text layer before it is
+>    ever shown (observed: window 2 rendered blank white; root-caused via a
+>    single-variable emulator experiment). The shipped fix captures `win2`
+>    as a whole variable in the closure and keeps `text2` alive in the
+>    returned app state: `(text2, text, window)`.
 > 2. **The heartbeat must keep the `u64` box and log field.** Phase 3's review
 >    added a `Box<u64>` round-trip (the only on-device exercise of the
 >    allocator's over-alignment shim) and `scripts/check.sh` now counts a

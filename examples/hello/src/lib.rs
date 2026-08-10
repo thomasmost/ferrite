@@ -52,10 +52,15 @@ ferrite::app! {
         window.add_child(&text);
         window.on_load(|| ferrite::log::info(c"window 1 loaded"));
 
-        let mut screen2 = (text2, win2);
+        // Capture win2 as a WHOLE variable. Do not bundle it into a tuple and
+        // use one field in the closure: edition-2021 closures capture only the
+        // paths they use (RFC 2229), so `move || tuple.1.push(..)` would move
+        // just the window in and silently DROP the other field at the end of
+        // this block -- destroying the text layer before the window is ever
+        // shown. (That is exactly the bug the plan's original listing had.)
         window.on_click(Button::Select, move || {
             ferrite::log::info(c"SELECT pressed");
-            screen2.1.push(true);
+            win2.push(true);
         });
 
         window.push(true);
@@ -64,6 +69,9 @@ ferrite::app! {
             sys::tick_timer_service_subscribe(sys::TimeUnits::SECOND_UNIT, Some(on_tick));
         }
 
-        (text, window)
+        // Children before parents: text2 (child of win2, which lives inside
+        // window's click closure and drops with window) first, then text,
+        // then window.
+        (text2, text, window)
     }
 }
