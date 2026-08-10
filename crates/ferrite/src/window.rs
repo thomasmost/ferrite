@@ -3,6 +3,14 @@
 use crate::sys;
 use crate::App;
 
+use alloc::boxed::Box;
+
+pub(crate) struct WindowState {
+    pub(crate) on_load: Option<Box<dyn FnMut()>>,
+    pub(crate) on_unload: Option<Box<dyn FnMut()>>,
+    pub(crate) clicks: crate::click::ClickHandlers,
+}
+
 pub struct Window {
     raw: *mut sys::Window,
 }
