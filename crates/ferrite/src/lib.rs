@@ -13,6 +13,7 @@ pub mod app_message;
 pub mod canvas;
 pub mod click;
 pub mod graphics;
+pub mod health;
 pub mod heap;
 pub mod layer;
 pub mod log;
