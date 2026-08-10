@@ -94,8 +94,7 @@ impl Tuple<'_> {
             let len = (*self.raw).length as usize;
             // Get offset to the value field within the packed struct
             let base_ptr = self.raw as *const u8;
-            let value_field_offset =
-                core::mem::offset_of!(sys::Tuple, value);
+            let value_field_offset = core::mem::offset_of!(sys::Tuple, value);
             let value_ptr = base_ptr.add(value_field_offset);
             core::slice::from_raw_parts(value_ptr, len)
         }
@@ -105,17 +104,14 @@ impl Tuple<'_> {
     pub fn value_i32(&self) -> Option<i32> {
         match self.tuple_type() {
             sys::TupleType::TUPLE_INT => decode_int(self.value_bytes_raw()),
-            sys::TupleType::TUPLE_UINT => {
-                decode_uint(self.value_bytes_raw()).map(|v| v as i32)
-            }
+            sys::TupleType::TUPLE_UINT => decode_uint(self.value_bytes_raw()).map(|v| v as i32),
             _ => None,
         }
     }
 
     /// Raw bytes of a byte-array tuple.
     pub fn value_bytes(&self) -> Option<&[u8]> {
-        (self.tuple_type() == sys::TupleType::TUPLE_BYTE_ARRAY)
-            .then(|| self.value_bytes_raw())
+        (self.tuple_type() == sys::TupleType::TUPLE_BYTE_ARRAY).then(|| self.value_bytes_raw())
     }
 
     /// C-string value of a cstring tuple.
@@ -127,9 +123,12 @@ impl Tuple<'_> {
     }
 }
 
+type ReceivedCallback = Box<dyn FnMut(&Dict<'_>)>;
+type DroppedCallback = Box<dyn FnMut(sys::AppMessageResult)>;
+
 struct AppMessageState {
-    on_received: Option<Box<dyn FnMut(&Dict<'_>)>>,
-    on_dropped: Option<Box<dyn FnMut(sys::AppMessageResult)>>,
+    on_received: Option<ReceivedCallback>,
+    on_dropped: Option<DroppedCallback>,
     /// Number of this app's callbacks currently on the stack. Structural
     /// backstop for the documented-unsupported case (dropping an `AppMessage`
     /// from inside its own callback): `Drop` debug-asserts this is zero, so
@@ -271,8 +270,7 @@ mod tests {
         }));
 
         let c = call_count.clone();
-        unsafe { &mut *state }.on_received =
-            Some(Box::new(move |_dict: &Dict| c.set(c.get() + 1)));
+        unsafe { &mut *state }.on_received = Some(Box::new(move |_dict: &Dict| c.set(c.get() + 1)));
 
         // First dispatch
         unsafe {
