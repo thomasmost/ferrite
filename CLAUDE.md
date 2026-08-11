@@ -18,7 +18,7 @@ User-facing docs (prerequisites, template setup, troubleshooting) live in
 ## Project Structure
 - `crates/ferrite-sys/` — generated FFI bindings (committed). See its CLAUDE.md.
 - `crates/ferrite/` — safe API + runtime. See its CLAUDE.md.
-- `crates/xtask/` — `bindgen` and `size` commands. Locates the SDK via
+- `crates/xtask/` — `bindgen`, `size`, and `messagekeys` commands. Locates the SDK via
   `PEBBLE_SDK_ROOT` or the default macOS install path (`sdk.rs`).
 - `examples/hello/` — copyable app template AND the integration test. See its
   CLAUDE.md. **Excluded from the workspace.**
@@ -43,6 +43,11 @@ User-facing docs (prerequisites, template setup, troubleshooting) live in
 - `cargo xtask bindgen` — regenerate `ferrite-sys` bindings (needs libclang).
 - `cargo xtask size [elf]` — static footprint vs Emery's 128 KB app-memory cap.
   **Exits nonzero when over budget** — it is a gate, not a report.
+- `cargo xtask messagekeys [--check] <package.json> <out.rs>` — generate message
+  ID assignments from phone-side JSON keys. Values are assigned sequentially from
+  10000 in `messageKeys` array order, which **IS the wire contract with JS**
+  (appending is safe; inserting or reordering silently corrupts the protocol).
+  **Exits nonzero on drift with --check** — stale generated files fail the gate.
 - `python3 -m unittest discover -s examples/hello/tests` — tests the wscript
   relocation guardrail's parser.
 
