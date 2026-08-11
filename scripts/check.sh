@@ -28,7 +28,7 @@ echo "==> unit tests"
 # Added in Phase 1. These guard logic that regressed more than once: the
 # wscript relocation guardrail (which catches -C relocation-model=pic failing
 # to reach rustc) and FixedBuf's UTF-8 truncation in the panic handler.
-(cd "$REPO_ROOT" && cargo test -p ferrite)
+(cd "$REPO_ROOT" && cargo test --workspace)
 (cd "$REPO_ROOT" && python3 -m unittest discover -s examples/hello/tests)
 
 echo "==> pebble build"

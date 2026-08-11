@@ -28,7 +28,9 @@ trampoline's stack frame.
 This is not theoretical. The naive `&mut *(context as *mut State)` shape was
 written first and **Miri proved it UB** in Phase 4 review. The SDK genuinely
 nests: pebble.h:5213 — installing a click config provider on an already-visible
-window invokes the provider *synchronously*. Run `cargo miri test -p ferrite`
+window invokes the provider *synchronously*. Run
+`cargo +nightly miri test -p ferrite` (miri is nightly-only;
+`rustup +nightly component add miri` once)
 after any trampoline change.
 
 Every callback-bearing module follows it: `click`, `window`, `canvas`,

@@ -19,11 +19,15 @@ pub enum Error {
 
 impl Error {
     fn from_code(code: i32) -> Error {
+        // Pinned to the bindings' StatusCode constants, not transcribed
+        // literals: if a future `cargo xtask bindgen` run ever moves a status
+        // code, this keeps mapping the SDK's actual values instead of
+        // silently degrading every branch to Error::Other.
         match code {
-            -9 => Error::DoesNotExist,
-            -6 => Error::OutOfStorage,
-            -8 => Error::Range,
-            -4 => Error::InvalidArgument,
+            c if c == sys::StatusCode::E_DOES_NOT_EXIST.0 as i32 => Error::DoesNotExist,
+            c if c == sys::StatusCode::E_OUT_OF_STORAGE.0 as i32 => Error::OutOfStorage,
+            c if c == sys::StatusCode::E_RANGE.0 as i32 => Error::Range,
+            c if c == sys::StatusCode::E_INVALID_ARGUMENT.0 as i32 => Error::InvalidArgument,
             other => Error::Other(other),
         }
     }

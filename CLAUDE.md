@@ -34,7 +34,9 @@ User-facing docs (prerequisites, template setup, troubleshooting) live in
 - `cargo test -p ferrite` — host unit tests (`ferrite` is `no_std` except under
   `cfg(test)`; the panic handler and allocator are gated on
   `target_os = "none"` so they do not clash with std).
-- `cargo miri test -p ferrite` — **run this whenever you touch a trampoline.**
+- `cargo +nightly miri test -p ferrite` — **run this whenever you touch a
+  trampoline.** Miri is nightly-only (`rustup +nightly component add miri`
+  once); builds themselves stay on stable, so do NOT pin a toolchain file.
   Miri is what proved the naive "hold `&mut State` across the user closure"
   shape to be UB in Phase 4. It is deliberately NOT in `check.sh` (too slow for
   the loop); running it is your job when editing callback dispatch.
