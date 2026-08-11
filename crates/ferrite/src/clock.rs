@@ -45,6 +45,9 @@ mod tests {
 
     #[no_mangle]
     extern "C" fn localtime(timep: *mut sys::time_t) -> *mut sys::tm {
+        // sys::time_t is c_long; on 64-bit hosts this is already i64 and the cast
+        // is unnecessary but harmless on 32-bit hosts it's needed.
+        #[allow(clippy::unnecessary_cast)]
         ASKED_FOR.with(|c| c.set(unsafe { *timep } as i64));
         if RETURN_NULL.with(|c| c.get()) {
             return core::ptr::null_mut();
