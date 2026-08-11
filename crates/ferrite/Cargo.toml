@@ -1,0 +1,9 @@
+[package]
+name = "ferrite"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Safe Rust API and runtime for PebbleOS watchapps"
+
+[dependencies]
+ferrite-sys = { path = "../ferrite-sys" }

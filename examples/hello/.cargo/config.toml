@@ -1,0 +1,9 @@
+# These flags are mandatory -- see the REQUIRED_RUSTFLAGS comment in ../wscript
+# for why (without PIC, every &'static pointer is garbage at runtime).
+#
+# NOTE: a RUSTFLAGS or CARGO_ENCODED_RUSTFLAGS environment variable overrides
+# this table entirely, so `pebble build` does not rely on it -- the wscript
+# passes the same flags to cargo explicitly and verifies the linked ELF. This
+# table only covers direct `cargo build` invocations in a clean environment.
+[target.thumbv7m-none-eabi]
+rustflags = ["-C", "relocation-model=pic", "-C", "force-unwind-tables=no"]
