@@ -69,6 +69,12 @@ if [[ ! -f "$HELLO_DIR/build/hello.pbw" ]]; then
     exit 1
 fi
 
+echo "==> size budget"
+# cargo xtask size exits nonzero if the static footprint exceeds Emery's
+# 128 KB app-memory cap, making the budget a real gate rather than a number
+# someone has to notice.
+(cd "$REPO_ROOT" && cargo xtask size)
+
 echo "==> install to emery emulator and watch logs (up to ${TIMEOUT_SECS}s)"
 LOG_FILE="$(mktemp)"
 cleanup() {

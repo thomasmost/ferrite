@@ -45,7 +45,23 @@ fn parse_berkeley(stdout: &str) -> Option<(u64, u64, u64)> {
     }
 }
 
+/// Pure budget arithmetic: (footprint, percent-of-cap, bytes remaining for
+/// heap+stack, over-cap flag). The cap is inclusive: exactly at the cap is
+/// allowed with zero remaining.
+fn budget(text: u64, data: u64, bss: u64) -> (u64, u64, u64, bool) {
+    let footprint = text + data + bss;
+    let percent = footprint * 100 / APP_MEMORY_CAP;
+    let remaining = APP_MEMORY_CAP - footprint.min(APP_MEMORY_CAP);
+    (footprint, percent, remaining, footprint > APP_MEMORY_CAP)
+}
+
 pub fn run(args: &[String]) -> ExitCode {
+    if matches!(args.first().map(String::as_str), Some("--help" | "-h")) {
+        eprintln!("usage: cargo xtask size [path/to/app.elf]");
+        eprintln!("  Reports .text/.data/.bss against Emery's 128 KB app-memory cap.");
+        eprintln!("  Defaults to examples/hello/build/emery/pebble-app.elf.");
+        return ExitCode::SUCCESS;
+    }
     let elf = args
         .first()
         .map(PathBuf::from)
@@ -59,10 +75,23 @@ pub fn run(args: &[String]) -> ExitCode {
     }
 
     let size_tool = sdk_root().join("toolchain/arm-none-eabi/bin/arm-none-eabi-size");
-    let output = Command::new(&size_tool)
-        .arg(&elf)
-        .output()
-        .unwrap_or_else(|e| panic!("failed to run {}: {e}", size_tool.display()));
+    // Graceful on the foreseeable user condition (missing/mislocated SDK),
+    // matching gen_bindings' house pattern rather than panicking.
+    if !size_tool.exists() {
+        eprintln!(
+            "error: {} not found.\nInstall Pebble SDK {} or set PEBBLE_SDK_ROOT.",
+            size_tool.display(),
+            crate::sdk::SDK_VERSION
+        );
+        return ExitCode::FAILURE;
+    }
+    let output = match Command::new(&size_tool).arg(&elf).output() {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("error: failed to run {}: {e}", size_tool.display());
+            return ExitCode::FAILURE;
+        }
+    };
     if !output.status.success() {
         eprintln!("{}", String::from_utf8_lossy(&output.stderr));
         return ExitCode::FAILURE;
@@ -77,8 +106,7 @@ pub fn run(args: &[String]) -> ExitCode {
         }
     };
 
-    let footprint = text + data + bss;
-    let percent = footprint * 100 / APP_MEMORY_CAP;
+    let (footprint, percent, remaining, over) = budget(text, data, bss);
     println!("{}", elf.display());
     println!("  .text (code+rodata): {text:>7} bytes");
     println!("  .data (init data):   {data:>7} bytes");
@@ -86,12 +114,9 @@ pub fn run(args: &[String]) -> ExitCode {
     println!(
         "  static footprint:    {footprint:>7} / {APP_MEMORY_CAP} bytes ({percent}% of app memory)"
     );
-    println!(
-        "  left for heap+stack: {:>7} bytes",
-        APP_MEMORY_CAP - footprint.min(APP_MEMORY_CAP)
-    );
+    println!("  left for heap+stack: {remaining:>7} bytes");
 
-    if footprint > APP_MEMORY_CAP {
+    if over {
         eprintln!("ERROR: exceeds the {APP_MEMORY_CAP}-byte app memory cap");
         return ExitCode::FAILURE;
     }
@@ -149,5 +174,36 @@ mod tests {
         let output = "   text    data     bss     dec     hex filename\n   23456    712\n";
         let result = parse_berkeley(output);
         assert_eq!(result, None);
+    }
+
+    /// The cap is inclusive: exactly at 0x20000 passes with zero remaining.
+    #[test]
+    fn budget_exactly_at_cap_is_allowed() {
+        let (footprint, percent, remaining, over) = budget(APP_MEMORY_CAP, 0, 0);
+        assert_eq!(footprint, APP_MEMORY_CAP);
+        assert_eq!(percent, 100);
+        assert_eq!(remaining, 0);
+        assert!(!over);
+    }
+
+    /// Over the cap: flagged, zero remaining, and — the reason the remaining
+    /// arithmetic uses `.min(cap)` — no underflow panic.
+    #[test]
+    fn budget_over_cap_is_flagged_without_underflow() {
+        let (footprint, percent, remaining, over) = budget(APP_MEMORY_CAP, 1, 0);
+        assert_eq!(footprint, APP_MEMORY_CAP + 1);
+        assert_eq!(percent, 100);
+        assert_eq!(remaining, 0);
+        assert!(over);
+    }
+
+    #[test]
+    fn budget_typical_footprint() {
+        // The measured hello baseline at the time of writing.
+        let (footprint, percent, remaining, over) = budget(12441, 444, 8);
+        assert_eq!(footprint, 12893);
+        assert_eq!(percent, 9);
+        assert_eq!(remaining, 131072 - 12893);
+        assert!(!over);
     }
 }

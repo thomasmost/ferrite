@@ -63,7 +63,7 @@ cargo xtask size [path/to/pebble-app.elf]
 Baseline for `examples/hello` (Ferrite 6fd6c18):
 
 ```
-/Users/thomas/vibes/ferrite/examples/hello/build/emery/pebble-app.elf
+examples/hello/build/emery/pebble-app.elf
   .text (code+rodata):   12441 bytes
   .data (init data):       444 bytes
   .bss  (zeroed data):       8 bytes
@@ -90,9 +90,10 @@ rustup target add thumbv7m-none-eabi
 non-standard, set `PEBBLE_SDK_ROOT=/path/to/SDKs/4.17` for `cargo xtask`
 commands (the `pebble` tool itself manages its own paths).
 
-**`cargo: command not found` during `pebble build`** — the wscript falls
-back to `~/.cargo/bin/cargo`; if your Rust lives elsewhere, ensure `cargo`
-is on `PATH` in the shell that runs `pebble build`.
+**`cargo: command not found` during `pebble build`** — the wscript uses
+`~/.cargo/bin/cargo` when it exists and otherwise looks up `cargo` on
+`PATH`; if your Rust lives elsewhere, ensure `cargo` is on `PATH` in the
+shell that runs `pebble build`.
 
 ## Regenerating the SDK bindings
 
