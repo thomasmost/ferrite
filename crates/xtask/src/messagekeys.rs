@@ -35,12 +35,10 @@ fn emit_module(keys: &[(String, u32)]) -> String {
     out.push_str("//! Source: <path to package.json>\n");
     out.push_str("//! Regenerate: cargo xtask messagekeys <args>\n");
     out.push_str("//!\n");
-    out.push_str(
-        "//! Values are assigned sequentially from 10000 in `messageKeys` array order.\n",
-    );
+    out.push_str("//! Values are assigned sequentially from 10000 in `messageKeys` array order.\n");
     out.push_str("//! The order IS the wire contract, shared with the phone-side JS. Append new\n");
     out.push_str("//! keys at the end; never insert or reorder.\n");
-    out.push_str("\n");
+    out.push('\n');
 
     for (name, id) in keys {
         out.push_str(&format!("pub const {}: u32 = {};\n", name, id));
@@ -62,19 +60,20 @@ pub fn run(args: &[String]) -> ExitCode {
         };
     }
 
-    let (check_mode, package_path, output_path) = if args.get(0).map(String::as_str) == Some("--check") {
-        if args.len() < 3 {
-            eprintln!("error: --check requires <package.json> and <output.rs>");
-            return ExitCode::FAILURE;
-        }
-        (true, &args[1], &args[2])
-    } else {
-        if args.len() < 2 {
-            eprintln!("error: requires <package.json> and <output.rs>");
-            return ExitCode::FAILURE;
-        }
-        (false, &args[0], &args[1])
-    };
+    let (check_mode, package_path, output_path) =
+        if args.first().map(String::as_str) == Some("--check") {
+            if args.len() < 3 {
+                eprintln!("error: --check requires <package.json> and <output.rs>");
+                return ExitCode::FAILURE;
+            }
+            (true, &args[1], &args[2])
+        } else {
+            if args.len() < 2 {
+                eprintln!("error: requires <package.json> and <output.rs>");
+                return ExitCode::FAILURE;
+            }
+            (false, &args[0], &args[1])
+        };
 
     // Read package.json
     let json_content = match std::fs::read_to_string(package_path) {
@@ -101,10 +100,7 @@ pub fn run(args: &[String]) -> ExitCode {
         let existing = match std::fs::read_to_string(output_path) {
             Ok(c) => c,
             Err(e) => {
-                eprintln!(
-                    "error: --check mode: cannot read {}: {}",
-                    output_path, e
-                );
+                eprintln!("error: --check mode: cannot read {}: {}", output_path, e);
                 return ExitCode::FAILURE;
             }
         };
@@ -179,10 +175,7 @@ mod tests {
         assert_eq!(out, emit_module(&keys), "emission must be deterministic");
         assert!(out.contains("pub const LAT: u32 = 10000;"));
         assert!(out.contains("pub const CFG_PAUSE_SPEED: u32 = 10002;"));
-        assert!(
-            out.contains("DO NOT EDIT"),
-            "generated files must say so"
-        );
+        assert!(out.contains("DO NOT EDIT"), "generated files must say so");
     }
 
     #[test]
