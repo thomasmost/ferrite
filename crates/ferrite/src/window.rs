@@ -171,6 +171,13 @@ impl Window {
     ///
     /// Note (pebble.h:5730): if this leaves no windows on the stack, the
     /// system kills the app shortly afterwards.
+    ///
+    /// **This is the supported way for a window to dismiss itself from inside
+    /// its own click handler.** It does not free the window's state box, so
+    /// the executing closure stays valid. Do NOT drop the `Window` value in
+    /// the handler as well — see `click.rs`'s module doc. Keep it in the
+    /// app-state tuple and let it drop at exit; a self-dismissing dialog that
+    /// stays allocated for the app's life costs one window and is correct.
     pub fn remove_from_stack(&mut self, animated: bool) -> bool {
         unsafe { sys::window_stack_remove(self.raw, animated) }
     }

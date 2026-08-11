@@ -54,6 +54,10 @@ Corollaries:
   the executing closure. Backstopped by `callback_depth` + a `debug_assert` in
   `Drop`. Note `pebble build` is `--release`, so on-device this documents the
   contract rather than enforcing it.
+  The supported alternative for a self-dismissing window (a launch dialog, a
+  confirmation) is `remove_from_stack()` inside the handler, with the `Window`
+  kept in the app-state tuple so it drops at exit. Costs one allocation for
+  the app's life; correct at every optimization level.
 
 ## Invariant: drop order and RFC-2229 capture
 Children must drop before parents, or a child's `Drop` unlinks from a freed
