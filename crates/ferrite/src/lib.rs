@@ -25,6 +25,7 @@ pub mod persist;
 mod panic;
 pub mod text_layer;
 pub mod tick;
+pub mod time;
 pub mod types;
 pub mod window;
 
