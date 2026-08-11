@@ -237,6 +237,18 @@ mod tests {
         RET_CODE.with(|c| c.set(0));
     }
 
+    /// write_int and write_bool succeed through the real call path (the Ok
+    /// branch of check(), and the only coverage write_bool has).
+    #[test]
+    fn int_and_bool_writes_succeed() {
+        RET_CODE.with(|c| c.set(4));
+        assert_eq!(write_int(7, 123), Ok(()));
+        assert_eq!(write_bool(7, true), Ok(()));
+        EXISTS.with(|c| c.set(true));
+        assert_eq!(read_int(7), Ok(1)); // write_bool stored last: true as 1
+        RET_CODE.with(|c| c.set(0));
+    }
+
     /// Byte counts pass through unchanged, and read_data round-trips what
     /// write_data stored.
     #[test]
