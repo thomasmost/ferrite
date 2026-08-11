@@ -12,6 +12,8 @@ use crate::sys;
 /// firmware should never report) reads as 0, and a post-2106 clock pins at
 /// `u32::MAX`. Both are preferable to a wrapped value that looks plausible.
 pub fn now() -> u32 {
+    // SAFETY: time() with a null tloc is the documented no-output form per
+    // pebble.h:5899 — it returns the current epoch without writing to memory.
     epoch_to_u32(unsafe { sys::time(core::ptr::null_mut()) })
 }
 

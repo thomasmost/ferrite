@@ -38,11 +38,18 @@ use crate::App;
 pub(crate) fn str_to_cstr<'a>(buf: &'a mut [u8], s: &str) -> &'a CStr {
     assert!(!buf.is_empty(), "row-text buffer must have room for a NUL");
     let limit = buf.len() - 1;
-    let n = core::cmp::min(s.len(), limit);
+    let mut n = core::cmp::min(s.len(), limit);
+
+    // Clamp to the first interior NUL, if any. Rust strings can contain NUL bytes.
+    if let Some(nul_pos) = s.as_bytes()[..n].iter().position(|&b| b == 0) {
+        n = nul_pos;
+    }
+
     buf[..n].copy_from_slice(&s.as_bytes()[..n]);
     buf[n] = 0;
-    // SAFETY: bytes [0, n) are copied from a &str so contain no interior NUL,
-    // and buf[n] is the terminator.
+    // SAFETY: we copy exactly n bytes from s.as_bytes()[..n], clamped to stop
+    // before any interior NUL, and set buf[n] = 0 as the terminator. The result
+    // contains no interior NUL bytes and is properly terminated.
     unsafe { CStr::from_bytes_with_nul_unchecked(&buf[..=n]) }
 }
 
@@ -483,5 +490,14 @@ mod tests {
         let mut buf = [0u8; 4];
         let c = super::str_to_cstr(&mut buf, "aé…");
         assert!(c.to_bytes().len() <= 3);
+    }
+
+    /// A Rust &str can contain interior NUL bytes. The wrapper must clamp to
+    /// the first NUL so CStr's invariant (no interior NUL) is maintained.
+    #[test]
+    fn str_overload_truncates_at_interior_nul() {
+        let mut buf = [0u8; 16];
+        let c = super::str_to_cstr(&mut buf, "a\0b");
+        assert_eq!(c.to_bytes(), b"a", "must truncate at interior NUL");
     }
 }
