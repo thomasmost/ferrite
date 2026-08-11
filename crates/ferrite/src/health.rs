@@ -73,6 +73,9 @@ impl Drop for Health {
             "Health dropped from inside its own callback (unsupported; see health.rs)"
         );
         unsafe {
+            // Reset heart-rate sample period first: an uncancelled request outlives
+            // the app and costs battery (SDK best practice).
+            sys::health_service_set_heart_rate_sample_period(0);
             sys::health_service_events_unsubscribe();
             drop(Box::from_raw(self.state));
         }
@@ -84,13 +87,18 @@ pub fn peek(metric: HealthMetric) -> i32 {
     unsafe { sys::health_service_peek_current_value(metric) }
 }
 
+/// Check if a bitmask indicates availability.
+/// Accessibility is a bitmask — we test the Available bit, not compare for equality
+/// (the SDK may OR in other reasons like NotSupported or NoPermission).
+fn mask_is_available(mask: sys::HealthServiceAccessibilityMask) -> bool {
+    mask.0 & sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskAvailable.0 != 0
+}
+
 /// Whether `metric` is available right now.
 pub fn metric_available(metric: HealthMetric) -> bool {
     let now = unsafe { sys::time(core::ptr::null_mut()) };
     let mask = unsafe { sys::health_service_metric_accessible(metric, now, now) };
-    // Accessibility is a bitmask — test the Available bit, don't compare
-    // for equality (the SDK may OR in other reasons).
-    mask.0 & sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskAvailable.0 != 0
+    mask_is_available(mask)
 }
 
 // --- Trampoline (context = *mut HealthState) ---
@@ -194,5 +202,52 @@ mod tests {
         );
 
         unsafe { drop(Box::from_raw(state)) };
+    }
+
+    /// Test the bitmask check: Available must return true.
+    #[test]
+    fn mask_is_available_with_available() {
+        let available =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskAvailable;
+        assert!(mask_is_available(available));
+    }
+
+    /// Test the bitmask check: NoPermission must return false.
+    #[test]
+    fn mask_is_available_with_no_permission() {
+        let no_perm =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskNoPermission;
+        assert!(!mask_is_available(no_perm));
+    }
+
+    /// Test the bitmask check: NotSupported must return false.
+    #[test]
+    fn mask_is_available_with_not_supported() {
+        let not_supported =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskNotSupported;
+        assert!(!mask_is_available(not_supported));
+    }
+
+    /// Test the bitmask check: NotAvailable must return false.
+    #[test]
+    fn mask_is_available_with_not_available() {
+        let not_avail =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskNotAvailable;
+        assert!(!mask_is_available(not_avail));
+    }
+
+    /// Test the bitmask check: Available | NotAvailable must return true (the Available bit is set).
+    #[test]
+    fn mask_is_available_with_or_case() {
+        // Simulate SDK ORing in multiple bits
+        let available =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskAvailable;
+        let not_avail =
+            sys::HealthServiceAccessibilityMask::HealthServiceAccessibilityMaskNotAvailable;
+        let combined = sys::HealthServiceAccessibilityMask(available.0 | not_avail.0);
+        assert!(
+            mask_is_available(combined),
+            "Available bit must be detected even when ORed with other bits"
+        );
     }
 }

@@ -100,11 +100,22 @@ impl Tuple<'_> {
         }
     }
 
-    /// Integer value (signed or unsigned tuple types), sign-extended to i32.
+    /// Integer value (signed for TUPLE_INT, zero-extended for TUPLE_UINT cast to i32).
+    /// For TUPLE_UINT with values > i32::MAX, the cast wraps (lossy).
+    /// Returns None for non-integer types.
     pub fn value_i32(&self) -> Option<i32> {
         match self.tuple_type() {
             sys::TupleType::TUPLE_INT => decode_int(self.value_bytes_raw()),
             sys::TupleType::TUPLE_UINT => decode_uint(self.value_bytes_raw()).map(|v| v as i32),
+            _ => None,
+        }
+    }
+
+    /// Unsigned integer value (TUPLE_UINT only, zero-extended to u32).
+    /// Returns None for non-integer types.
+    pub fn value_u32(&self) -> Option<u32> {
+        match self.tuple_type() {
+            sys::TupleType::TUPLE_UINT => decode_uint(self.value_bytes_raw()),
             _ => None,
         }
     }
@@ -136,6 +147,12 @@ struct AppMessageState {
     callback_depth: u8,
 }
 
+// Flag tracking whether an AppMessage is currently open.
+// The watch runtime is single-threaded, so Cell is sufficient.
+struct AppMessageOpenFlag(core::cell::Cell<bool>);
+unsafe impl Sync for AppMessageOpenFlag {}
+static OPEN_FLAG: AppMessageOpenFlag = AppMessageOpenFlag(core::cell::Cell::new(false));
+
 /// The AppMessage service (inbound). At most one instance should exist.
 pub struct AppMessage {
     state: *mut AppMessageState, // Box, owned; freed in Drop
@@ -143,11 +160,17 @@ pub struct AppMessage {
 
 impl AppMessage {
     /// Registers callbacks and opens the inbox/outbox with the given sizes.
+    /// Returns an error if an AppMessage is already open.
     pub fn open(
         _app: &mut App,
         inbox_size: u32,
         outbox_size: u32,
     ) -> Result<AppMessage, sys::AppMessageResult> {
+        // Check if one is already open
+        if OPEN_FLAG.0.get() {
+            return Err(sys::AppMessageResult::APP_MSG_INVALID_STATE);
+        }
+
         let state = Box::into_raw(Box::new(AppMessageState {
             on_received: None,
             on_dropped: None,
@@ -159,11 +182,15 @@ impl AppMessage {
             sys::app_message_register_inbox_dropped(Some(on_inbox_dropped));
             let r = sys::app_message_open(inbox_size, outbox_size);
             if r != sys::AppMessageResult::APP_MSG_OK {
+                // Trampolines cannot fire between register and open-failure because
+                // the SDK dispatches inbox callbacks only from the app's event loop,
+                // which does not run during this synchronous call.
                 sys::app_message_deregister_callbacks();
                 sys::app_message_set_context(core::ptr::null_mut());
                 drop(Box::from_raw(state));
                 return Err(r);
             }
+            OPEN_FLAG.0.set(true);
         }
         Ok(AppMessage { state })
     }
@@ -187,9 +214,12 @@ impl Drop for AppMessage {
             "AppMessage dropped from inside its own callback (unsupported; see app_message.rs)"
         );
         unsafe {
+            // deregister_callbacks clears both inbox (received/dropped) and outbox
+            // callbacks. Affects raw-sys users mixing outbound messaging.
             sys::app_message_deregister_callbacks();
             sys::app_message_set_context(core::ptr::null_mut());
             drop(Box::from_raw(self.state));
+            OPEN_FLAG.0.set(false);
         }
     }
 }
@@ -323,5 +353,150 @@ mod tests {
         );
 
         unsafe { drop(Box::from_raw(state)) };
+    }
+
+    /// Test packed Tuple layout: key at offset 0, length at offset 5, value at offset 7.
+    #[test]
+    fn tuple_layout_pinned() {
+        // Verify the field offsets to catch any layout changes
+        let key_offset = core::mem::offset_of!(sys::Tuple, key);
+        let length_offset = core::mem::offset_of!(sys::Tuple, length);
+        let value_offset = core::mem::offset_of!(sys::Tuple, value);
+
+        assert_eq!(key_offset, 0, "key must be at offset 0");
+        assert_eq!(length_offset, 5, "length must be at offset 5");
+        assert_eq!(value_offset, 7, "value must be at offset 7");
+    }
+
+    /// Test wire-format round-trip for TUPLE_INT.
+    #[test]
+    fn tuple_wire_format_int() {
+        // Build a buffer in C layout: u32 key (LE), type byte, u16 length (LE), value bytes
+        let mut buf = [0u8; 64];
+        // key = 0x12345678 (little-endian)
+        buf[0..4].copy_from_slice(&(0x12345678_u32).to_le_bytes());
+        // type = TUPLE_INT
+        buf[4] = sys::TupleType::TUPLE_INT.0;
+        // length = 2 (two bytes for i16)
+        buf[5..7].copy_from_slice(&(2_u16).to_le_bytes());
+        // value = -1 as i16 (0xffff in little-endian)
+        buf[7..9].copy_from_slice(&(-1i16).to_le_bytes());
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.key(), 0x12345678);
+        assert_eq!(tuple.tuple_type(), sys::TupleType::TUPLE_INT);
+        assert_eq!(tuple.length(), 2);
+        assert_eq!(tuple.value_i32(), Some(-1));
+    }
+
+    /// Test wire-format round-trip for TUPLE_UINT.
+    #[test]
+    fn tuple_wire_format_uint() {
+        let mut buf = [0u8; 64];
+        // key = 0xdeadbeef
+        buf[0..4].copy_from_slice(&(0xdeadbeef_u32).to_le_bytes());
+        // type = TUPLE_UINT
+        buf[4] = sys::TupleType::TUPLE_UINT.0;
+        // length = 4 (four bytes for u32)
+        buf[5..7].copy_from_slice(&(4_u16).to_le_bytes());
+        // value = 0x12345678
+        buf[7..11].copy_from_slice(&(0x12345678_u32).to_le_bytes());
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.key(), 0xdeadbeef);
+        assert_eq!(tuple.tuple_type(), sys::TupleType::TUPLE_UINT);
+        assert_eq!(tuple.length(), 4);
+        assert_eq!(tuple.value_i32(), Some(0x12345678_i32));
+    }
+
+    /// Test wire-format round-trip for TUPLE_BYTE_ARRAY.
+    #[test]
+    fn tuple_wire_format_byte_array() {
+        let mut buf = [0u8; 64];
+        buf[0..4].copy_from_slice(&(0x11223344_u32).to_le_bytes());
+        buf[4] = sys::TupleType::TUPLE_BYTE_ARRAY.0;
+        buf[5..7].copy_from_slice(&(5_u16).to_le_bytes());
+        buf[7..12].copy_from_slice(b"hello");
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.key(), 0x11223344);
+        assert_eq!(tuple.tuple_type(), sys::TupleType::TUPLE_BYTE_ARRAY);
+        assert_eq!(tuple.length(), 5);
+        assert_eq!(tuple.value_bytes(), Some(&b"hello"[..]));
+        assert_eq!(tuple.value_i32(), None);
+    }
+
+    /// Test wire-format round-trip for TUPLE_CSTRING.
+    #[test]
+    fn tuple_wire_format_cstring() {
+        let mut buf = [0u8; 64];
+        buf[0..4].copy_from_slice(&(0x55667788_u32).to_le_bytes());
+        buf[4] = sys::TupleType::TUPLE_CSTRING.0;
+        buf[5..7].copy_from_slice(&(6_u16).to_le_bytes());
+        buf[7..13].copy_from_slice(b"hello\0");
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.key(), 0x55667788);
+        assert_eq!(tuple.tuple_type(), sys::TupleType::TUPLE_CSTRING);
+        assert_eq!(tuple.length(), 6);
+        assert_eq!(tuple.value_cstr().unwrap().to_bytes(), b"hello");
+        assert_eq!(tuple.value_i32(), None);
+    }
+
+    /// Test value_u32() for TUPLE_UINT.
+    #[test]
+    fn tuple_value_u32_uint_type() {
+        let mut buf = [0u8; 64];
+        buf[0..4].copy_from_slice(&(0xaabbccdd_u32).to_le_bytes());
+        buf[4] = sys::TupleType::TUPLE_UINT.0;
+        buf[5..7].copy_from_slice(&(4_u16).to_le_bytes());
+        buf[7..11].copy_from_slice(&(0x11223344_u32).to_le_bytes());
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.value_u32(), Some(0x11223344));
+        assert_eq!(tuple.value_u32(), Some(0x11223344));
+    }
+
+    /// Test value_u32() returns None for non-UINT types.
+    #[test]
+    fn tuple_value_u32_non_uint_returns_none() {
+        let mut buf = [0u8; 64];
+        buf[0..4].copy_from_slice(&(0x12345678_u32).to_le_bytes());
+        buf[4] = sys::TupleType::TUPLE_BYTE_ARRAY.0;
+        buf[5..7].copy_from_slice(&(5_u16).to_le_bytes());
+        buf[7..12].copy_from_slice(b"hello");
+
+        let tuple_ptr = buf.as_mut_ptr() as *mut sys::Tuple;
+        let tuple = Tuple {
+            raw: tuple_ptr,
+            _lifetime: PhantomData,
+        };
+
+        assert_eq!(tuple.value_u32(), None);
     }
 }

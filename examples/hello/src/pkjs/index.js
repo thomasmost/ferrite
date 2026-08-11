@@ -9,6 +9,6 @@ Pebble.addEventListener('ready', function () {
     Pebble.sendAppMessage(
         msg,
         function () { console.log('pkjs PING sent'); },
-        function (e) { console.log('pkjs PING failed'); }
+        function (e) { console.log('pkjs PING failed: ' + JSON.stringify(e)); }
     );
 });
