@@ -18,10 +18,21 @@ fn find_repo_root(from: &str) -> Result<PathBuf> {
     }
 }
 
-/// Compute a relative path from `base` to `target`. Both are canonicalized.
+/// Compute a relative path from `base` to `target`.
+/// `base` must be a directory (and must exist). `target` may be a file that
+/// does not exist yet — we canonicalize its parent and rejoin the filename.
 fn pathdiff(base: &Path, target: &str) -> Result<String> {
     let base_canon = base.canonicalize()?;
-    let target_canon = PathBuf::from(target).canonicalize()?;
+    let target_path = PathBuf::from(target);
+
+    // If target exists, canonicalize it directly. Otherwise canonicalize the parent.
+    let target_canon = if target_path.exists() {
+        target_path.canonicalize()?
+    } else {
+        let parent = target_path.parent().ok_or("target has no parent")?;
+        let parent_canon = parent.canonicalize()?;
+        parent_canon.join(target_path.file_name().ok_or("target has no filename")?)
+    };
 
     // Simple relative path: start from base, strip matching prefix.
     if let Ok(rel) = target_canon.strip_prefix(&base_canon) {
@@ -148,10 +159,22 @@ pub fn run(args: &[String]) -> ExitCode {
         }
     };
 
-    let regen_cmd = format!(
-        "cargo xtask messagekeys {} {}",
-        rel_package_path, rel_output_path
-    );
+    // If output is in a different git repo than the xtask binary,
+    // emit instructions for cross-repo usage. Otherwise emit a simple command.
+    let regen_cmd = match find_repo_root(".") {
+        Ok(current_repo) if current_repo != repo_root => {
+            // Cross-repo: ferrite's xtask generating code in fitter's repo.
+            // Emit a note pointing to the authoritative gate command.
+            "See scripts/check.sh for the regeneration command".to_string()
+        }
+        _ => {
+            // Same repo: emit a simple command.
+            format!(
+                "cargo xtask messagekeys {} {}",
+                rel_package_path, rel_output_path
+            )
+        }
+    };
 
     let generated = emit_module(&keys, &rel_package_path, &regen_cmd);
 
@@ -265,5 +288,32 @@ mod tests {
         let out = emit_module(&keys, source, regen);
         assert!(out.contains(&format!("Source: {}", source)));
         assert!(out.contains(&format!("Regenerate: {}", regen)));
+    }
+
+    #[test]
+    fn pathdiff_handles_nonexistent_target_file() {
+        use std::fs;
+
+        // Create a temp directory with a known structure
+        let temp_base = std::env::temp_dir().join("messagekeys_test");
+        let _ = fs::remove_dir_all(&temp_base);
+        fs::create_dir_all(&temp_base).expect("create temp base");
+
+        let subdir = temp_base.join("subdir");
+        fs::create_dir(&subdir).expect("create subdir");
+
+        // Target file does not exist yet, but its parent does
+        let nonexistent = subdir.join("output.rs");
+        assert!(!nonexistent.exists());
+
+        // Should still compute a relative path without error
+        let rel = super::pathdiff(&temp_base, nonexistent.to_str().unwrap())
+            .expect("pathdiff succeeds even when target does not exist");
+
+        // The relative path should point to the nonexistent file
+        assert_eq!(rel, "subdir/output.rs");
+
+        // Clean up
+        let _ = fs::remove_dir_all(&temp_base);
     }
 }

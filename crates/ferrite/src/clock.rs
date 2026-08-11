@@ -140,7 +140,8 @@ mod tests {
     fn epoch_to_time_t_saturates_above_max() {
         assert_eq!(super::epoch_to_time_t(i64::MAX), sys::time_t::MAX);
         // On 32-bit targets, time_t::MAX is i32::MAX. On 64-bit, it's i64::MAX.
-        let above_max = if sys::time_t::MAX == i64::MAX {
+        // Test with a value we know is above the limit without overflow.
+        let above_max = if sys::time_t::MAX == i64::MAX as sys::time_t {
             i64::MAX
         } else {
             // 32-bit target: use a value above i32::MAX
