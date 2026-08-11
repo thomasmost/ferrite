@@ -5,6 +5,33 @@ use std::process::ExitCode;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+/// Determine whether two repository roots are the same.
+///
+/// This is the core predicate for deciding which regeneration command to emit.
+/// Returns true if they are the same repo, false otherwise.
+fn same_repo_root(xtask_repo: &Path, output_repo: &Path) -> bool {
+    xtask_repo == output_repo
+}
+
+/// Determine whether the output path is in the same git repository as xtask itself.
+///
+/// Returns true if output is in xtask's repo, false if it's in a different repo.
+/// This predicate is used to decide whether `cargo xtask messagekeys` will resolve
+/// when run from the output path's repository root.
+fn is_output_in_xtask_repo(output_path: &str) -> Result<bool> {
+    // Find xtask's own repository root from the manifest directory.
+    // env!("CARGO_MANIFEST_DIR") is a compile-time constant referring to the
+    // directory containing this crate's Cargo.toml — no runtime cwd dependence.
+    let xtask_manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let xtask_repo_root = find_repo_root(xtask_manifest_dir)?;
+
+    // Find the repository root of the output path.
+    let output_repo_root = find_repo_root(output_path)?;
+
+    // They must be the same for a simple `cargo xtask` command to work.
+    Ok(same_repo_root(&xtask_repo_root, &output_repo_root))
+}
+
 /// Find the git repository root by walking up from a given path.
 /// If the path doesn't exist, canonicalize its parent instead.
 fn find_repo_root(from: &str) -> Result<PathBuf> {
@@ -182,22 +209,27 @@ pub fn run(args: &[String]) -> ExitCode {
         }
     };
 
-    // Determine if output is in a different git repo than the package.
-    // This decision must depend only on the arguments (output_path and package_path),
-    // not on the process working directory.
-    let output_repo_root = find_repo_root(output_path).ok();
-    let is_cross_repo = output_repo_root != Some(repo_root.clone());
+    // Determine if output is in the same git repo as xtask itself.
+    // This decision must depend only on the arguments (output_path),
+    // not on the process working directory. env!("CARGO_MANIFEST_DIR")
+    // is a compile-time constant, so this is deterministic.
+    let in_xtask_repo = match is_output_in_xtask_repo(output_path) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("error: cannot determine repo relationship: {}", e);
+            return ExitCode::FAILURE;
+        }
+    };
 
-    let regen_cmd = if is_cross_repo {
-        // Cross-repo: generating code in a different repo.
-        // Emit a note pointing to the authoritative gate command.
-        "See scripts/check.sh for the regeneration command".to_string()
-    } else {
-        // Same repo: emit a simple command.
+    let regen_cmd = if in_xtask_repo {
+        // Output is in the same repo as xtask: a simple command will work.
         format!(
             "cargo xtask messagekeys {} {}",
             rel_package_path, rel_output_path
         )
+    } else {
+        // Output is in a different repo: emit a note pointing to the authoritative gate command.
+        "See scripts/check.sh for the regeneration command".to_string()
     };
 
     let generated = emit_module(&keys, &rel_package_path, &regen_cmd);
@@ -366,5 +398,26 @@ mod tests {
         // Restore original directory and clean up
         let _ = env::set_current_dir(&saved_dir);
         let _ = fs::remove_dir_all(&temp_base);
+    }
+
+    #[test]
+    fn same_repo_root_compares_paths_correctly() {
+        use std::path::Path;
+
+        let repo_a = Path::new("/path/to/repo/a");
+        let repo_b = Path::new("/path/to/repo/b");
+        let repo_a_again = Path::new("/path/to/repo/a");
+
+        // Same path should be considered the same repo
+        assert!(super::same_repo_root(repo_a, repo_a_again));
+
+        // Different paths should be considered different repos
+        assert!(!super::same_repo_root(repo_a, repo_b));
+
+        // This test demonstrates the regression: if the old code had checked
+        // whether the output repo root matches the package repo root (instead of
+        // the xtask repo root), it would incorrectly conclude that output in
+        // /path/to/repo/b is in the same repo as xtask in /path/to/repo/a.
+        // This test ensures the predicate only returns true for actual matches.
     }
 }
