@@ -6,8 +6,27 @@ use std::process::ExitCode;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Find the git repository root by walking up from a given path.
+/// If the path doesn't exist, canonicalize its parent instead.
 fn find_repo_root(from: &str) -> Result<PathBuf> {
-    let mut path = PathBuf::from(from).canonicalize()?;
+    let path_buf = PathBuf::from(from);
+    let mut path = if path_buf.exists() {
+        path_buf.canonicalize()?
+    } else {
+        // Path doesn't exist; canonicalize parent and rejoin the name.
+        let mut parent = path_buf.parent().ok_or("path has no parent")?;
+        let parent_buf;
+        if parent.as_os_str().is_empty() {
+            // Bare filename; use current directory as parent.
+            parent_buf = Path::new(".");
+            parent = parent_buf;
+        }
+        let parent_canon = parent.canonicalize()?;
+        if let Some(name) = path_buf.file_name() {
+            parent_canon.join(name)
+        } else {
+            parent_canon
+        }
+    };
     loop {
         if path.join(".git").exists() {
             return Ok(path);
@@ -29,7 +48,11 @@ fn pathdiff(base: &Path, target: &str) -> Result<String> {
     let target_canon = if target_path.exists() {
         target_path.canonicalize()?
     } else {
-        let parent = target_path.parent().ok_or("target has no parent")?;
+        let mut parent = target_path.parent().ok_or("target has no parent")?;
+        // Bare filename has an empty parent; treat it as current directory.
+        if parent.as_os_str().is_empty() {
+            parent = Path::new(".");
+        }
         let parent_canon = parent.canonicalize()?;
         parent_canon.join(target_path.file_name().ok_or("target has no filename")?)
     };
@@ -159,21 +182,22 @@ pub fn run(args: &[String]) -> ExitCode {
         }
     };
 
-    // If output is in a different git repo than the xtask binary,
-    // emit instructions for cross-repo usage. Otherwise emit a simple command.
-    let regen_cmd = match find_repo_root(".") {
-        Ok(current_repo) if current_repo != repo_root => {
-            // Cross-repo: ferrite's xtask generating code in fitter's repo.
-            // Emit a note pointing to the authoritative gate command.
-            "See scripts/check.sh for the regeneration command".to_string()
-        }
-        _ => {
-            // Same repo: emit a simple command.
-            format!(
-                "cargo xtask messagekeys {} {}",
-                rel_package_path, rel_output_path
-            )
-        }
+    // Determine if output is in a different git repo than the package.
+    // This decision must depend only on the arguments (output_path and package_path),
+    // not on the process working directory.
+    let output_repo_root = find_repo_root(output_path).ok();
+    let is_cross_repo = output_repo_root != Some(repo_root.clone());
+
+    let regen_cmd = if is_cross_repo {
+        // Cross-repo: generating code in a different repo.
+        // Emit a note pointing to the authoritative gate command.
+        "See scripts/check.sh for the regeneration command".to_string()
+    } else {
+        // Same repo: emit a simple command.
+        format!(
+            "cargo xtask messagekeys {} {}",
+            rel_package_path, rel_output_path
+        )
     };
 
     let generated = emit_module(&keys, &rel_package_path, &regen_cmd);
@@ -314,6 +338,33 @@ mod tests {
         assert_eq!(rel, "subdir/output.rs");
 
         // Clean up
+        let _ = fs::remove_dir_all(&temp_base);
+    }
+
+    #[test]
+    fn pathdiff_handles_bare_filename_with_no_directory() {
+        use std::env;
+        use std::fs;
+
+        // Save the current directory to restore it later
+        let saved_dir = env::current_dir().expect("get current dir");
+
+        // Create a temp directory and change to it
+        let temp_base = std::env::temp_dir().join("messagekeys_bare_test");
+        let _ = fs::remove_dir_all(&temp_base);
+        fs::create_dir_all(&temp_base).expect("create temp base");
+
+        env::set_current_dir(&temp_base).expect("change to temp dir");
+
+        // Test a bare filename (no directory component)
+        let rel =
+            super::pathdiff(&temp_base, "output.rs").expect("pathdiff succeeds for bare filename");
+
+        // The relative path should be the filename itself
+        assert_eq!(rel, "output.rs");
+
+        // Restore original directory and clean up
+        let _ = env::set_current_dir(&saved_dir);
         let _ = fs::remove_dir_all(&temp_base);
     }
 }
