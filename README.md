@@ -108,6 +108,96 @@ Requires libclang (Apple Command Line Tools suffice). Bindings are pinned
 to SDK 4.17/Emery — the firmware call table is index-based, so bindings and
 SDK versions must move together.
 
+## Use of `unsafe`
+
+App code written against this toolchain is safe Rust: `examples/hello` — the
+template you copy — contains **zero** `unsafe` blocks. (The one exception is
+invisible: the `ferrite::app!` macro expands to a single `unsafe` call that
+constructs the `App` token before handing it to your setup code.) All of the
+`unsafe` lives inside `crates/ferrite` and `crates/ferrite-sys`, and this
+section explains why it is there, what keeps it honest, and what could shrink
+it.
+
+### Why it is unavoidable
+
+- **The SDK is a C API.** Every firmware call crosses an FFI boundary, and
+  calling an `extern "C"` function is `unsafe` by definition in Rust. This is
+  the irreducible floor: a Pebble toolchain that never says `unsafe` is not
+  possible.
+- **Callbacks carry `void*` context.** The SDK invokes our `extern "C"`
+  trampolines with a raw context pointer; recovering the typed closure state
+  from it requires raw-pointer dereferences.
+- **The tick service has no context parameter at all**, so its closure lives
+  in a private `static` slot — which needs a manual `unsafe impl Sync`,
+  justified by the platform being single-threaded (three such statics exist,
+  each with a `// SAFETY:` comment stating exactly that invariant).
+- **`Tuple` (AppMessage) is a packed C struct with a flexible array member.**
+  Reading its value bytes requires `offset_of!`-based raw-pointer arithmetic;
+  taking a reference to a packed field would itself be undefined behavior.
+- **The global allocator** implements `GlobalAlloc` over the SDK's
+  `malloc`/`free` (an inherently `unsafe` trait), including an
+  over-allocate-and-stash shim for alignments above the firmware heap's
+  assumed 4 bytes.
+- **The panic handler** ends in an `asm!("udf #255")` trap so the firmware's
+  fault path terminates the app.
+
+### What keeps it honest
+
+- **Miri, under both aliasing models.** The full host test suite runs clean
+  under `cargo +nightly miri test -p ferrite` (Stacked Borrows and Tree
+  Borrows). This is not a formality: the first draft of the callback
+  trampolines held `&mut` state across user-closure calls, and Miri proved
+  that shape undefined behavior during review — the SDK genuinely reenters
+  (installing a click provider on a visible window invokes it synchronously),
+  and user closures can reenter the safe API. The project treats a Miri run
+  as mandatory after any trampoline change.
+- **One audited discipline across all fourteen trampolines** — the thirteen
+  that dispatch user closures follow the same take/call/restore sequence
+  (take the closure out of its slot, run it with no borrow of the state live,
+  restore only if the slot is still empty), and the fourteenth (the click
+  config provider) takes only a shared reference because it only reads. The
+  discipline is documented at each site, and its invariants are pinned by
+  host tests that drive the *real* `extern "C"` trampolines through
+  `#[no_mangle]` stub symbols — with mutation testing used during review to
+  prove each test fails when its invariant is broken.
+- **Compile-time ABI assertions.** `ferrite-sys` `const`-asserts the struct
+  sizes and field offsets the unsafe code relies on (packed `Tuple` at 7
+  bytes, `struct tm` at 48 with `tm_gmtoff` at offset 36, one-byte short
+  enums, …) against ground truth measured with the SDK's own
+  `arm-none-eabi-gcc`. If a future bindings regeneration changes an ABI fact,
+  the target build fails instead of the pointer math silently going wrong.
+- **Debug backstops for the one documented-unsupported case.** Dropping a
+  wrapper from inside its own callback would free state under the executing
+  closure; every state-owning type counts callback depth and `debug_assert!`s
+  it is zero in `Drop`, converting that misuse into a deterministic panic in
+  debug builds.
+- **Defense at the ABI layer too:** the wscript's fail-closed relocation
+  guardrail (unit-tested, 29 cases) rejects any binary whose static pointers
+  the Pebble loader could not fix up — a class of corruption Rust's type
+  system cannot see.
+
+### Shrinking it further
+
+- **Centralize the trampoline pattern.** The take/call/restore sequence is
+  repeated (deliberately — each site is small and independently auditable);
+  a generic, once-audited callback-slot type could reduce twelve unsafe sites
+  to one at the cost of less obvious per-site reasoning. Worth revisiting if
+  the surface keeps growing.
+- **Lint hardening.** `#![deny(unsafe_op_in_unsafe_fn)]` would force explicit
+  `unsafe {}` blocks (with room for per-operation `// SAFETY:` comments)
+  inside the `unsafe extern "C"` trampolines, and `#![forbid(unsafe_code)]`
+  can be stamped on the modules that need none (`layer` today) to keep them
+  that way.
+- **Upstream changes could delete whole categories.** A tick API with a
+  context parameter would eliminate the `static` slot and two of the three
+  manual `Sync` impls; nothing else here is removable without giving up the
+  safe-closure API itself.
+
+What cannot shrink: the FFI calls. Past that floor, the goal of this codebase
+is not zero `unsafe` but zero *unaudited* `unsafe` — every block sits behind
+a documented invariant, and the invariants are machine-checked where a
+machine can check them.
+
 ## Repository layout
 
 - `crates/ferrite` — the crate apps depend on: safe API + runtime (entry
