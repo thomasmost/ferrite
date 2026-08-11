@@ -12,6 +12,7 @@ mod fmt_buf;
 pub mod app_message;
 pub mod canvas;
 pub mod click;
+pub mod clock;
 pub mod graphics;
 pub mod health;
 pub mod heap;
@@ -25,6 +26,7 @@ pub mod persist;
 mod panic;
 pub mod text_layer;
 pub mod tick;
+pub mod time;
 pub mod types;
 pub mod window;
 

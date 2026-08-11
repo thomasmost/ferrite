@@ -22,7 +22,10 @@ use core::marker::PhantomData;
 use crate::sys;
 use crate::App;
 
-pub use crate::sys::TupleType;
+// AppMessageResult appears in this module's own public signatures
+// (`open`'s error type and `on_dropped`'s argument), so callers must be able
+// to name it without reaching into `sys`.
+pub use crate::sys::{AppMessageResult, TupleType};
 
 /// Little-endian unsigned decode for AppMessage integer tuples (1/2/4 bytes).
 fn decode_uint(bytes: &[u8]) -> Option<u32> {

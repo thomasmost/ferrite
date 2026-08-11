@@ -29,6 +29,23 @@ use crate::sys;
 use crate::window::Window;
 use crate::App;
 
+/// Copies `s` into `buf` with a NUL terminator, truncating by byte to fit,
+/// and returns it as a `&CStr`. Mirrors `snprintf`'s contract.
+///
+/// Truncation is by byte, not character: the SDK renders bytes, and a
+/// half-written multi-byte character renders as a replacement glyph rather
+/// than panicking. `buf` must be non-empty.
+pub(crate) fn str_to_cstr<'a>(buf: &'a mut [u8], s: &str) -> &'a CStr {
+    assert!(!buf.is_empty(), "row-text buffer must have room for a NUL");
+    let limit = buf.len() - 1;
+    let n = core::cmp::min(s.len(), limit);
+    buf[..n].copy_from_slice(&s.as_bytes()[..n]);
+    buf[n] = 0;
+    // SAFETY: bytes [0, n) are copied from a &str so contain no interior NUL,
+    // and buf[n] is the terminator.
+    unsafe { CStr::from_bytes_with_nul_unchecked(&buf[..=n]) }
+}
+
 /// A menu row cell being drawn — draw helpers over the SDK cell renderers.
 pub struct RowCell<'a> {
     ctx: *mut sys::GContext,
@@ -61,6 +78,27 @@ impl RowCell<'_> {
                 ptr::null_mut(),
             );
         }
+    }
+
+    /// Like [`basic_draw`](Self::basic_draw) but takes a `&str`, copying it
+    /// into a stack buffer. For dynamic row text, which is the common case.
+    ///
+    /// Text longer than 63 bytes is truncated — menu cells cannot render more
+    /// than a couple of dozen characters at any system font anyway.
+    pub fn basic_draw_str(&mut self, title: &str) {
+        let mut tb = [0u8; 64];
+        self.basic_draw(str_to_cstr(&mut tb, title));
+    }
+
+    /// Like [`basic_draw_with_subtitle`](Self::basic_draw_with_subtitle) but
+    /// takes `&str`s. Each is truncated at 63 bytes.
+    pub fn basic_draw_with_subtitle_str(&mut self, title: &str, subtitle: &str) {
+        let mut tb = [0u8; 64];
+        let mut sb = [0u8; 64];
+        // Two separate buffers: the SDK reads both pointers during the call.
+        let t = str_to_cstr(&mut tb, title);
+        let s = str_to_cstr(&mut sb, subtitle);
+        self.basic_draw_with_subtitle(t, s);
     }
 }
 
@@ -419,5 +457,31 @@ mod tests {
         unsafe {
             drop(Box::from_raw(state));
         }
+    }
+
+    /// Dynamic row text is the common case -- fitter formats a timestamp and a
+    /// stats line per row. Forcing every caller to hand-roll NUL termination
+    /// in a hot draw callback invites a panic path where there should be none.
+    #[test]
+    fn str_overload_nul_terminates_and_truncates() {
+        let mut buf = [0u8; 8];
+        let c = super::str_to_cstr(&mut buf, "abcdefghij");
+        assert_eq!(c.to_bytes(), b"abcdefg", "must truncate to fit the NUL");
+    }
+
+    #[test]
+    fn str_overload_handles_exact_fit_and_empty() {
+        let mut buf = [0u8; 4];
+        assert_eq!(super::str_to_cstr(&mut buf, "abc").to_bytes(), b"abc");
+        assert_eq!(super::str_to_cstr(&mut buf, "").to_bytes(), b"");
+    }
+
+    /// Truncation is by BYTE, matching snprintf. A multi-byte character cut in
+    /// half must not produce an invalid CStr or panic -- the SDK renders bytes.
+    #[test]
+    fn str_overload_truncating_mid_character_does_not_panic() {
+        let mut buf = [0u8; 4];
+        let c = super::str_to_cstr(&mut buf, "aé…");
+        assert!(c.to_bytes().len() <= 3);
     }
 }

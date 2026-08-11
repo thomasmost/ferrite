@@ -171,12 +171,29 @@ impl Window {
     ///
     /// Note (pebble.h:5730): if this leaves no windows on the stack, the
     /// system kills the app shortly afterwards.
+    ///
+    /// **This is the supported way for a window to dismiss itself from inside
+    /// its own click handler.** It does not free the window's state box, so
+    /// the executing closure stays valid. Do NOT drop the `Window` value in
+    /// the handler as well — see `click.rs`'s module doc. Keep it in the
+    /// app-state tuple and let it drop at exit; a self-dismissing dialog that
+    /// stays allocated for the app's life costs one window and is correct.
     pub fn remove_from_stack(&mut self, animated: bool) -> bool {
         unsafe { sys::window_stack_remove(self.raw, animated) }
     }
 
     pub fn is_loaded(&self) -> bool {
         unsafe { sys::window_is_loaded(self.raw) }
+    }
+
+    /// Whether this window is currently on the window stack (visible or
+    /// covered). Distinct from `is_loaded`, which reports SDK load state.
+    ///
+    /// Intended for idempotent stack management: a caller that maps
+    /// application state onto the window stack every tick needs to know
+    /// whether a push would be a no-op.
+    pub fn is_on_stack(&self) -> bool {
+        unsafe { sys::window_stack_contains_window(self.raw) }
     }
 }
 
@@ -239,5 +256,76 @@ unsafe extern "C" fn on_window_unload(window: *mut sys::Window) {
         if slot.is_none() {
             *slot = Some(f);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::click::ClickHandlers;
+    use core::mem::ManuallyDrop;
+    use std::cell::Cell;
+
+    // Real-symbol SDK stub: the host linker uses this #[no_mangle] definition
+    // to satisfy the bindgen `extern` declaration, so the tests below exercise
+    // the REAL is_on_stack wrapper -- not a parallel mock API. House pattern
+    // per persist.rs / click.rs::provider_tests. Behaviour is scripted through
+    // thread_locals so the multithreaded harness cannot race.
+    std::thread_local! {
+        static ON_STACK: Cell<bool> = const { Cell::new(false) };
+        static ASKED_ABOUT: Cell<usize> = const { Cell::new(0) };
+    }
+
+    #[no_mangle]
+    extern "C" fn window_stack_contains_window(window: *mut sys::Window) -> bool {
+        ASKED_ABOUT.with(|c| c.set(window as usize));
+        ON_STACK.with(|c| c.get())
+    }
+
+    fn empty_state() -> WindowState {
+        WindowState {
+            on_load: None,
+            on_unload: None,
+            clicks: ClickHandlers::new(),
+            callback_depth: 0,
+        }
+    }
+
+    /// Wraps a fabricated raw pointer in a `Window` without calling the SDK.
+    /// `ManuallyDrop` because the real `Drop` would call `window_destroy` on a
+    /// bogus pointer and then `Box::from_raw` a pointer that was never boxed.
+    fn fake_window(raw: usize, state: &mut WindowState) -> ManuallyDrop<Window> {
+        ManuallyDrop::new(Window {
+            raw: raw as *mut sys::Window,
+            state: state as *mut WindowState,
+        })
+    }
+
+    #[test]
+    fn is_on_stack_reports_true_when_the_sdk_says_so() {
+        let mut state = empty_state();
+        let w = fake_window(0xBEEF, &mut state);
+        ON_STACK.with(|c| c.set(true));
+        assert!(w.is_on_stack());
+    }
+
+    #[test]
+    fn is_on_stack_reports_false_when_the_sdk_says_so() {
+        let mut state = empty_state();
+        let w = fake_window(0xBEEF, &mut state);
+        ON_STACK.with(|c| c.set(false));
+        assert!(!w.is_on_stack());
+    }
+
+    /// The wrapper must ask about ITS OWN window. Passing the wrong pointer
+    /// would make fitter's router see another window's membership and
+    /// push/pop in a 1 Hz loop.
+    #[test]
+    fn is_on_stack_asks_the_sdk_about_this_window() {
+        let mut state = empty_state();
+        let w = fake_window(0xD00D, &mut state);
+        ASKED_ABOUT.with(|c| c.set(0));
+        let _ = w.is_on_stack();
+        assert_eq!(ASKED_ABOUT.with(|c| c.get()), 0xD00D);
     }
 }
