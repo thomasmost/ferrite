@@ -12,6 +12,7 @@ mod fmt_buf;
 pub mod app_message;
 pub mod canvas;
 pub mod click;
+pub mod clock;
 pub mod graphics;
 pub mod health;
 pub mod heap;
