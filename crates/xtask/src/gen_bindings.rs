@@ -7,9 +7,7 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-/// SDK version the committed bindings are pinned to. The firmware jump table
-/// is index-based, so bindings must match the SDK the app links against.
-const SDK_VERSION: &str = "4.17";
+use crate::sdk::{sdk_root, SDK_VERSION};
 
 /// Platform the bindings are generated for. Emitted into the generated file
 /// so `ferrite-sys` re-exports it rather than restating it.
@@ -32,16 +30,6 @@ const EMERY_DEFINES: &[&str] = &[
     "-DPBL_DISPLAY_WIDTH=200",
     "-DPBL_DISPLAY_HEIGHT=228",
 ];
-
-fn sdk_root() -> PathBuf {
-    if let Ok(p) = std::env::var("PEBBLE_SDK_ROOT") {
-        return PathBuf::from(p);
-    }
-    std::env::home_dir()
-        .unwrap_or_default()
-        .join("Library/Application Support/Pebble SDK/SDKs")
-        .join(SDK_VERSION)
-}
 
 pub fn run() -> ExitCode {
     let sdk = sdk_root();
