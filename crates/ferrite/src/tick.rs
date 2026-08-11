@@ -67,6 +67,9 @@ static TICK_SLOT: TickSlot = TickSlot(UnsafeCell::new(None));
 // after the current dispatch (e.g., if unsubscribe was called from inside the
 // closure). Cleared after dispatch or when subscribe() is called.
 struct PendingUnsubscribeFlag(core::cell::Cell<bool>);
+// SAFETY: the watch runtime is single-threaded; this static is only touched
+// from the app task. (Required because statics must be Sync.) Host tests
+// never touch it -- they pass local Cells to dispatch().
 unsafe impl Sync for PendingUnsubscribeFlag {}
 static PENDING_UNSUBSCRIBE: PendingUnsubscribeFlag =
     PendingUnsubscribeFlag(core::cell::Cell::new(false));

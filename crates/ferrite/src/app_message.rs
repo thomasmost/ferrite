@@ -148,8 +148,11 @@ struct AppMessageState {
 }
 
 // Flag tracking whether an AppMessage is currently open.
-// The watch runtime is single-threaded, so Cell is sufficient.
 struct AppMessageOpenFlag(core::cell::Cell<bool>);
+// SAFETY: the watch runtime is single-threaded; this static is only touched
+// from the app task. (Required because statics must be Sync.) Host tests
+// touch it from exactly one test function, so no cross-thread access exists
+// there either.
 unsafe impl Sync for AppMessageOpenFlag {}
 static OPEN_FLAG: AppMessageOpenFlag = AppMessageOpenFlag(core::cell::Cell::new(false));
 
@@ -498,5 +501,68 @@ mod tests {
         };
 
         assert_eq!(tuple.value_u32(), None);
+    }
+}
+
+/// Single-instance guard test. Lives in its own module with real-symbol SDK
+/// stubs (house pattern; the linker satisfies the bindgen externs with
+/// these). ONE test function touches the process-global OPEN_FLAG, so the
+/// multithreaded host harness cannot race on it.
+#[cfg(test)]
+mod open_flag_tests {
+    use super::*;
+    use crate::App;
+
+    #[no_mangle]
+    extern "C" fn app_message_set_context(_context: *mut c_void) -> *mut c_void {
+        core::ptr::null_mut()
+    }
+
+    #[no_mangle]
+    extern "C" fn app_message_register_inbox_received(
+        _cb: sys::AppMessageInboxReceived,
+    ) -> sys::AppMessageInboxReceived {
+        None
+    }
+
+    #[no_mangle]
+    extern "C" fn app_message_register_inbox_dropped(
+        _cb: sys::AppMessageInboxDropped,
+    ) -> sys::AppMessageInboxDropped {
+        None
+    }
+
+    #[no_mangle]
+    extern "C" fn app_message_open(
+        _size_inbound: u32,
+        _size_outbound: u32,
+    ) -> sys::AppMessageResult {
+        sys::AppMessageResult::APP_MSG_OK
+    }
+
+    #[no_mangle]
+    extern "C" fn app_message_deregister_callbacks() {}
+
+    /// A second open while one instance lives must fail loudly with
+    /// APP_MSG_INVALID_STATE (previously it silently killed the first
+    /// instance's callbacks), and dropping the instance must re-permit
+    /// opening.
+    #[test]
+    fn second_open_fails_and_drop_repermits() {
+        let mut app = unsafe { App::__new() };
+
+        let first = AppMessage::open(&mut app, 64, 64);
+        assert!(first.is_ok(), "first open must succeed");
+
+        let second = AppMessage::open(&mut app, 64, 64);
+        assert_eq!(
+            second.err(),
+            Some(sys::AppMessageResult::APP_MSG_INVALID_STATE),
+            "second open while one is alive must be refused"
+        );
+
+        drop(first);
+        let third = AppMessage::open(&mut app, 64, 64);
+        assert!(third.is_ok(), "drop must clear the open flag");
     }
 }

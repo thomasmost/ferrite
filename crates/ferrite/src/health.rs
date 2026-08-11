@@ -251,3 +251,62 @@ mod tests {
         );
     }
 }
+
+/// Drop-order test: lives in its own module with real-symbol SDK stubs
+/// (house pattern). ONE test function constructs a Health, so no cross-test
+/// interference on the recording state (thread_local isolates it anyway).
+#[cfg(test)]
+mod drop_order_tests {
+    use super::*;
+    use crate::App;
+    use core::cell::RefCell;
+
+    thread_local! {
+        /// Record of SDK calls, in order: ("hr_period", value) / ("unsubscribe", 0).
+        static CALLS: RefCell<alloc::vec::Vec<(&'static str, u16)>> =
+            const { RefCell::new(alloc::vec::Vec::new()) };
+    }
+
+    #[no_mangle]
+    extern "C" fn health_service_events_subscribe(
+        _handler: sys::HealthEventHandler,
+        _context: *mut core::ffi::c_void,
+    ) -> bool {
+        true
+    }
+
+    #[no_mangle]
+    extern "C" fn health_service_events_unsubscribe() -> bool {
+        CALLS.with(|c| c.borrow_mut().push(("unsubscribe", 0)));
+        true
+    }
+
+    #[no_mangle]
+    extern "C" fn health_service_set_heart_rate_sample_period(interval_sec: u16) -> bool {
+        CALLS.with(|c| c.borrow_mut().push(("hr_period", interval_sec)));
+        true
+    }
+
+    /// The C2 regression test: Drop must cancel the HR sample-period request
+    /// (SDK best practice -- an uncancelled request outlives the app and
+    /// costs battery) and must do so BEFORE unsubscribing. This line was
+    /// lost once already.
+    #[test]
+    fn drop_resets_hr_period_before_unsubscribing() {
+        let mut app = unsafe { App::__new() };
+
+        let mut health = Health::subscribe(&mut app, |_e| {}).expect("stub returns true");
+        health.set_heart_rate_sample_period(10);
+        CALLS.with(|c| c.borrow_mut().clear());
+
+        drop(health);
+
+        CALLS.with(|c| {
+            assert_eq!(
+                *c.borrow(),
+                alloc::vec![("hr_period", 0), ("unsubscribe", 0)],
+                "Drop must reset the HR period to 0 and only then unsubscribe"
+            );
+        });
+    }
+}
