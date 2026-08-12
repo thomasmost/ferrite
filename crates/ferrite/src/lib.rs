@@ -96,9 +96,23 @@ macro_rules! app {
     (fn main($app:ident: &mut App) $body:block) => {
         #[no_mangle]
         pub extern "C" fn main() -> i32 {
+            // The setup block runs behind an `#[inline(never)]` barrier so its
+            // locals do NOT stay in main's frame: main's frame survives
+            // `app_event_loop()` for the app's whole life, and the app stack
+            // is only a few KB. An inlined setup block (opt-level="z" inlines
+            // single-use closures aggressively) left ~1.3 KB of stack for
+            // every SDK callback and render pass -- the firmware's menu text
+            // layout alone overflows that. Measured on Emery: this barrier
+            // returns ~2 KB of runtime stack to callbacks.
+            #[inline(never)]
+            fn __setup_frame<T>(f: impl FnOnce() -> T) -> T {
+                f()
+            }
             let mut __token = unsafe { $crate::App::__new() };
-            let $app: &mut $crate::App = &mut __token;
-            let __state = $body;
+            let __state = __setup_frame(|| {
+                let $app: &mut $crate::App = &mut __token;
+                $body
+            });
             unsafe { $crate::sys::app_event_loop() };
             ::core::mem::drop(__state);
             0
