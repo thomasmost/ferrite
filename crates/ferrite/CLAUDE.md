@@ -99,3 +99,13 @@ path captures completely), and keep layers alive in the app-state tuple.
   ones.
 - `graphics::Graphics` carries a lifetime because the SDK `GContext` is only
   valid inside an update proc.
+- **The app stack is a few KB, and main's frame survives `app_event_loop`.**
+  `app!` runs the setup block behind an `#[inline(never)]` barrier so its
+  locals pop before the event loop starts — measured on Emery, an inlined
+  setup frame left ~1.3 KB for ALL SDK callbacks, and the firmware's menu
+  text layout alone overflowed it (App fault, PC:0 LR:0 — an unreadable
+  exception frame, not a null call). Corollaries for apps: build large
+  structs on the heap (`alloc_zeroed`-style constructors, `Vec` fields —
+  `Rc::new(RefCell::new(X{..}))` builds X on the STACK first), and keep
+  closure frames in SDK callbacks small; every branch's locals are allocated
+  on entry, so a fat cold path can sink a hot one.
